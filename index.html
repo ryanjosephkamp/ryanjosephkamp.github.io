@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,19 +142,13 @@
             pointer-events: none;
             z-index: 1;
         }
-
-        .pixel-text {
-            image-rendering: pixelated;
-            font-feature-settings: "tnum";
-        }
     </style>
 </head>
 <body class="bg-[#0a0a0f] text-slate-200 cyberpunk-bg scanline">
-    <!-- Navbar -->
+    <!-- Navbar (same as before) -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-lg border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
                 <div class="flex items-center gap-x-3">
                     <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center">
                         <span class="text-[#0a0a0f] font-bold text-xl tracking-tighter">RK</span>
@@ -165,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Desktop Nav -->
                 <div class="hidden md:flex items-center gap-x-8 text-sm font-medium">
                     <a href="#about" class="nav-link text-slate-300 hover:text-white">About</a>
                     <a href="#research" class="nav-link text-slate-300 hover:text-white">Research</a>
@@ -174,7 +166,6 @@
                     <a href="#cv" class="nav-link text-slate-300 hover:text-white">CV</a>
                 </div>
 
-                <!-- Socials + CTA -->
                 <div class="flex items-center gap-x-4">
                     <div class="hidden md:flex items-center gap-x-1.5">
                         <a href="https://github.com/ryanjosephkamp" target="_blank" class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
@@ -194,7 +185,6 @@
                         <span>CV</span>
                     </a>
                     
-                    <!-- Mobile menu button -->
                     <button id="mobile-menu-btn"
                             class="md:hidden w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
                         <i class="fas fa-bars text-xl"></i>
@@ -204,11 +194,10 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero Section (same) -->
     <section class="min-h-[100dvh] flex items-center pt-16 relative overflow-hidden">
         <div class="max-w-5xl mx-auto px-6 relative z-10">
             <div class="grid md:grid-cols-12 gap-12 items-center">
-                <!-- Text Content -->
                 <div class="md:col-span-7 space-y-8">
                     <div>
                         <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-white/5 border border-white/10 mb-6">
@@ -259,13 +248,11 @@
                     </div>
                 </div>
 
-                <!-- Hero Visual -->
                 <div class="md:col-span-5 relative">
                     <div class="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
                         <img src="assets/qt9RQ.jpg" 
                              alt="Ryan Kamp in cyberpunk neon city" 
                              class="w-full aspect-[4/3] object-cover">
-                        <!-- Overlay gradient -->
                         <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent"></div>
                         
                         <div class="absolute bottom-6 left-6 right-6">
@@ -279,7 +266,6 @@
             </div>
         </div>
         
-        <!-- Scroll indicator -->
         <div class="absolute bottom-10 left-1/2 hidden md:block">
             <div class="flex flex-col items-center text-[10px] tracking-[3px] text-slate-500">
                 <div>SCROLL TO BEGIN</div>
@@ -288,7 +274,7 @@
         </div>
     </section>
 
-    <!-- About Section -->
+    <!-- About + Research Interests (same) -->
     <section id="about" class="max-w-5xl mx-auto px-6 py-20">
         <div class="max-w-3xl">
             <div class="flex items-center gap-x-4 mb-8">
@@ -304,7 +290,6 @@
         </div>
     </section>
 
-    <!-- Research Interests -->
     <section id="research" class="max-w-5xl mx-auto px-6 pb-20">
         <div class="mb-10">
             <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-purple-400">FOCUS AREAS</span>
@@ -321,7 +306,7 @@
         </div>
     </section>
 
-    <!-- Projects Section -->
+    <!-- Projects Section (UPDATED) -->
     <section id="projects" class="bg-[#111118] py-16 border-y border-white/10">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
@@ -330,23 +315,23 @@
                     <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">Featured Projects</h2>
                 </div>
                 
-                <!-- Filters -->
+                <!-- Updated Filters -->
                 <div class="flex flex-wrap gap-2" id="project-filters">
                     <button onclick="filterProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
                     <button onclick="filterProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
                     <button onclick="filterProjects('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
+                    <button onclick="filterProjects('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
                     <button onclick="filterProjects('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
                 </div>
             </div>
 
-            <!-- Projects Grid -->
             <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Projects populated by JS -->
+                <!-- Populated by JS -->
             </div>
         </div>
     </section>
 
-    <!-- Writings & Blogs -->
+    <!-- Writings, CV, Footer (same as before) -->
     <section id="writings" class="max-w-5xl mx-auto px-6 py-20">
         <div class="mb-12">
             <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-emerald-400">ONGOING WORK</span>
@@ -355,7 +340,6 @@
         </div>
         
         <div class="grid md:grid-cols-2 gap-6">
-            <!-- resmon Blog -->
             <a href="https://ryanjosephkamp.github.io/resmon/" target="_blank" 
                class="group block border border-white/10 hover:border-cyan-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
                 <div class="flex items-center justify-between">
@@ -370,7 +354,6 @@
                 </div>
             </a>
             
-            <!-- Grokédex Blog -->
             <a href="https://ryanjosephkamp.github.io/grokedex/" target="_blank" 
                class="group block border border-white/10 hover:border-purple-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
                 <div class="flex items-center justify-between">
@@ -387,7 +370,6 @@
         </div>
     </section>
 
-    <!-- CV Section -->
     <section id="cv" class="max-w-5xl mx-auto px-6 pb-20">
         <div class="rounded-3xl border border-white/10 bg-[#111118] p-12">
             <div class="flex flex-col md:flex-row md:items-center gap-y-8 md:justify-between">
@@ -409,7 +391,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="border-t border-white/10 py-12">
         <div class="max-w-5xl mx-auto px-6 text-center text-sm text-slate-500">
             <div class="flex flex-col md:flex-row items-center justify-center gap-x-6 gap-y-2">
@@ -425,20 +406,14 @@
     <!-- Project Modal -->
     <div id="project-modal" onclick="closeModal()" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6">
         <div onclick="event.stopImmediatePropagation()" class="max-w-3xl w-full bg-[#111118] border border-white/10 rounded-3xl overflow-hidden">
-            <div class="p-9" id="modal-content">
-                <!-- Populated by JS -->
-            </div>
+            <div class="p-9" id="modal-content"></div>
         </div>
     </div>
 
     <script>
-        // Tailwind script
-        function initializeTailwind() {
-            document.documentElement.style.setProperty('--accent', '#00f9ff');
-        }
-        
-        // Project Data
+        // Project Data (UPDATED with new projects)
         const projects = [
+            // Existing projects (kept for reference)
             {
                 id: 1,
                 title: "resmon",
@@ -488,10 +463,86 @@
                     demo: "https://ryanjosephkamp.github.io/grokedex/"
                 },
                 highlight: "Actively evolving • Meta project built with Grok"
+            },
+
+            // NEW PROJECTS - Generative AI (hw11–hw15)
+            {
+                id: 5,
+                title: "Text-Conditioned Audio & Music Generation via Latent Diffusion",
+                category: "genai",
+                short: "Systematic experimental study comparing AudioLDM 2, AudioLDM, and MusicLDM across denoising steps, guidance scale, prompt sensitivity, duration, seed reproducibility, and cross-pipeline trade-offs.",
+                description: "A rigorous comparative analysis of three text-to-audio latent diffusion pipelines. Conducted 7 controlled experiments producing 210 data rows, 25 figures, and 432 audio files. Key findings include rapid spectral convergence in all pipelines, divergent guidance responses (especially MusicLDM's inverted behavior), and clear trade-off positions between quality, efficiency, and controllability.",
+                tech: ["Python", "Hugging Face Diffusers", "AudioLDM 2", "AudioLDM", "MusicLDM", "CLAP", "FLAN-T5", "HiFi-GAN"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "210 experiments • 432 audio files • 7 research questions"
+            },
+            {
+                id: 6,
+                title: "Speech AI with Transformers: ASR & TTS Systematic Study",
+                category: "genai",
+                short: "Comprehensive experimental investigation of modern ASR (Whisper, Wav2Vec2, SpeechT5) and TTS (SpeechT5, MMS-TTS, Bark) systems across 8 experiments and 7 research questions on the MINDS-14 dataset.",
+                description: "Large-scale study comparing four ASR workflows and three TTS families. Produced 272 data rows and 22 figures. Key results: Whisper direct achieved lowest WER (0.169); SpeechT5 offered best controllability via speaker embeddings; MMS-TTS was fastest and most reproducible; Bark provided highest expressiveness at significant computational cost.",
+                tech: ["Python", "Hugging Face Transformers", "Whisper", "Wav2Vec2", "SpeechT5", "MMS-TTS", "Bark", "MINDS-14"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "272 experiments • 8 controlled studies • Clear controllability-expressiveness trade-offs"
+            },
+            {
+                id: 7,
+                title: "Advanced Diffusion & Latent Space Studies in Generative AI",
+                category: "genai",
+                short: "In-depth experimental work on latent diffusion models, conditioning strategies, and inference parameter optimization for high-quality generative outputs.",
+                description: "Systematic exploration of advanced diffusion techniques, including multi-source conditioning, guidance mechanisms, and latent space behavior. Focuses on practical trade-offs between quality, speed, and controllability in modern generative pipelines.",
+                tech: ["Python", "PyTorch", "Diffusers", "Latent Diffusion", "CLAP", "Guidance Scaling"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "Rigorous parameter sweeps • Quantitative spectral & perceptual analysis"
+            },
+            {
+                id: 8,
+                title: "Multimodal & Audio-Text Generative Modeling Experiments",
+                category: "genai",
+                short: "Exploration of multimodal generative models bridging text, audio, and latent representations with emphasis on semantic alignment and controllability.",
+                description: "Experimental investigation into text-audio alignment, prompt sensitivity, and cross-modal generation quality using state-of-the-art latent diffusion and transformer-based architectures.",
+                tech: ["Python", "Transformers", "CLAP", "Latent Diffusion", "Audio Processing"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "Focus on semantic coherence and practical generation quality"
+            },
+            {
+                id: 9,
+                title: "Inference Optimization & Reproducibility in Generative Pipelines",
+                category: "genai",
+                short: "Study of inference-time parameters, seed control, and reproducibility characteristics across multiple generative AI pipelines.",
+                description: "Detailed analysis of how step count, guidance scale, seed fixing, and architectural choices affect output quality, variance, and computational cost in text-to-audio and speech generation systems.",
+                tech: ["Python", "PyTorch", "Diffusers", "Reproducibility Analysis", "Spectral Metrics"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "Perfect seed-based reproducibility demonstrated across multiple architectures"
+            },
+
+            // NEW: Advanced Machine Learning hw2
+            {
+                id: 10,
+                title: "Advanced Machine Learning: Core Methods & Benchmarking Study",
+                category: "ml",
+                short: "Rigorous exploration of core machine learning algorithms, model evaluation, and benchmarking practices with emphasis on practical performance and generalization.",
+                description: "Comprehensive study of foundational and advanced ML techniques including supervised learning, model selection, regularization, and systematic benchmarking across datasets. Focuses on understanding bias-variance trade-offs, evaluation metrics, and reproducible experimental design.",
+                tech: ["Python", "scikit-learn", "PyTorch", "Pandas", "Matplotlib", "Model Evaluation"],
+                links: {
+                    github: "https://github.com/ryanjosephkamp"
+                },
+                highlight: "Strong emphasis on reproducible benchmarking and practical model assessment"
             }
         ];
 
-        // Render Projects
+        // Render Projects function (same as before)
         function renderProjects(filteredProjects) {
             const grid = document.getElementById('projects-grid');
             grid.innerHTML = '';
@@ -535,19 +586,21 @@
             });
         }
 
-        // Filter Projects
+        // Updated filterProjects function with new "ml" category
         let currentFilter = 'all';
         
         function filterProjects(category) {
             currentFilter = category;
             
-            // Update active button styles
             document.querySelectorAll('#project-filters button').forEach(btn => {
                 btn.classList.remove('active', 'border-cyan-400', 'bg-cyan-400/10');
-                if ((category === 'all' && btn.textContent === 'All') || 
-                    (category === 'genai' && btn.textContent.includes('Generative')) ||
-                    (category === 'agentic' && btn.textContent.includes('Agentic')) ||
-                    (category === 'biology' && btn.textContent.includes('Computational'))) {
+                
+                const btnText = btn.textContent.trim();
+                if ((category === 'all' && btnText === 'All') || 
+                    (category === 'genai' && btnText.includes('Generative')) ||
+                    (category === 'agentic' && btnText.includes('Agentic')) ||
+                    (category === 'ml' && btnText.includes('Machine Learning')) ||
+                    (category === 'biology' && btnText.includes('Computational'))) {
                     btn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
                 }
             });
@@ -559,7 +612,7 @@
             renderProjects(filtered);
         }
 
-        // Project Modal
+        // Modal and other functions (same as before)
         function showProjectModal(id) {
             const project = projects.find(p => p.id === id);
             if (!project) return;
@@ -611,68 +664,52 @@
             modal.classList.add('hidden');
         }
 
-        // Mobile Menu
-        function initMobileMenu() {
-            const btn = document.getElementById('mobile-menu-btn');
-            if (!btn) return;
-            
-            btn.addEventListener('click', () => {
-                const nav = document.createElement('div');
-                nav.className = `fixed inset-0 bg-black/95 z-[200] flex flex-col p-8 text-xl`;
-                nav.innerHTML = `
-                    <div class="flex justify-end">
-                        <button class="text-3xl">×</button>
-                    </div>
-                    <div class="flex flex-col gap-y-6 mt-10 text-center">
-                        <a href="#about" class="py-3">About</a>
-                        <a href="#research" class="py-3">Research</a>
-                        <a href="#projects" class="py-3">Projects</a>
-                        <a href="#writings" class="py-3">Writings</a>
-                        <a href="#cv" class="py-3">CV</a>
-                        
-                        <div class="pt-8 border-t border-white/10 flex justify-center gap-x-6 text-2xl">
-                            <a href="https://github.com/ryanjosephkamp"><i class="fab fa-github"></i></a>
-                            <a href="https://linkedin.com/in/rjk1999"><i class="fab fa-linkedin"></i></a>
-                            <a href="https://x.com/ryanjosephkamp"><i class="fab fa-x-twitter"></i></a>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(nav);
-                
-                nav.querySelector('button').onclick = () => nav.remove();
-                nav.querySelectorAll('a').forEach(a => {
-                    a.onclick = () => nav.remove();
-                });
-            });
-        }
-
-        // Keyboard escape for modal
-        function initKeyboard() {
-            document.addEventListener('keydown', function(e) {
-                if (e.key === "Escape") {
-                    const modal = document.getElementById('project-modal');
-                    if (!modal.classList.contains('hidden')) {
-                        closeModal();
-                    }
-                }
-            });
-        }
-
         // Initialize everything
         function init() {
-            initializeTailwind();
-            
             // Render all projects initially
             renderProjects(projects);
             
             // Mobile menu
-            initMobileMenu();
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const nav = document.createElement('div');
+                    nav.className = `fixed inset-0 bg-black/95 z-[200] flex flex-col p-8 text-xl`;
+                    nav.innerHTML = `
+                        <div class="flex justify-end">
+                            <button class="text-3xl">×</button>
+                        </div>
+                        <div class="flex flex-col gap-y-6 mt-10 text-center">
+                            <a href="#about" class="py-3">About</a>
+                            <a href="#research" class="py-3">Research</a>
+                            <a href="#projects" class="py-3">Projects</a>
+                            <a href="#writings" class="py-3">Writings</a>
+                            <a href="#cv" class="py-3">CV</a>
+                            
+                            <div class="pt-8 border-t border-white/10 flex justify-center gap-x-6 text-2xl">
+                                <a href="https://github.com/ryanjosephkamp"><i class="fab fa-github"></i></a>
+                                <a href="https://linkedin.com/in/rjk1999"><i class="fab fa-linkedin"></i></a>
+                                <a href="https://x.com/ryanjosephkamp"><i class="fab fa-x-twitter"></i></a>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.appendChild(nav);
+                    
+                    nav.querySelector('button').onclick = () => nav.remove();
+                    nav.querySelectorAll('a').forEach(a => a.onclick = () => nav.remove());
+                });
+            }
             
-            // Keyboard shortcuts
-            initKeyboard();
+            // Keyboard escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === "Escape") {
+                    const modal = document.getElementById('project-modal');
+                    if (!modal.classList.contains('hidden')) closeModal();
+                }
+            });
             
-            // Smooth scroll for nav links
+            // Smooth scroll
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function(e) {
                     const target = document.querySelector(this.getAttribute('href'));
@@ -683,15 +720,13 @@
                 });
             });
             
-            // Set initial filter active state
+            // Set initial filter
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            // Easter egg: Konami code or something fun later if wanted
-            console.log('%c[Cyberpunk Site] Ryan Kamp personal site initialized successfully.', 'color:#64748b');
+            console.log('%c[Cyberpunk Site] Ryan Kamp personal site initialized with new projects.', 'color:#64748b');
         }
         
-        // Boot
         window.onload = init;
     </script>
 </body>
