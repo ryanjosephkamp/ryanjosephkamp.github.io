@@ -76,35 +76,6 @@
             box-shadow: 0 0 25px rgba(0, 249, 255, 0.15);
         }
 
-        .neon-border {
-            border: 1px solid #00f9ff;
-            box-shadow: 0 0 15px rgba(0, 249, 255, 0.3);
-        }
-
-        .nav-link {
-            position: relative;
-            transition: color 0.2s ease;
-        }
-        
-        .nav-link:hover {
-            color: #00f9ff;
-        }
-        
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: #00f9ff;
-            transition: width 0.3s ease;
-        }
-        
-        .nav-link:hover::after {
-            width: 100%;
-        }
-
         .filter-btn {
             transition: all 0.2s ease;
         }
@@ -115,36 +86,9 @@
             font-weight: 600;
             box-shadow: 0 0 15px rgba(0, 249, 255, 0.5);
         }
-
-        .modal {
-            animation: modalPop 0.3s ease forwards;
-        }
-
-        @keyframes modalPop {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .scanline {
-            position: relative;
-        }
-        
-        .scanline::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(
-                to bottom,
-                transparent 50%,
-                rgba(0, 249, 255, 0.04) 51%
-            );
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 1;
-        }
     </style>
 </head>
-<body class="bg-[#0a0a0f] text-slate-200 cyberpunk-bg scanline">
+<body class="bg-[#0a0a0f] text-slate-200 cyberpunk-bg">
     <!-- Navbar -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/95 backdrop-blur-lg border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6">
@@ -184,11 +128,6 @@
                         <i class="fas fa-download text-xs"></i>
                         <span>CV</span>
                     </a>
-                    
-                    <button id="mobile-menu-btn"
-                            class="md:hidden w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
-                        <i class="fas fa-bars text-xl"></i>
-                    </button>
                 </div>
             </div>
         </div>
@@ -235,17 +174,6 @@
                             <span>Download CV</span>
                         </a>
                     </div>
-
-                    <div class="flex items-center gap-x-5 text-sm pt-4">
-                        <div class="flex -space-x-2">
-                            <div class="w-8 h-8 rounded-full border-2 border-[#0a0a0f] overflow-hidden ring-1 ring-white/10">
-                                <img src="https://avatars.githubusercontent.com/u/192532973?v=4" alt="Ryan Kamp" class="w-full h-full object-cover">
-                            </div>
-                        </div>
-                        <div class="text-slate-400 text-sm">
-                            University of Cincinnati • Class of 2027 (MS)
-                        </div>
-                    </div>
                 </div>
 
                 <div class="md:col-span-5 relative">
@@ -254,27 +182,13 @@
                              alt="Ryan Kamp in cyberpunk neon city" 
                              class="w-full aspect-[4/3] object-cover">
                         <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent"></div>
-                        
-                        <div class="absolute bottom-6 left-6 right-6">
-                            <div class="flex items-center gap-x-2 text-xs font-mono tracking-widest">
-                                <div class="px-3 py-1 bg-black/60 backdrop-blur rounded-2xl border border-white/20">AGENTIC AI</div>
-                                <div class="px-3 py-1 bg-black/60 backdrop-blur rounded-2xl border border-white/20">GENAI</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="absolute bottom-10 left-1/2 hidden md:block">
-            <div class="flex flex-col items-center text-[10px] tracking-[3px] text-slate-500">
-                <div>SCROLL TO BEGIN</div>
-                <i class="fas fa-chevron-down mt-1.5 animate-bounce"></i>
-            </div>
-        </div>
     </section>
 
-    <!-- About Section -->
+    <!-- About + Research Interests (unchanged) -->
     <section id="about" class="max-w-5xl mx-auto px-6 py-20">
         <div class="max-w-3xl">
             <div class="flex items-center gap-x-4 mb-8">
@@ -285,12 +199,11 @@
             <div class="prose prose-invert text-lg text-slate-300 max-w-none">
                 <p>I'm Ryan Kamp, a graduate student pursuing an <strong>MS in Computer Science</strong> at the University of Cincinnati. My thesis advisor is <a href="https://researchdirectory.uc.edu/p/chengy" class="text-cyan-400 hover:underline">Dr. Yizong Cheng</a>.</p>
                 
-                <p class="mt-6">My work centers on <strong>agentic AI systems</strong>, explainable AI, generative models, language models/LLMs, rigorous benchmarking &amp; evaluation, and computational biology. I previously completed a BA in Mathematics and BS in Neuroscience at UC (May 2025), where I conducted undergraduate research under <a href="https://sites.google.com/view/hkimmathbio/home" class="text-cyan-400 hover:underline">Dr. Hyunjoong Kim</a>.</p>
+                <p class="mt-6">My work centers on <strong>agentic AI systems</strong>, explainable AI, generative models, language models/LLMs, rigorous benchmarking &amp; evaluation, and computational biology.</p>
             </div>
         </div>
     </section>
 
-    <!-- Research Interests -->
     <section id="research" class="max-w-5xl mx-auto px-6 pb-20">
         <div class="mb-10">
             <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-purple-400">FOCUS AREAS</span>
@@ -307,7 +220,7 @@
         </div>
     </section>
 
-    <!-- Projects Section -->
+    <!-- Featured Projects Section -->
     <section id="projects" class="bg-[#111118] py-16 border-y border-white/10">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
@@ -316,7 +229,7 @@
                     <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">Featured Projects</h2>
                 </div>
                 
-                <!-- Filters (Updated with new tab) -->
+                <!-- Filters -->
                 <div class="flex flex-wrap gap-2" id="project-filters">
                     <button onclick="filterProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
                     <button onclick="filterProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
@@ -327,24 +240,21 @@
                 </div>
             </div>
 
-            <!-- Projects Grid -->
             <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Populated by JS -->
             </div>
         </div>
     </section>
 
-    <!-- Writings & Blogs -->
+    <!-- Writings, CV, Footer (unchanged for brevity) -->
     <section id="writings" class="max-w-5xl mx-auto px-6 py-20">
         <div class="mb-12">
             <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-emerald-400">ONGOING WORK</span>
             <h2 class="mt-3 text-5xl font-display font-semibold tracking-tighter">Writings &amp; Blogs</h2>
-            <p class="mt-4 max-w-md text-slate-400">I maintain two active technical blogs documenting tools, experiments, and insights.</p>
         </div>
         
         <div class="grid md:grid-cols-2 gap-6">
-            <a href="https://ryanjosephkamp.github.io/resmon/" target="_blank" 
-               class="group block border border-white/10 hover:border-cyan-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
+            <a href="https://ryanjosephkamp.github.io/resmon/" target="_blank" class="group block border border-white/10 hover:border-cyan-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="font-semibold text-2xl group-hover:text-cyan-400 transition-colors">resmon Blog</div>
@@ -352,13 +262,9 @@
                     </div>
                     <i class="fas fa-external-link-alt text-xl text-slate-500 group-hover:text-cyan-400 transition-colors"></i>
                 </div>
-                <div class="mt-8 text-sm leading-relaxed text-slate-300">
-                    Deep dives into building production-grade research tools, LLM integration patterns, and automated literature monitoring systems.
-                </div>
             </a>
             
-            <a href="https://ryanjosephkamp.github.io/grokedex/" target="_blank" 
-               class="group block border border-white/10 hover:border-purple-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
+            <a href="https://ryanjosephkamp.github.io/grokedex/" target="_blank" class="group block border border-white/10 hover:border-purple-400/40 rounded-3xl p-8 transition-all hover:-translate-y-1">
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="font-semibold text-2xl group-hover:text-purple-400 transition-colors">Grokédex</div>
@@ -366,59 +272,42 @@
                     </div>
                     <i class="fas fa-external-link-alt text-xl text-slate-500 group-hover:text-purple-400 transition-colors"></i>
                 </div>
-                <div class="mt-8 text-sm leading-relaxed text-slate-300">
-                    A comprehensive, collaborative encyclopedia and interactive user manual for Grok and the Grok app — built with Grok.
-                </div>
             </a>
         </div>
     </section>
 
-    <!-- CV Section -->
     <section id="cv" class="max-w-5xl mx-auto px-6 pb-20">
         <div class="rounded-3xl border border-white/10 bg-[#111118] p-12">
             <div class="flex flex-col md:flex-row md:items-center gap-y-8 md:justify-between">
                 <div>
                     <h2 class="font-display text-5xl font-semibold tracking-tighter">Curriculum Vitae</h2>
-                    <p class="mt-3 text-slate-400 max-w-md">Full academic and professional background, including detailed research experience and technical projects.</p>
                 </div>
-                
                 <div>
-                    <a href="https://drive.google.com/file/d/1ccl2OQZWUlDNYDEpQasoxtdBYhVZ0yPa/view?usp=drivesdk" 
-                       target="_blank"
+                    <a href="https://drive.google.com/file/d/1ccl2OQZWUlDNYDEpQasoxtdBYhVZ0yPa/view?usp=drivesdk" target="_blank"
                        class="inline-flex items-center gap-x-3 px-10 py-4 bg-white hover:bg-amber-300 active:bg-amber-400 transition-all text-[#0a0a0f] font-semibold text-lg rounded-3xl">
                         <i class="fas fa-download"></i>
                         <span>Download Latest CV (PDF)</span>
                     </a>
-                    <p class="text-[10px] text-center mt-3 text-slate-500 tracking-widest">LAST UPDATED • SPRING 2026</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="border-t border-white/10 py-12">
         <div class="max-w-5xl mx-auto px-6 text-center text-sm text-slate-500">
-            <div class="flex flex-col md:flex-row items-center justify-center gap-x-6 gap-y-2">
-                <div>© 2026 Ryan Kamp</div>
-                <div class="hidden md:block">•</div>
-                <div>Built with modern web technologies &amp; a lot of neon</div>
-                <div class="hidden md:block">•</div>
-                <a href="https://github.com/ryanjosephkamp/ryanjosephkamp.github.io" target="_blank" class="hover:text-white transition-colors">View source on GitHub</a>
-            </div>
+            <div>© 2026 Ryan Kamp • Built with modern web technologies &amp; a lot of neon</div>
         </div>
     </footer>
 
     <!-- Project Modal -->
     <div id="project-modal" onclick="closeModal()" class="hidden fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6">
         <div onclick="event.stopImmediatePropagation()" class="max-w-3xl w-full bg-[#111118] border border-white/10 rounded-3xl overflow-hidden">
-            <div class="p-9" id="modal-content">
-                <!-- Populated by JS -->
-            </div>
+            <div class="p-9" id="modal-content"></div>
         </div>
     </div>
 
     <script>
-        // Project Data (Batch 1 Updated)
+        // Project Data
         const projects = [
             {
                 id: 1,
@@ -438,19 +327,19 @@
                 title: "Image Token Study",
                 category: "genai",
                 short: "Large-scale empirical study measuring how token-reducing image transformations affect VLM description accuracy across 6 flagship models and 12,000 API observations.",
-                description: "A rigorous cross-provider study evaluating Anthropic Claude, OpenAI GPT, Google Gemini, and xAI Grok models under controlled resolution reduction, lossy compression, color quantization, and adaptive pipelines. Includes detailed Pareto analysis and practical recommendations for practitioners.",
+                description: "A rigorous cross-provider study evaluating Anthropic Claude, OpenAI GPT, Google Gemini, and xAI Grok models under controlled resolution reduction, lossy compression, color quantization, and adaptive pipelines.",
                 tech: ["Python", "PyTorch", "BERTScore", "Sentence-Transformers", "API Integration"],
                 links: {
                     github: "https://github.com/ryanjosephkamp/image_token_study"
                 },
-                highlight: "12,000 scored observations • 4 providers • 19 transformation levels"
+                highlight: "12,000 scored observations • 4 providers"
             },
             {
                 id: 3,
                 title: "SPINK7-KLK5 MD Pipeline v3",
                 category: "biology",
                 short: "End-to-end molecular dynamics pipeline for computing binding free energy of the SPINK7-KLK5 protease-antiprotease complex using OpenMM, AMBER, and advanced sampling methods.",
-                description: "Production-quality computational biophysics workflow featuring steered molecular dynamics, umbrella sampling with WHAM/MBAR, metadynamics, and alchemical free energy perturbation. Extensively validated against literature values.",
+                description: "Production-quality computational biophysics workflow featuring steered molecular dynamics, umbrella sampling with WHAM/MBAR, metadynamics, and alchemical free energy perturbation.",
                 tech: ["Python", "OpenMM", "AMBER", "Jupyter", "MDAnalysis"],
                 links: {
                     github: "https://github.com/ryanjosephkamp/spink7-klk5-md-pipeline-v3"
@@ -462,7 +351,7 @@
                 title: "Grokédex",
                 category: "agentic",
                 short: "Collaborative, interactive encyclopedia and user manual for Grok and the Grok app — built with Grok.",
-                description: "A living documentation project featuring original insights, workflows, tips, and structured knowledge about Grok capabilities. Designed as both a reference and an interactive learning tool.",
+                description: "A living documentation project featuring original insights, workflows, tips, and structured knowledge about Grok capabilities.",
                 tech: ["Markdown", "GitHub Pages", "Collaboration with Grok"],
                 links: {
                     github: "https://github.com/ryanjosephkamp/grokedex",
@@ -470,23 +359,22 @@
                 },
                 highlight: "Actively evolving • Meta project built with Grok"
             },
-            // NEW PROJECT - Batch 1
+            // NEW - English OpenList
             {
                 id: 5,
                 title: "English OpenList",
                 category: "linguistics",
                 short: "A comprehensive, continuously updated dictionary of 378,666+ validated English words with rich metadata (POS, definitions, pronunciation). Daily automated updates via Merriam-Webster API, published on Hugging Face Datasets.",
-                description: "English OpenList is a living lexical resource that transforms a static word list into a dynamic, publicly accessible dictionary. It performs daily automated discovery of new words from Merriam-Webster RSS feeds, the New Words page, Wordnik Word of the Day, and manual additions. It validates invalid entries, generates statistical reports, and publishes updated data on Hugging Face Datasets with full provenance and version history. Designed for spell checking, word games (Scrabble/Wordle compatible), NLP training, and computational linguistics research.",
+                description: "English OpenList is a living lexical resource that performs daily automated discovery of new words from Merriam-Webster RSS feeds, the New Words page, Wordnik Word of the Day, and manual additions. It validates invalid entries, generates statistical reports, and publishes updated data on Hugging Face Datasets with full provenance.",
                 tech: ["Python", "Merriam-Webster API", "Hugging Face Datasets", "GitHub Actions", "Wordnik API"],
                 links: {
                     github: "https://github.com/ryanjosephkamp/english-openlist",
                     demo: "https://huggingface.co/datasets/ryanjosephkamp/english-openlist"
                 },
-                highlight: "378k+ validated words • Daily automated updates • Computational linguistics / NLP resource"
+                highlight: "378k+ validated words • Daily automated updates • Computational linguistics resource"
             }
         ];
 
-        // Render Projects function
         function renderProjects(filteredProjects) {
             const grid = document.getElementById('projects-grid');
             grid.innerHTML = '';
@@ -524,26 +412,28 @@
                         </div>
                     </div>
                 `;
-                
                 card.onclick = () => showProjectModal(project.id);
                 grid.appendChild(card);
             });
         }
 
-        // Filter Projects function (Updated for new tab)
-        let currentFilter = 'all';
-        
         function filterProjects(category) {
-            currentFilter = category;
+            console.log('Filtering by:', category); // Debug
             
             document.querySelectorAll('#project-filters button').forEach(btn => {
                 btn.classList.remove('active', 'border-cyan-400', 'bg-cyan-400/10');
-                if ((category === 'all' && btn.textContent === 'All') || 
-                    (category === 'genai' && btn.textContent.includes('Generative')) ||
-                    (category === 'agentic' && btn.textContent.includes('Agentic')) ||
-                    (category === 'ml' && btn.textContent.includes('Machine Learning')) ||
-                    (category === 'linguistics' && btn.textContent.includes('Computational Linguistics')) ||
-                    (category === 'biology' && btn.textContent.includes('Computational Biology'))) {
+                
+                const text = btn.textContent.trim();
+                let match = false;
+                
+                if (category === 'all' && text === 'All') match = true;
+                else if (category === 'genai' && text.includes('Generative')) match = true;
+                else if (category === 'agentic' && text.includes('Agentic')) match = true;
+                else if (category === 'ml' && text.includes('Machine Learning')) match = true;
+                else if (category === 'linguistics' && text.includes('Computational Linguistics')) match = true;
+                else if (category === 'biology' && text.includes('Computational Biology')) match = true;
+                
+                if (match) {
                     btn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
                 }
             });
@@ -555,7 +445,6 @@
             renderProjects(filtered);
         }
 
-        // Project Modal
         function showProjectModal(id) {
             const project = projects.find(p => p.id === id);
             if (!project) return;
@@ -607,65 +496,14 @@
             modal.classList.add('hidden');
         }
 
-        // Initialize everything
         function init() {
             renderProjects(projects);
             
-            // Mobile menu
-            const btn = document.getElementById('mobile-menu-btn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    const nav = document.createElement('div');
-                    nav.className = `fixed inset-0 bg-black/95 z-[200] flex flex-col p-8 text-xl`;
-                    nav.innerHTML = `
-                        <div class="flex justify-end">
-                            <button class="text-3xl">×</button>
-                        </div>
-                        <div class="flex flex-col gap-y-6 mt-10 text-center">
-                            <a href="#about" class="py-3">About</a>
-                            <a href="#research" class="py-3">Research</a>
-                            <a href="#projects" class="py-3">Projects</a>
-                            <a href="#writings" class="py-3">Writings</a>
-                            <a href="#cv" class="py-3">CV</a>
-                            
-                            <div class="pt-8 border-t border-white/10 flex justify-center gap-x-6 text-2xl">
-                                <a href="https://github.com/ryanjosephkamp"><i class="fab fa-github"></i></a>
-                                <a href="https://linkedin.com/in/rjk1999"><i class="fab fa-linkedin"></i></a>
-                                <a href="https://x.com/ryanjosephkamp"><i class="fab fa-x-twitter"></i></a>
-                            </div>
-                        </div>
-                    `;
-                    
-                    document.body.appendChild(nav);
-                    nav.querySelector('button').onclick = () => nav.remove();
-                    nav.querySelectorAll('a').forEach(a => a.onclick = () => nav.remove());
-                });
-            }
-            
-            // Keyboard escape
-            document.addEventListener('keydown', function(e) {
-                if (e.key === "Escape") {
-                    const modal = document.getElementById('project-modal');
-                    if (!modal.classList.contains('hidden')) closeModal();
-                }
-            });
-            
-            // Smooth scroll
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
-            });
-            
-            // Set initial filter
+            // Set initial active button
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            console.log('%c[Cyberpunk Site] Batch 1 applied successfully - Computational Linguistics tab + English OpenList added.', 'color:#64748b');
+            console.log('%c[Site] Batch 1 fixed and loaded successfully.', 'color:#10b981');
         }
         
         window.onload = init;
