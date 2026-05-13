@@ -183,7 +183,7 @@
         </div>
     </section>
 
-    <!-- Featured Projects Section -->
+    <!-- Featured Projects Section (Selective) -->
     <section id="projects" class="bg-[#111118] py-16 border-y border-white/10">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
@@ -193,22 +193,22 @@
                 </div>
                 
                 <div class="flex flex-wrap gap-2" id="project-filters">
-                    <button onclick="filterProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
-                    <button onclick="filterProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
-                    <button onclick="filterProjects('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
-                    <button onclick="filterProjects('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
-                    <button onclick="filterProjects('linguistics')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Linguistics</button>
-                    <button onclick="filterProjects('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
+                    <button onclick="filterFeatured('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
+                    <button onclick="filterFeatured('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
+                    <button onclick="filterFeatured('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
+                    <button onclick="filterFeatured('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
+                    <button onclick="filterFeatured('linguistics')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Linguistics</button>
+                    <button onclick="filterFeatured('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
                 </div>
             </div>
 
-            <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div id="featured-projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Populated by JS -->
             </div>
         </div>
     </section>
 
-    <!-- NEW: All Projects Section (Batch 2) -->
+    <!-- All Projects Section (Complete Portfolio) -->
     <section id="all-projects" class="max-w-7xl mx-auto px-6 py-16 border-t border-white/10">
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
             <div>
@@ -292,13 +292,14 @@
     </div>
 
     <script>
-        const projects = [
+        // Featured Projects (Selective - only the most important ones)
+        const featuredProjects = [
             {
                 id: 1,
                 title: "resmon",
                 category: "agentic",
                 short: "Production-grade automated literature surveillance desktop app unifying 16 scholarly repositories with optional LLM summarization.",
-                description: "A sophisticated local-first desktop application that monitors open-access repositories, runs scheduled deep sweeps, and generates rich research reports.",
+                description: "A sophisticated local-first desktop application that monitors open-access repositories, runs scheduled deep sweeps, and generates rich research reports. It features a full Electron + FastAPI architecture, optional cloud sync, and deep LLM integration across multiple providers.",
                 tech: ["Python", "FastAPI", "Electron", "React", "SQLite", "APScheduler"],
                 links: { github: "https://github.com/ryanjosephkamp/resmon", demo: "https://ryanjosephkamp.github.io/resmon/" },
                 highlight: "Flagship ongoing project • Actively maintained"
@@ -308,7 +309,7 @@
                 title: "Image Token Study",
                 category: "genai",
                 short: "Large-scale empirical study measuring how token-reducing image transformations affect VLM description accuracy across 6 flagship models and 12,000 API observations.",
-                description: "A rigorous cross-provider study evaluating Anthropic Claude, OpenAI GPT, Google Gemini, and xAI Grok models under controlled resolution reduction and compression.",
+                description: "A rigorous cross-provider study evaluating Anthropic Claude, OpenAI GPT, Google Gemini, and xAI Grok models under controlled resolution reduction, lossy compression, color quantization, and adaptive pipelines.",
                 tech: ["Python", "PyTorch", "BERTScore", "Sentence-Transformers", "API Integration"],
                 links: { github: "https://github.com/ryanjosephkamp/image_token_study" },
                 highlight: "12,000 scored observations • 4 providers • 19 transformation levels"
@@ -317,8 +318,8 @@
                 id: 3,
                 title: "SPINK7-KLK5 MD Pipeline v3",
                 category: "biology",
-                short: "End-to-end molecular dynamics pipeline for computing binding free energy of the SPINK7-KLK5 protease-antiprotease complex.",
-                description: "Production-quality computational biophysics workflow featuring steered molecular dynamics, umbrella sampling with WHAM/MBAR, metadynamics, and alchemical free energy perturbation.",
+                short: "End-to-end molecular dynamics pipeline for computing binding free energy of the SPINK7-KLK5 protease-antiprotease complex using OpenMM, AMBER, and advanced sampling methods.",
+                description: "Production-quality computational biophysics workflow featuring steered molecular dynamics, umbrella sampling with WHAM/MBAR, metadynamics, and alchemical free energy perturbation. Extensively validated against literature values.",
                 tech: ["Python", "OpenMM", "AMBER", "Jupyter", "MDAnalysis"],
                 links: { github: "https://github.com/ryanjosephkamp/spink7-klk5-md-pipeline-v3" },
                 highlight: "33 experiments • Strong literature validation"
@@ -328,7 +329,7 @@
                 title: "Grokédex",
                 category: "agentic",
                 short: "Collaborative, interactive encyclopedia and user manual for Grok and the Grok app — built with Grok.",
-                description: "A living documentation project featuring original insights, workflows, tips, and structured knowledge about Grok capabilities.",
+                description: "A living documentation project featuring original insights, workflows, tips, and structured knowledge about Grok capabilities. Designed as both a reference and an interactive learning tool.",
                 tech: ["Markdown", "GitHub Pages", "Collaboration with Grok"],
                 links: { github: "https://github.com/ryanjosephkamp/grokedex", demo: "https://ryanjosephkamp.github.io/grokedex/" },
                 highlight: "Actively evolving • Meta project built with Grok"
@@ -364,50 +365,96 @@
                 highlight: "272 experiments • 8 controlled studies"
             },
             {
-                id: 8,
-                title: "Advanced Diffusion & Latent Space Studies in Generative AI",
-                category: "genai",
-                short: "In-depth experimental work on latent diffusion models, conditioning strategies, and inference parameter optimization for high-quality generative outputs.",
-                description: "Systematic exploration of advanced diffusion techniques, including multi-source conditioning, guidance mechanisms, and latent space behavior.",
-                tech: ["Python", "PyTorch", "Diffusers", "Latent Diffusion", "CLAP", "Guidance Scaling"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Rigorous parameter sweeps"
-            },
-            {
-                id: 9,
-                title: "Multimodal & Audio-Text Generative Modeling Experiments",
-                category: "genai",
-                short: "Exploration of multimodal generative models bridging text, audio, and latent representations with emphasis on semantic alignment and controllability.",
-                description: "Experimental investigation into text-audio alignment, prompt sensitivity, and cross-modal generation quality.",
-                tech: ["Python", "Transformers", "CLAP", "Latent Diffusion", "Audio Processing"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Focus on semantic coherence"
-            },
-            {
-                id: 10,
-                title: "Inference Optimization & Reproducibility in Generative Pipelines",
-                category: "genai",
-                short: "Study of inference-time parameters, seed control, and reproducibility characteristics across multiple generative AI pipelines.",
-                description: "Detailed analysis of how step count, guidance scale, seed fixing, and architectural choices affect output quality and computational cost.",
-                tech: ["Python", "PyTorch", "Diffusers", "Reproducibility Analysis", "Spectral Metrics"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Perfect seed-based reproducibility"
-            },
-            {
                 id: 11,
-                title: "Advanced Machine Learning: Core Methods & Benchmarking Study",
+                title: "Advanced Machine Learning: Core Methods & Benchmarking",
                 category: "ml",
                 short: "Rigorous exploration of core machine learning algorithms, model evaluation, and benchmarking practices with emphasis on practical performance and generalization.",
-                description: "Comprehensive study of foundational and advanced ML techniques including supervised learning, model selection, regularization, and systematic benchmarking across datasets.",
+                description: "Comprehensive study of foundational and advanced ML techniques including supervised learning, model selection, regularization, and systematic benchmarking across datasets. Focuses on understanding bias-variance trade-offs, evaluation metrics, and reproducible experimental design.",
                 tech: ["Python", "scikit-learn", "PyTorch", "Pandas", "Matplotlib", "Model Evaluation"],
                 links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Strong emphasis on reproducible benchmarking"
+                highlight: "Strong emphasis on reproducible benchmarking and practical model assessment"
             }
         ];
 
-        // Featured Projects functions
-        function renderProjects(filteredProjects) {
-            const grid = document.getElementById('projects-grid');
+        // All Projects (Complete Portfolio)
+        const allProjects = [
+            ...featuredProjects,
+            // Remaining Generative AI projects (hw4–hw10) - only in All Projects
+            {
+                id: 12,
+                title: "Advanced Prompt Engineering & Evaluation",
+                category: "genai",
+                short: "Advanced study of prompt engineering techniques, chain-of-thought reasoning, and systematic evaluation of LLM outputs across multiple models and tasks.",
+                description: "Comprehensive exploration of modern prompt engineering strategies including few-shot, chain-of-thought, tree-of-thoughts, and self-consistency methods. Includes rigorous evaluation frameworks for measuring output quality, consistency, and task performance across GPT-4, Claude, Gemini, and Grok.",
+                tech: ["Python", "OpenAI API", "Anthropic API", "Google Gemini", "xAI Grok", "Prompt Engineering", "Evaluation Metrics"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Multi-model evaluation • Advanced reasoning techniques"
+            },
+            {
+                id: 13,
+                title: "Parameter-Efficient Fine-Tuning Study",
+                category: "genai",
+                short: "Practical implementation and comparison of parameter-efficient fine-tuning techniques (LoRA, QLoRA, Prefix Tuning, Adapter layers) for large language models.",
+                description: "Hands-on study of modern fine-tuning approaches for LLMs. Compares full fine-tuning vs. parameter-efficient methods across multiple tasks, analyzing trade-offs between performance, computational cost, and memory requirements.",
+                tech: ["Python", "Hugging Face Transformers", "PEFT", "LoRA", "QLoRA", "PyTorch", "Model Evaluation"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "LoRA vs QLoRA • Efficiency analysis"
+            },
+            {
+                id: 14,
+                title: "Multimodal Generative Models",
+                category: "genai",
+                short: "Exploration of multimodal generative models including text-to-image, image-to-text, and vision-language models with focus on CLIP, DALL-E, and Stable Diffusion variants.",
+                description: "Comprehensive study of multimodal architectures. Includes experiments with text-to-image generation, image captioning, visual question answering, and cross-modal retrieval using state-of-the-art models.",
+                tech: ["Python", "Stable Diffusion", "CLIP", "DALL-E", "Vision Transformers", "Hugging Face Diffusers"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Text-to-image • Vision-language models"
+            },
+            {
+                id: 15,
+                title: "Latent Diffusion Models Deep Dive",
+                category: "genai",
+                short: "In-depth theoretical and practical study of latent diffusion models, including denoising diffusion probabilistic models (DDPM), conditioning mechanisms, and guidance techniques.",
+                description: "Detailed exploration of the mathematics and implementation of latent diffusion models. Covers forward/reverse diffusion processes, U-Net architecture, classifier-free guidance, and practical sampling strategies.",
+                tech: ["Python", "PyTorch", "Diffusers", "Latent Diffusion", "U-Net", "Guidance Scaling"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Theoretical foundations • Practical implementation"
+            },
+            {
+                id: 16,
+                title: "Variational Autoencoders & Generative Flow Models",
+                category: "genai",
+                short: "Implementation and comparison of Variational Autoencoders (VAEs) and normalizing flow models for generative tasks with focus on latent space structure and sampling quality.",
+                description: "Comprehensive study of VAEs and flow-based generative models. Includes experiments with standard VAEs, β-VAEs, and RealNVP/MAF architectures with analysis of latent space properties and generation quality.",
+                tech: ["Python", "PyTorch", "VAE", "Normalizing Flows", "Latent Space Analysis"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "VAE vs Flow models • Latent space analysis"
+            },
+            {
+                id: 17,
+                title: "GANs & Adversarial Training",
+                category: "genai",
+                short: "Implementation and analysis of Generative Adversarial Networks (GANs) including DCGAN, StyleGAN, and conditional GANs with focus on training stability and mode collapse mitigation.",
+                description: "Practical exploration of GAN architectures and training techniques. Covers DCGAN, StyleGAN2, conditional GANs, and modern stabilization methods including spectral normalization and progressive growing.",
+                tech: ["Python", "PyTorch", "GAN", "DCGAN", "StyleGAN", "Spectral Normalization"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "GAN training stability • StyleGAN experiments"
+            },
+            {
+                id: 18,
+                title: "Autoregressive Models & Transformers for Generation",
+                category: "genai",
+                short: "Study of autoregressive generative models including GPT-style transformers, with focus on next-token prediction, sampling strategies, and temperature scaling.",
+                description: "Fundamental study of autoregressive language modeling. Includes implementation of transformer-based generators, analysis of sampling methods (greedy, beam search, top-k, nucleus sampling), and temperature effects on output diversity.",
+                tech: ["Python", "PyTorch", "Transformers", "GPT", "Sampling Strategies", "Temperature Scaling"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Autoregressive generation • Sampling techniques"
+            }
+        ];
+
+        // Featured Projects rendering
+        function renderFeatured(filteredProjects) {
+            const grid = document.getElementById('featured-projects-grid');
             grid.innerHTML = '';
             
             filteredProjects.forEach(project => {
@@ -452,7 +499,7 @@
             });
         }
 
-        function filterProjects(category) {
+        function filterFeatured(category) {
             document.querySelectorAll('#project-filters button').forEach(btn => {
                 btn.classList.remove('active', 'border-cyan-400', 'bg-cyan-400/10');
                 
@@ -467,11 +514,11 @@
                 }
             });
             
-            const filtered = category === 'all' ? projects : projects.filter(p => p.category === category);
-            renderProjects(filtered);
+            const filtered = category === 'all' ? featuredProjects : featuredProjects.filter(p => p.category === category);
+            renderFeatured(filtered);
         }
 
-        // All Projects functions (Batch 2)
+        // All Projects rendering
         function renderAllProjects(filteredProjects) {
             const grid = document.getElementById('all-projects-grid');
             grid.innerHTML = '';
@@ -533,12 +580,14 @@
                 }
             });
             
-            const filtered = category === 'all' ? projects : projects.filter(p => p.category === category);
+            const filtered = category === 'all' ? allProjects : allProjects.filter(p => p.category === category);
             renderAllProjects(filtered);
         }
 
         function showProjectModal(id) {
-            const project = projects.find(p => p.id === id);
+            // Search in both arrays
+            let project = featuredProjects.find(p => p.id === id);
+            if (!project) project = allProjects.find(p => p.id === id);
             if (!project) return;
             
             const modal = document.getElementById('project-modal');
@@ -582,20 +631,16 @@
         }
 
         function init() {
-            // Featured Projects
-            renderProjects(projects);
+            renderFeatured(featuredProjects);
+            renderAllProjects(allProjects);
             
-            // All Projects (Batch 2)
-            renderAllProjects(projects);
-            
-            // Set initial active buttons
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
             const allProjectsBtn = document.querySelector('#all-project-filters button');
             if (allProjectsBtn) allProjectsBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            console.log('%c[Site] Batch 2 applied successfully!', 'color:#10b981');
+            console.log('%c[Site] Batches 1-3 corrected and applied successfully!', 'color:#10b981');
         }
         
         window.onload = init;
