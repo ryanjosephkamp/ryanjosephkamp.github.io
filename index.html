@@ -379,7 +379,7 @@
         // All Projects (Complete Portfolio)
         const allProjects = [
             ...featuredProjects,
-            // Remaining Generative AI projects (with clear identification in description)
+            // Remaining Generative AI projects
             {
                 id: 12,
                 title: "Advanced Prompt Engineering & Evaluation",
@@ -450,7 +450,7 @@
                 links: { github: "https://github.com/ryanjosephkamp" },
                 highlight: "Autoregressive generation • Sampling techniques"
             },
-            // Remaining Advanced Machine Learning projects (Batch 4)
+            // Advanced Machine Learning projects
             {
                 id: 19,
                 title: "Supervised Learning & Model Selection",
@@ -470,6 +470,108 @@
                 tech: ["Python", "scikit-learn", "UMAP", "t-SNE", "PCA", "Clustering Algorithms", "Anomaly Detection"],
                 links: { github: "https://github.com/ryanjosephkamp" },
                 highlight: "Clustering • Dimensionality reduction • Anomaly detection"
+            },
+
+            // === BATCH 5: First 10 Biophysics Weekly Projects ===
+            {
+                id: 21,
+                title: "Introduction to Molecular Dynamics",
+                category: "biology",
+                short: "Fundamentals of molecular dynamics simulation using OpenMM with focus on basic system setup, energy minimization, and equilibration protocols.",
+                description: "Weekly Biophysics Project – Week 1 Project 1: Introduction to molecular dynamics simulation using OpenMM. Focus on system setup, energy minimization, and basic equilibration protocols for simple molecular systems.",
+                tech: ["Python", "OpenMM", "MDTraj", "PDB Files"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 1 Project 1 • Molecular Dynamics Fundamentals"
+            },
+            {
+                id: 22,
+                title: "Protein Structure Analysis",
+                category: "biology",
+                short: "Structural analysis of proteins using MDAnalysis and PyMOL with focus on secondary structure identification, RMSD calculations, and visualization.",
+                description: "Weekly Biophysics Project – Week 2 Project 1: Protein structure analysis using MDAnalysis and PyMOL. Focus on secondary structure identification, RMSD calculations, and structural visualization techniques.",
+                tech: ["Python", "MDAnalysis", "PyMOL", "PDB Files"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 2 Project 1 • Protein Structure Analysis"
+            },
+            {
+                id: 23,
+                title: "Ligand Docking Basics",
+                category: "biology",
+                short: "Introduction to molecular docking using AutoDock Vina with focus on receptor preparation, ligand parameterization, and binding pose analysis.",
+                description: "Weekly Biophysics Project – Week 3 Project 1: Introduction to molecular docking using AutoDock Vina. Focus on receptor preparation, ligand parameterization, and binding pose analysis for small molecule ligands.",
+                tech: ["Python", "AutoDock Vina", "Open Babel", "PyMOL"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 3 Project 1 • Molecular Docking Fundamentals"
+            },
+            {
+                id: 24,
+                title: "Free Energy Calculations - FEP",
+                category: "biology",
+                short: "Free energy perturbation calculations using OpenMM with focus on alchemical transformations and thermodynamic integration for binding affinity prediction.",
+                description: "Weekly Biophysics Project – Week 4 Project 1: Free energy perturbation (FEP) calculations using OpenMM. Focus on alchemical transformations and thermodynamic integration for binding affinity prediction.",
+                tech: ["Python", "OpenMM", "Alchemical Analysis", "MBAR"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 4 Project 1 • Free Energy Perturbation"
+            },
+            {
+                id: 25,
+                title: "Umbrella Sampling & WHAM",
+                category: "biology",
+                short: "Umbrella sampling simulations with WHAM analysis for potential of mean force calculations along reaction coordinates.",
+                description: "Weekly Biophysics Project – Week 5 Project 1: Umbrella sampling simulations with Weighted Histogram Analysis Method (WHAM) for potential of mean force calculations along defined reaction coordinates.",
+                tech: ["Python", "OpenMM", "WHAM", "MDAnalysis"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 5 Project 1 • Umbrella Sampling & WHAM"
+            },
+            {
+                id: 26,
+                title: "Metadynamics Simulations",
+                category: "biology",
+                short: "Metadynamics simulations for enhanced sampling of free energy landscapes using PLUMED and OpenMM.",
+                description: "Weekly Biophysics Project – Week 6 Project 1: Metadynamics simulations for enhanced sampling of free energy landscapes using PLUMED integrated with OpenMM.",
+                tech: ["Python", "OpenMM", "PLUMED", "Colvars"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 6 Project 1 • Metadynamics"
+            },
+            {
+                id: 27,
+                title: "Protein-Ligand Binding Analysis",
+                category: "biology",
+                short: "Comprehensive analysis of protein-ligand binding using multiple computational methods including docking, MD simulation, and free energy calculations.",
+                description: "Weekly Biophysics Project – Week 7 Project 1: Comprehensive analysis of protein-ligand binding using multiple computational methods including docking, molecular dynamics simulation, and free energy calculations.",
+                tech: ["Python", "OpenMM", "AutoDock Vina", "MDAnalysis", "PyMOL"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 7 Project 1 • Protein-Ligand Binding Analysis"
+            },
+            {
+                id: 28,
+                title: "Membrane Protein Simulations",
+                category: "biology",
+                short: "Molecular dynamics simulations of membrane proteins in lipid bilayers with focus on system setup and analysis of membrane-protein interactions.",
+                description: "Weekly Biophysics Project – Week 8 Project 1: Molecular dynamics simulations of membrane proteins in lipid bilayers with focus on system setup, membrane insertion, and analysis of membrane-protein interactions.",
+                tech: ["Python", "OpenMM", "CHARMM-GUI", "MDAnalysis"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 8 Project 1 • Membrane Protein Simulations"
+            },
+            {
+                id: 29,
+                title: "Protein Folding Analysis",
+                category: "biology",
+                short: "Analysis of protein folding pathways and stability using molecular dynamics simulations and enhanced sampling techniques.",
+                description: "Weekly Biophysics Project – Week 9 Project 1: Analysis of protein folding pathways and stability using molecular dynamics simulations and enhanced sampling techniques.",
+                tech: ["Python", "OpenMM", "MDAnalysis", "PyEMMA"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 9 Project 1 • Protein Folding Analysis"
+            },
+            {
+                id: 30,
+                title: "Machine Learning for Biophysics",
+                category: "biology",
+                short: "Application of machine learning techniques to biophysics problems including protein structure prediction and binding affinity prediction.",
+                description: "Weekly Biophysics Project – Week 10 Project 1: Application of machine learning techniques to biophysics problems including protein structure prediction and binding affinity prediction using neural networks.",
+                tech: ["Python", "PyTorch", "scikit-learn", "MDAnalysis"],
+                links: { github: "https://github.com/ryanjosephkamp" },
+                highlight: "Week 10 Project 1 • ML for Biophysics"
             }
         ];
 
@@ -660,7 +762,7 @@
             const allProjectsBtn = document.querySelector('#all-project-filters button');
             if (allProjectsBtn) allProjectsBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            console.log('%c[Site] Batches 1-4 with new description rule applied successfully!', 'color:#10b981');
+            console.log('%c[Site] Batch 5 (first 10 biophysics projects) applied successfully!', 'color:#10b981');
         }
         
         window.onload = init;
