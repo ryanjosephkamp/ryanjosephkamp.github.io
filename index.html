@@ -192,7 +192,6 @@
                     <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">Featured Projects</h2>
                 </div>
                 
-                <!-- Filters (Batch 1 Updated) -->
                 <div class="flex flex-wrap gap-2" id="project-filters">
                     <button onclick="filterProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
                     <button onclick="filterProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
@@ -206,6 +205,29 @@
             <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Populated by JS -->
             </div>
+        </div>
+    </section>
+
+    <!-- NEW: All Projects Section (Batch 2) -->
+    <section id="all-projects" class="max-w-7xl mx-auto px-6 py-16 border-t border-white/10">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
+            <div>
+                <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-emerald-400">COMPLETE PORTFOLIO</span>
+                <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">All Projects</h2>
+            </div>
+            
+            <div class="flex flex-wrap gap-2" id="all-project-filters">
+                <button onclick="filterAllProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
+                <button onclick="filterAllProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
+                <button onclick="filterAllProjects('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
+                <button onclick="filterAllProjects('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
+                <button onclick="filterAllProjects('linguistics')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Linguistics</button>
+                <button onclick="filterAllProjects('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
+            </div>
+        </div>
+
+        <div id="all-projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Populated by JS -->
         </div>
     </section>
 
@@ -311,7 +333,6 @@
                 links: { github: "https://github.com/ryanjosephkamp/grokedex", demo: "https://ryanjosephkamp.github.io/grokedex/" },
                 highlight: "Actively evolving • Meta project built with Grok"
             },
-            // NEW - English OpenList (Batch 1)
             {
                 id: 5,
                 title: "English OpenList",
@@ -319,10 +340,7 @@
                 short: "A comprehensive, continuously updated dictionary of 378,666+ validated English words with rich metadata (POS, definitions, pronunciation). Daily automated updates via Merriam-Webster API, published on Hugging Face Datasets.",
                 description: "English OpenList is a living lexical resource that performs daily automated discovery of new words from Merriam-Webster RSS feeds, the New Words page, Wordnik Word of the Day, and manual additions. It validates invalid entries, generates statistical reports, and publishes updated data on Hugging Face Datasets with full provenance and version history.",
                 tech: ["Python", "Merriam-Webster API", "Hugging Face Datasets", "GitHub Actions", "Wordnik API"],
-                links: { 
-                    github: "https://github.com/ryanjosephkamp/english-openlist", 
-                    demo: "https://huggingface.co/datasets/ryanjosephkamp/english-openlist" 
-                },
+                links: { github: "https://github.com/ryanjosephkamp/english-openlist", demo: "https://huggingface.co/datasets/ryanjosephkamp/english-openlist" },
                 highlight: "378k+ validated words • Daily automated updates • Computational linguistics resource"
             },
             {
@@ -387,6 +405,7 @@
             }
         ];
 
+        // Featured Projects functions
         function renderProjects(filteredProjects) {
             const grid = document.getElementById('projects-grid');
             grid.innerHTML = '';
@@ -452,6 +471,72 @@
             renderProjects(filtered);
         }
 
+        // All Projects functions (Batch 2)
+        function renderAllProjects(filteredProjects) {
+            const grid = document.getElementById('all-projects-grid');
+            grid.innerHTML = '';
+            
+            filteredProjects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = `project-card bg-[#111118] border border-white/10 rounded-3xl p-7 cursor-pointer group`;
+                
+                let techHTML = project.tech.map(t => `<span class="text-xs px-3 py-1 rounded-2xl bg-white/5 border border-white/10 font-mono">${t}</span>`).join('');
+                let linksHTML = '';
+                if (project.links.github) linksHTML += `<a href="${project.links.github}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fab fa-github"></i></a>`;
+                if (project.links.demo) linksHTML += `<a href="${project.links.demo}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fas fa-external-link-alt"></i></a>`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-5">
+                        <div>
+                            <div class="font-semibold text-2xl tracking-tight group-hover:text-cyan-400 transition-colors">${project.title}</div>
+                            <div class="text-xs font-mono tracking-widest text-slate-500 mt-1">${project.highlight || ''}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-3 py-1 text-xs rounded-2xl border border-white/10 font-mono">${project.category.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-slate-300 text-[15px] leading-relaxed line-clamp-3 mb-6">${project.short}</p>
+                    
+                    <div class="flex flex-wrap gap-1.5 mb-6">
+                        ${techHTML}
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <button onclick="event.stopImmediatePropagation(); showProjectModal(${project.id});" class="font-semibold flex items-center gap-x-2 text-cyan-400 group-hover:gap-x-3 transition-all">
+                            <span>Learn more</span> 
+                            <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                        
+                        <div class="flex gap-x-3 text-lg text-slate-400">
+                            ${linksHTML}
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => showProjectModal(project.id);
+                grid.appendChild(card);
+            });
+        }
+
+        function filterAllProjects(category) {
+            document.querySelectorAll('#all-project-filters button').forEach(btn => {
+                btn.classList.remove('active', 'border-cyan-400', 'bg-cyan-400/10');
+                
+                const btnText = btn.textContent.trim();
+                if ((category === 'all' && btnText === 'All') || 
+                    (category === 'genai' && btnText.includes('Generative')) ||
+                    (category === 'agentic' && btnText.includes('Agentic')) ||
+                    (category === 'ml' && btnText.includes('Machine Learning')) ||
+                    (category === 'linguistics' && btnText.includes('Computational Linguistics')) ||
+                    (category === 'biology' && btnText.includes('Computational Biology'))) {
+                    btn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
+                }
+            });
+            
+            const filtered = category === 'all' ? projects : projects.filter(p => p.category === category);
+            renderAllProjects(filtered);
+        }
+
         function showProjectModal(id) {
             const project = projects.find(p => p.id === id);
             if (!project) return;
@@ -497,55 +582,20 @@
         }
 
         function init() {
+            // Featured Projects
             renderProjects(projects);
             
-            const btn = document.getElementById('mobile-menu-btn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    const nav = document.createElement('div');
-                    nav.className = `fixed inset-0 bg-black/95 z-[200] flex flex-col p-8 text-xl`;
-                    nav.innerHTML = `
-                        <div class="flex justify-end"><button class="text-3xl">×</button></div>
-                        <div class="flex flex-col gap-y-6 mt-10 text-center">
-                            <a href="#about" class="py-3">About</a>
-                            <a href="#research" class="py-3">Research</a>
-                            <a href="#projects" class="py-3">Projects</a>
-                            <a href="#writings" class="py-3">Writings</a>
-                            <a href="#cv" class="py-3">CV</a>
-                            <div class="pt-8 border-t border-white/10 flex justify-center gap-x-6 text-2xl">
-                                <a href="https://github.com/ryanjosephkamp"><i class="fab fa-github"></i></a>
-                                <a href="https://linkedin.com/in/rjk1999"><i class="fab fa-linkedin"></i></a>
-                                <a href="https://x.com/ryanjosephkamp"><i class="fab fa-x-twitter"></i></a>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(nav);
-                    nav.querySelector('button').onclick = () => nav.remove();
-                    nav.querySelectorAll('a').forEach(a => a.onclick = () => nav.remove());
-                });
-            }
+            // All Projects (Batch 2)
+            renderAllProjects(projects);
             
-            document.addEventListener('keydown', function(e) {
-                if (e.key === "Escape") {
-                    const modal = document.getElementById('project-modal');
-                    if (!modal.classList.contains('hidden')) closeModal();
-                }
-            });
-            
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function(e) {
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        e.preventDefault();
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
-            });
-            
+            // Set initial active buttons
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            console.log('%c[Site] Batch 1 applied successfully!', 'color:#10b981');
+            const allProjectsBtn = document.querySelector('#all-project-filters button');
+            if (allProjectsBtn) allProjectsBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
+            
+            console.log('%c[Site] Batch 2 applied successfully!', 'color:#10b981');
         }
         
         window.onload = init;
