@@ -192,12 +192,13 @@
                     <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">Featured Projects</h2>
                 </div>
                 
-                <!-- Filters -->
+                <!-- Filters (Batch 1 Updated) -->
                 <div class="flex flex-wrap gap-2" id="project-filters">
                     <button onclick="filterProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
                     <button onclick="filterProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
                     <button onclick="filterProjects('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
                     <button onclick="filterProjects('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
+                    <button onclick="filterProjects('linguistics')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Linguistics</button>
                     <button onclick="filterProjects('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
                 </div>
             </div>
@@ -310,8 +311,22 @@
                 links: { github: "https://github.com/ryanjosephkamp/grokedex", demo: "https://ryanjosephkamp.github.io/grokedex/" },
                 highlight: "Actively evolving • Meta project built with Grok"
             },
+            // NEW - English OpenList (Batch 1)
             {
                 id: 5,
+                title: "English OpenList",
+                category: "linguistics",
+                short: "A comprehensive, continuously updated dictionary of 378,666+ validated English words with rich metadata (POS, definitions, pronunciation). Daily automated updates via Merriam-Webster API, published on Hugging Face Datasets.",
+                description: "English OpenList is a living lexical resource that performs daily automated discovery of new words from Merriam-Webster RSS feeds, the New Words page, Wordnik Word of the Day, and manual additions. It validates invalid entries, generates statistical reports, and publishes updated data on Hugging Face Datasets with full provenance and version history.",
+                tech: ["Python", "Merriam-Webster API", "Hugging Face Datasets", "GitHub Actions", "Wordnik API"],
+                links: { 
+                    github: "https://github.com/ryanjosephkamp/english-openlist", 
+                    demo: "https://huggingface.co/datasets/ryanjosephkamp/english-openlist" 
+                },
+                highlight: "378k+ validated words • Daily automated updates • Computational linguistics resource"
+            },
+            {
+                id: 6,
                 title: "Text-Conditioned Audio & Music Generation via Latent Diffusion",
                 category: "genai",
                 short: "Systematic experimental study comparing AudioLDM 2, AudioLDM, and MusicLDM across denoising steps, guidance scale, prompt sensitivity, duration, seed reproducibility, and cross-pipeline trade-offs.",
@@ -321,7 +336,7 @@
                 highlight: "210 experiments • 432 audio files • 7 research questions"
             },
             {
-                id: 6,
+                id: 7,
                 title: "Speech AI with Transformers: ASR & TTS Systematic Study",
                 category: "genai",
                 short: "Comprehensive experimental investigation of modern ASR (Whisper, Wav2Vec2, SpeechT5) and TTS (SpeechT5, MMS-TTS, Bark) systems across 8 experiments and 7 research questions on the MINDS-14 dataset.",
@@ -331,7 +346,7 @@
                 highlight: "272 experiments • 8 controlled studies"
             },
             {
-                id: 7,
+                id: 8,
                 title: "Advanced Diffusion & Latent Space Studies in Generative AI",
                 category: "genai",
                 short: "In-depth experimental work on latent diffusion models, conditioning strategies, and inference parameter optimization for high-quality generative outputs.",
@@ -341,7 +356,7 @@
                 highlight: "Rigorous parameter sweeps"
             },
             {
-                id: 8,
+                id: 9,
                 title: "Multimodal & Audio-Text Generative Modeling Experiments",
                 category: "genai",
                 short: "Exploration of multimodal generative models bridging text, audio, and latent representations with emphasis on semantic alignment and controllability.",
@@ -351,7 +366,7 @@
                 highlight: "Focus on semantic coherence"
             },
             {
-                id: 9,
+                id: 10,
                 title: "Inference Optimization & Reproducibility in Generative Pipelines",
                 category: "genai",
                 short: "Study of inference-time parameters, seed control, and reproducibility characteristics across multiple generative AI pipelines.",
@@ -361,7 +376,7 @@
                 highlight: "Perfect seed-based reproducibility"
             },
             {
-                id: 10,
+                id: 11,
                 title: "Advanced Machine Learning: Core Methods & Benchmarking Study",
                 category: "ml",
                 short: "Rigorous exploration of core machine learning algorithms, model evaluation, and benchmarking practices with emphasis on practical performance and generalization.",
@@ -381,7 +396,6 @@
                 card.className = `project-card bg-[#111118] border border-white/10 rounded-3xl p-7 cursor-pointer group`;
                 
                 let techHTML = project.tech.map(t => `<span class="text-xs px-3 py-1 rounded-2xl bg-white/5 border border-white/10 font-mono">${t}</span>`).join('');
-                
                 let linksHTML = '';
                 if (project.links.github) linksHTML += `<a href="${project.links.github}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fab fa-github"></i></a>`;
                 if (project.links.demo) linksHTML += `<a href="${project.links.demo}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fas fa-external-link-alt"></i></a>`;
@@ -414,7 +428,6 @@
                         </div>
                     </div>
                 `;
-                
                 card.onclick = () => showProjectModal(project.id);
                 grid.appendChild(card);
             });
@@ -429,7 +442,8 @@
                     (category === 'genai' && btnText.includes('Generative')) ||
                     (category === 'agentic' && btnText.includes('Agentic')) ||
                     (category === 'ml' && btnText.includes('Machine Learning')) ||
-                    (category === 'biology' && btnText.includes('Computational'))) {
+                    (category === 'linguistics' && btnText.includes('Computational Linguistics')) ||
+                    (category === 'biology' && btnText.includes('Computational Biology'))) {
                     btn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
                 }
             });
@@ -446,7 +460,6 @@
             const content = document.getElementById('modal-content');
             
             let techHTML = project.tech.map(t => `<span class="px-4 py-1.5 text-xs rounded-3xl bg-white/5 border border-white/10 font-mono">${t}</span>`).join('');
-            
             let linksHTML = '';
             if (project.links.github) linksHTML += `<a href="${project.links.github}" target="_blank" class="flex-1 md:flex-none px-8 py-3.5 bg-white/5 hover:bg-white/10 border border-white/20 rounded-3xl flex items-center justify-center gap-x-3 font-semibold transition-all"><i class="fab fa-github"></i> View on GitHub</a>`;
             if (project.links.demo) linksHTML += `<a href="${project.links.demo}" target="_blank" class="flex-1 md:flex-none px-8 py-3.5 bg-gradient-to-r from-cyan-400 to-purple-400 text-black font-semibold rounded-3xl flex items-center justify-center gap-x-3 hover:brightness-105 transition-all"><span>Visit Live Site</span> <i class="fas fa-external-link-alt"></i></a>`;
@@ -532,7 +545,7 @@
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            console.log('%c[Site] Fixed and loaded successfully!', 'color:#10b981');
+            console.log('%c[Site] Batch 1 applied successfully!', 'color:#10b981');
         }
         
         window.onload = init;
