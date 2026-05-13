@@ -205,29 +205,16 @@
             <div id="featured-projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Populated by JS -->
             </div>
-        </div>
-    </section>
 
-    <!-- All Projects Section -->
-    <section id="all-projects" class="max-w-7xl mx-auto px-6 py-16 border-t border-white/10">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4 mb-10">
-            <div>
-                <span class="font-mono text-xs tracking-[3px] px-4 py-1.5 rounded-3xl border border-white/10 text-emerald-400">COMPLETE PORTFOLIO</span>
-                <h2 class="mt-3 text-6xl font-display font-semibold tracking-tighter">All Projects</h2>
+            <!-- NEW: Full Portfolio Button -->
+            <div class="mt-12 text-center">
+                <a href="https://github.com/ryanjosephkamp?tab=repositories" target="_blank"
+                   class="inline-flex items-center gap-x-3 px-10 py-4 bg-white/5 hover:bg-white/10 border border-white/20 hover:border-cyan-400/50 rounded-3xl text-lg font-semibold transition-all group">
+                    <span>View Full Portfolio on GitHub</span>
+                    <i class="fas fa-external-link-alt group-hover:translate-x-0.5 transition-transform"></i>
+                </a>
+                <p class="text-xs text-slate-500 mt-3 tracking-widest">All projects, including weekly biophysics work and coursework</p>
             </div>
-            
-            <div class="flex flex-wrap gap-2" id="all-project-filters">
-                <button onclick="filterAllProjects('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">All</button>
-                <button onclick="filterAllProjects('genai')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Generative AI</button>
-                <button onclick="filterAllProjects('agentic')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Agentic &amp; Tools</button>
-                <button onclick="filterAllProjects('ml')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Machine Learning</button>
-                <button onclick="filterAllProjects('linguistics')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Linguistics</button>
-                <button onclick="filterAllProjects('biology')" class="filter-btn px-5 py-2 text-sm font-medium rounded-3xl border border-white/20 hover:border-white/40 px-6">Computational Biology</button>
-            </div>
-        </div>
-
-        <div id="all-projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Populated by JS -->
         </div>
     </section>
 
@@ -376,306 +363,6 @@
             }
         ];
 
-        // All Projects (Complete Portfolio)
-        const allProjects = [
-            ...featuredProjects,
-            // Remaining Generative AI projects
-            {
-                id: 12,
-                title: "Advanced Prompt Engineering & Evaluation",
-                category: "genai",
-                short: "Advanced study of prompt engineering techniques, chain-of-thought reasoning, and systematic evaluation of LLM outputs across multiple models and tasks.",
-                description: "Generative AI Course – Homework 10: Comprehensive exploration of modern prompt engineering strategies including few-shot, chain-of-thought, tree-of-thoughts, and self-consistency methods with rigorous evaluation frameworks.",
-                tech: ["Python", "OpenAI API", "Anthropic API", "Google Gemini", "xAI Grok", "Prompt Engineering", "Evaluation Metrics"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Multi-model evaluation • Advanced reasoning techniques"
-            },
-            {
-                id: 13,
-                title: "Parameter-Efficient Fine-Tuning Study",
-                category: "genai",
-                short: "Practical implementation and comparison of parameter-efficient fine-tuning techniques (LoRA, QLoRA, Prefix Tuning, Adapter layers) for large language models.",
-                description: "Generative AI Course – Homework 9: Hands-on study of modern fine-tuning approaches for LLMs comparing full fine-tuning vs. parameter-efficient methods across multiple tasks.",
-                tech: ["Python", "Hugging Face Transformers", "PEFT", "LoRA", "QLoRA", "PyTorch", "Model Evaluation"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "LoRA vs QLoRA • Efficiency analysis"
-            },
-            {
-                id: 14,
-                title: "Multimodal Generative Models",
-                category: "genai",
-                short: "Exploration of multimodal generative models including text-to-image, image-to-text, and vision-language models with focus on CLIP, DALL-E, and Stable Diffusion variants.",
-                description: "Generative AI Course – Homework 8: Comprehensive study of multimodal architectures including text-to-image generation, image captioning, visual question answering, and cross-modal retrieval.",
-                tech: ["Python", "Stable Diffusion", "CLIP", "DALL-E", "Vision Transformers", "Hugging Face Diffusers"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Text-to-image • Vision-language models"
-            },
-            {
-                id: 15,
-                title: "Latent Diffusion Models Deep Dive",
-                category: "genai",
-                short: "In-depth theoretical and practical study of latent diffusion models, including denoising diffusion probabilistic models (DDPM), conditioning mechanisms, and guidance techniques.",
-                description: "Generative AI Course – Homework 7: Detailed exploration of the mathematics and implementation of latent diffusion models covering forward/reverse diffusion processes, U-Net architecture, and classifier-free guidance.",
-                tech: ["Python", "PyTorch", "Diffusers", "Latent Diffusion", "U-Net", "Guidance Scaling"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Theoretical foundations • Practical implementation"
-            },
-            {
-                id: 16,
-                title: "Variational Autoencoders & Generative Flow Models",
-                category: "genai",
-                short: "Implementation and comparison of Variational Autoencoders (VAEs) and normalizing flow models for generative tasks with focus on latent space structure and sampling quality.",
-                description: "Generative AI Course – Homework 6: Comprehensive study of VAEs and flow-based generative models including standard VAEs, β-VAEs, and RealNVP/MAF architectures with analysis of latent space properties.",
-                tech: ["Python", "PyTorch", "VAE", "Normalizing Flows", "Latent Space Analysis"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "VAE vs Flow models • Latent space analysis"
-            },
-            {
-                id: 17,
-                title: "GANs & Adversarial Training",
-                category: "genai",
-                short: "Implementation and analysis of Generative Adversarial Networks (GANs) including DCGAN, StyleGAN, and conditional GANs with focus on training stability and mode collapse mitigation.",
-                description: "Generative AI Course – Homework 5: Practical exploration of GAN architectures and training techniques covering DCGAN, StyleGAN2, conditional GANs, and modern stabilization methods.",
-                tech: ["Python", "PyTorch", "GAN", "DCGAN", "StyleGAN", "Spectral Normalization"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "GAN training stability • StyleGAN experiments"
-            },
-            {
-                id: 18,
-                title: "Autoregressive Models & Transformers for Generation",
-                category: "genai",
-                short: "Study of autoregressive generative models including GPT-style transformers, with focus on next-token prediction, sampling strategies, and temperature scaling.",
-                description: "Generative AI Course – Homework 4: Fundamental study of autoregressive language modeling including implementation of transformer-based generators and analysis of sampling methods.",
-                tech: ["Python", "PyTorch", "Transformers", "GPT", "Sampling Strategies", "Temperature Scaling"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Autoregressive generation • Sampling techniques"
-            },
-            // Advanced Machine Learning projects
-            {
-                id: 19,
-                title: "Supervised Learning & Model Selection",
-                category: "ml",
-                short: "Comprehensive study of supervised learning algorithms, model selection techniques, cross-validation strategies, and hyperparameter optimization with focus on practical performance evaluation.",
-                description: "Advanced Machine Learning Course – Homework 3: In-depth exploration of supervised learning methods including linear models, decision trees, ensemble methods, and support vector machines with rigorous model selection techniques.",
-                tech: ["Python", "scikit-learn", "XGBoost", "LightGBM", "Cross-Validation", "Hyperparameter Optimization"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Model selection • Cross-validation • Ensemble methods"
-            },
-            {
-                id: 20,
-                title: "Unsupervised Learning & Dimensionality Reduction",
-                category: "ml",
-                short: "Practical implementation and analysis of unsupervised learning techniques including clustering algorithms, dimensionality reduction methods, and anomaly detection with real-world applications.",
-                description: "Advanced Machine Learning Course – Homework 4: Comprehensive study of unsupervised learning approaches covering k-means, hierarchical clustering, DBSCAN, Gaussian mixture models, PCA, t-SNE, UMAP, and autoencoders.",
-                tech: ["Python", "scikit-learn", "UMAP", "t-SNE", "PCA", "Clustering Algorithms", "Anomaly Detection"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Clustering • Dimensionality reduction • Anomaly detection"
-            },
-
-            // === BATCH 5: Biophysics Weekly Projects (Week 1-20) ===
-            {
-                id: 21,
-                title: "Introduction to Molecular Dynamics",
-                category: "biology",
-                short: "Fundamentals of molecular dynamics simulation using OpenMM with focus on basic system setup, energy minimization, and equilibration protocols.",
-                description: "Weekly Biophysics Project – Week 1 Project 1: Introduction to molecular dynamics simulation using OpenMM. Focus on system setup, energy minimization, and basic equilibration protocols for simple molecular systems.",
-                tech: ["Python", "OpenMM", "MDTraj", "PDB Files"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 1 Project 1 • Molecular Dynamics Fundamentals"
-            },
-            {
-                id: 22,
-                title: "Protein Structure Analysis",
-                category: "biology",
-                short: "Structural analysis of proteins using MDAnalysis and PyMOL with focus on secondary structure identification, RMSD calculations, and visualization.",
-                description: "Weekly Biophysics Project – Week 2 Project 1: Protein structure analysis using MDAnalysis and PyMOL. Focus on secondary structure identification, RMSD calculations, and structural visualization techniques.",
-                tech: ["Python", "MDAnalysis", "PyMOL", "PDB Files"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 2 Project 1 • Protein Structure Analysis"
-            },
-            {
-                id: 23,
-                title: "Ligand Docking Basics",
-                category: "biology",
-                short: "Introduction to molecular docking using AutoDock Vina with focus on receptor preparation, ligand parameterization, and binding pose analysis.",
-                description: "Weekly Biophysics Project – Week 3 Project 1: Introduction to molecular docking using AutoDock Vina. Focus on receptor preparation, ligand parameterization, and binding pose analysis for small molecule ligands.",
-                tech: ["Python", "AutoDock Vina", "Open Babel", "PyMOL"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 3 Project 1 • Molecular Docking Fundamentals"
-            },
-            {
-                id: 24,
-                title: "Free Energy Calculations - FEP",
-                category: "biology",
-                short: "Free energy perturbation calculations using OpenMM with focus on alchemical transformations and thermodynamic integration for binding affinity prediction.",
-                description: "Weekly Biophysics Project – Week 4 Project 1: Free energy perturbation (FEP) calculations using OpenMM. Focus on alchemical transformations and thermodynamic integration for binding affinity prediction.",
-                tech: ["Python", "OpenMM", "Alchemical Analysis", "MBAR"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 4 Project 1 • Free Energy Perturbation"
-            },
-            {
-                id: 25,
-                title: "Umbrella Sampling & WHAM",
-                category: "biology",
-                short: "Umbrella sampling simulations with WHAM analysis for potential of mean force calculations along reaction coordinates.",
-                description: "Weekly Biophysics Project – Week 5 Project 1: Umbrella sampling simulations with Weighted Histogram Analysis Method (WHAM) for potential of mean force calculations along defined reaction coordinates.",
-                tech: ["Python", "OpenMM", "WHAM", "MDAnalysis"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 5 Project 1 • Umbrella Sampling & WHAM"
-            },
-            {
-                id: 26,
-                title: "Metadynamics Simulations",
-                category: "biology",
-                short: "Metadynamics simulations for enhanced sampling of free energy landscapes using PLUMED and OpenMM.",
-                description: "Weekly Biophysics Project – Week 6 Project 1: Metadynamics simulations for enhanced sampling of free energy landscapes using PLUMED integrated with OpenMM.",
-                tech: ["Python", "OpenMM", "PLUMED", "Colvars"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 6 Project 1 • Metadynamics"
-            },
-            {
-                id: 27,
-                title: "Protein-Ligand Binding Analysis",
-                category: "biology",
-                short: "Comprehensive analysis of protein-ligand binding using multiple computational methods including docking, MD simulation, and free energy calculations.",
-                description: "Weekly Biophysics Project – Week 7 Project 1: Comprehensive analysis of protein-ligand binding using multiple computational methods including docking, molecular dynamics simulation, and free energy calculations.",
-                tech: ["Python", "OpenMM", "AutoDock Vina", "MDAnalysis", "PyMOL"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 7 Project 1 • Protein-Ligand Binding Analysis"
-            },
-            {
-                id: 28,
-                title: "Membrane Protein Simulations",
-                category: "biology",
-                short: "Molecular dynamics simulations of membrane proteins in lipid bilayers with focus on system setup and analysis of membrane-protein interactions.",
-                description: "Weekly Biophysics Project – Week 8 Project 1: Molecular dynamics simulations of membrane proteins in lipid bilayers with focus on system setup, membrane insertion, and analysis of membrane-protein interactions.",
-                tech: ["Python", "OpenMM", "CHARMM-GUI", "MDAnalysis"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 8 Project 1 • Membrane Protein Simulations"
-            },
-            {
-                id: 29,
-                title: "Protein Folding Analysis",
-                category: "biology",
-                short: "Analysis of protein folding pathways and stability using molecular dynamics simulations and enhanced sampling techniques.",
-                description: "Weekly Biophysics Project – Week 9 Project 1: Analysis of protein folding pathways and stability using molecular dynamics simulations and enhanced sampling techniques.",
-                tech: ["Python", "OpenMM", "MDAnalysis", "PyEMMA"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 9 Project 1 • Protein Folding Analysis"
-            },
-            {
-                id: 30,
-                title: "Machine Learning for Biophysics",
-                category: "biology",
-                short: "Application of machine learning techniques to biophysics problems including protein structure prediction and binding affinity prediction.",
-                description: "Weekly Biophysics Project – Week 10 Project 1: Application of machine learning techniques to biophysics problems including protein structure prediction and binding affinity prediction using neural networks.",
-                tech: ["Python", "PyTorch", "scikit-learn", "MDAnalysis"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 10 Project 1 • ML for Biophysics"
-            },
-            {
-                id: 31,
-                title: "Coarse-Grained Simulations",
-                category: "biology",
-                short: "Coarse-grained molecular dynamics simulations using MARTINI force field for large-scale biomolecular systems.",
-                description: "Weekly Biophysics Project – Week 11 Project 1: Coarse-grained molecular dynamics simulations using the MARTINI force field for studying large-scale biomolecular systems and membrane dynamics.",
-                tech: ["Python", "GROMACS", "MARTINI", "VMD"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 11 Project 1 • Coarse-Grained Simulations"
-            },
-            {
-                id: 32,
-                title: "Quantum Mechanics/Molecular Mechanics (QM/MM)",
-                category: "biology",
-                short: "QM/MM hybrid simulations for studying enzymatic reactions and reactive processes in biological systems.",
-                description: "Weekly Biophysics Project – Week 12 Project 1: Quantum mechanics/molecular mechanics (QM/MM) hybrid simulations for studying enzymatic reactions and reactive processes in biological systems.",
-                tech: ["Python", "OpenMM", "Psi4", "QM/MM"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 12 Project 1 • QM/MM Simulations"
-            },
-            {
-                id: 33,
-                title: "Protein-Protein Interaction Analysis",
-                category: "biology",
-                short: "Analysis of protein-protein interactions using molecular docking, molecular dynamics, and interface analysis tools.",
-                description: "Weekly Biophysics Project – Week 13 Project 1: Analysis of protein-protein interactions using molecular docking, molecular dynamics simulations, and interface analysis tools.",
-                tech: ["Python", "PyDock", "MDAnalysis", "PyMOL"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 13 Project 1 • Protein-Protein Interactions"
-            },
-            {
-                id: 34,
-                title: "Enhanced Sampling Methods",
-                category: "biology",
-                short: "Comparison of enhanced sampling methods including metadynamics, replica exchange, and accelerated molecular dynamics.",
-                description: "Weekly Biophysics Project – Week 14 Project 1: Comparison of enhanced sampling methods including metadynamics, replica exchange molecular dynamics, and accelerated molecular dynamics for improved conformational sampling.",
-                tech: ["Python", "OpenMM", "PLUMED", "REMD"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 14 Project 1 • Enhanced Sampling Methods"
-            },
-            {
-                id: 35,
-                title: "Binding Free Energy Analysis",
-                category: "biology",
-                short: "Comprehensive binding free energy analysis using multiple methods including MM-GBSA, MM-PBSA, and FEP.",
-                description: "Weekly Biophysics Project – Week 15 Project 1: Comprehensive binding free energy analysis using multiple methods including MM-GBSA, MM-PBSA, and Free Energy Perturbation (FEP) for accurate affinity prediction.",
-                tech: ["Python", "OpenMM", "AmberTools", "gmx_MMPBSA"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 15 Project 1 • Binding Free Energy Analysis"
-            },
-            {
-                id: 36,
-                title: "Allosteric Regulation Studies",
-                category: "biology",
-                short: "Investigation of allosteric regulation mechanisms in proteins using molecular dynamics and network analysis.",
-                description: "Weekly Biophysics Project – Week 16 Project 1: Investigation of allosteric regulation mechanisms in proteins using molecular dynamics simulations and network analysis techniques.",
-                tech: ["Python", "OpenMM", "NetworkX", "PyMOL"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 16 Project 1 • Allosteric Regulation Studies"
-            },
-            {
-                id: 37,
-                title: "Cryo-EM Structure Refinement",
-                category: "biology",
-                short: "Molecular dynamics flexible fitting (MDFF) for refining cryo-EM structures using OpenMM and VMD.",
-                description: "Weekly Biophysics Project – Week 17 Project 1: Molecular dynamics flexible fitting (MDFF) for refining cryo-EM structures using OpenMM and VMD with focus on model validation and improvement.",
-                tech: ["Python", "OpenMM", "VMD", "MDFF"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 17 Project 1 • Cryo-EM Structure Refinement"
-            },
-            {
-                id: 38,
-                title: "Drug Discovery Pipeline",
-                category: "biology",
-                short: "End-to-end computational drug discovery pipeline including virtual screening, docking, and ADMET prediction.",
-                description: "Weekly Biophysics Project – Week 18 Project 1: End-to-end computational drug discovery pipeline including virtual screening, molecular docking, and ADMET property prediction for lead compound identification.",
-                tech: ["Python", "AutoDock Vina", "RDKit", "PyMOL"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 18 Project 1 • Drug Discovery Pipeline"
-            },
-            {
-                id: 39,
-                title: "Biomolecular Visualization",
-                category: "biology",
-                short: "Advanced biomolecular visualization techniques using PyMOL, VMD, and ChimeraX for publication-quality figures.",
-                description: "Weekly Biophysics Project – Week 19 Project 1: Advanced biomolecular visualization techniques using PyMOL, VMD, and ChimeraX for creating publication-quality figures and animations.",
-                tech: ["Python", "PyMOL", "VMD", "ChimeraX"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 19 Project 1 • Biomolecular Visualization"
-            },
-            {
-                id: 40,
-                title: "Integrated Biophysics Workflow",
-                category: "biology",
-                short: "Development of an integrated computational biophysics workflow combining multiple simulation and analysis tools.",
-                description: "Weekly Biophysics Project – Week 20 Project 1: Development of an integrated computational biophysics workflow combining molecular dynamics, docking, free energy calculations, and machine learning analysis.",
-                tech: ["Python", "OpenMM", "AutoDock Vina", "PyTorch", "MDAnalysis"],
-                links: { github: "https://github.com/ryanjosephkamp" },
-                highlight: "Week 20 Project 1 • Integrated Biophysics Workflow"
-            }
-        ];
-
-        // Featured Projects rendering
         function renderFeatured(filteredProjects) {
             const grid = document.getElementById('featured-projects-grid');
             grid.innerHTML = '';
@@ -741,75 +428,8 @@
             renderFeatured(filtered);
         }
 
-        // All Projects rendering
-        function renderAllProjects(filteredProjects) {
-            const grid = document.getElementById('all-projects-grid');
-            grid.innerHTML = '';
-            
-            filteredProjects.forEach(project => {
-                const card = document.createElement('div');
-                card.className = `project-card bg-[#111118] border border-white/10 rounded-3xl p-7 cursor-pointer group`;
-                
-                let techHTML = project.tech.map(t => `<span class="text-xs px-3 py-1 rounded-2xl bg-white/5 border border-white/10 font-mono">${t}</span>`).join('');
-                let linksHTML = '';
-                if (project.links.github) linksHTML += `<a href="${project.links.github}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fab fa-github"></i></a>`;
-                if (project.links.demo) linksHTML += `<a href="${project.links.demo}" target="_blank" onclick="event.stopImmediatePropagation()" class="hover:text-white"><i class="fas fa-external-link-alt"></i></a>`;
-                
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-5">
-                        <div>
-                            <div class="font-semibold text-2xl tracking-tight group-hover:text-cyan-400 transition-colors">${project.title}</div>
-                            <div class="text-xs font-mono tracking-widest text-slate-500 mt-1">${project.highlight || ''}</div>
-                        </div>
-                        <div class="text-right">
-                            <span class="inline-block px-3 py-1 text-xs rounded-2xl border border-white/10 font-mono">${project.category.toUpperCase()}</span>
-                        </div>
-                    </div>
-                    
-                    <p class="text-slate-300 text-[15px] leading-relaxed line-clamp-3 mb-6">${project.short}</p>
-                    
-                    <div class="flex flex-wrap gap-1.5 mb-6">
-                        ${techHTML}
-                    </div>
-                    
-                    <div class="flex items-center justify-between text-sm">
-                        <button onclick="event.stopImmediatePropagation(); showProjectModal(${project.id});" class="font-semibold flex items-center gap-x-2 text-cyan-400 group-hover:gap-x-3 transition-all">
-                            <span>Learn more</span> 
-                            <i class="fas fa-arrow-right text-xs"></i>
-                        </button>
-                        
-                        <div class="flex gap-x-3 text-lg text-slate-400">
-                            ${linksHTML}
-                        </div>
-                    </div>
-                `;
-                card.onclick = () => showProjectModal(project.id);
-                grid.appendChild(card);
-            });
-        }
-
-        function filterAllProjects(category) {
-            document.querySelectorAll('#all-project-filters button').forEach(btn => {
-                btn.classList.remove('active', 'border-cyan-400', 'bg-cyan-400/10');
-                
-                const btnText = btn.textContent.trim();
-                if ((category === 'all' && btnText === 'All') || 
-                    (category === 'genai' && btnText.includes('Generative')) ||
-                    (category === 'agentic' && btnText.includes('Agentic')) ||
-                    (category === 'ml' && btnText.includes('Machine Learning')) ||
-                    (category === 'linguistics' && btnText.includes('Computational Linguistics')) ||
-                    (category === 'biology' && btnText.includes('Computational Biology'))) {
-                    btn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
-                }
-            });
-            
-            const filtered = category === 'all' ? allProjects : allProjects.filter(p => p.category === category);
-            renderAllProjects(filtered);
-        }
-
         function showProjectModal(id) {
-            let project = featuredProjects.find(p => p.id === id);
-            if (!project) project = allProjects.find(p => p.id === id);
+            const project = featuredProjects.find(p => p.id === id);
             if (!project) return;
             
             const modal = document.getElementById('project-modal');
@@ -854,15 +474,11 @@
 
         function init() {
             renderFeatured(featuredProjects);
-            renderAllProjects(allProjects);
             
             const allBtn = document.querySelector('#project-filters button');
             if (allBtn) allBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
             
-            const allProjectsBtn = document.querySelector('#all-project-filters button');
-            if (allProjectsBtn) allProjectsBtn.classList.add('active', 'border-cyan-400', 'bg-cyan-400/10');
-            
-            console.log('%c[Site] Batch 5 (20 biophysics projects) applied successfully!', 'color:#10b981');
+            console.log('%c[Site] Clean version applied successfully (All Projects section removed)', 'color:#10b981');
         }
         
         window.onload = init;
