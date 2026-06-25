@@ -1,0 +1,88 @@
+[
+  {
+    "title": "S26 AIRP",
+    "type": "Portfolio",
+    "summary": "A 67-repository portfolio of AI-assisted research software prototypes. Scientific and domain-specific content is provisional and not independently validated.",
+    "primaryUrl": "https://ryanjosephkamp.github.io/blog/articles/s26-airp/",
+    "github": "https://github.com/ryanjosephkamp?tab=repositories",
+    "article": "https://ryanjosephkamp.github.io/blog/articles/s26-airp/",
+    "categories": ["research-software", "ai-ml"],
+    "tags": ["AI-assisted software", "prototypes", "disclosure"],
+    "featured": true
+  },
+  {
+    "title": "resmon",
+    "type": "Research software",
+    "summary": "A local-first literature surveillance application for monitoring open-access repositories and generating research reports with optional LLM assistance.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/resmon",
+    "github": "https://github.com/ryanjosephkamp/resmon",
+    "demo": "https://ryanjosephkamp.github.io/resmon/",
+    "categories": ["research-software", "data-tooling"],
+    "tags": ["Python", "FastAPI", "Electron", "SQLite"],
+    "featured": true
+  },
+  {
+    "title": "Image Token Study",
+    "type": "Study",
+    "summary": "A cross-provider empirical study of how token-reducing image transformations affect vision-language model description behavior.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/image_token_study",
+    "github": "https://github.com/ryanjosephkamp/image_token_study",
+    "categories": ["ai-ml"],
+    "tags": ["VLMs", "evaluation", "transformations"],
+    "featured": false
+  },
+  {
+    "title": "SPINK7-KLK5 MD Pipeline v3",
+    "type": "Pipeline",
+    "summary": "A molecular dynamics pipeline for exploring the SPINK7-KLK5 protease-antiprotease complex using simulation and analysis workflows.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/spink7-klk5-md-pipeline-v3",
+    "github": "https://github.com/ryanjosephkamp/spink7-klk5-md-pipeline-v3",
+    "categories": ["research-software"],
+    "tags": ["Python", "OpenMM", "MDAnalysis"],
+    "featured": false
+  },
+  {
+    "title": "English OpenList",
+    "type": "Dataset and tooling",
+    "summary": "A lexical resource workflow for validating, versioning, and publishing English word data with provenance-oriented automation.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/english-openlist",
+    "github": "https://github.com/ryanjosephkamp/english-openlist",
+    "demo": "https://huggingface.co/datasets/ryanjosephkamp/english-openlist",
+    "categories": ["data-tooling"],
+    "tags": ["Python", "datasets", "automation"],
+    "featured": false
+  },
+  {
+    "title": "Text-Conditioned Audio and Music Generation",
+    "type": "Coursework study",
+    "summary": "A controlled generative-audio study comparing text-to-audio and music-generation pipelines across prompts and generation settings.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/latent-diffusion-audio-music-study",
+    "github": "https://github.com/ryanjosephkamp/latent-diffusion-audio-music-study",
+    "docs": "https://drive.google.com/drive/folders/1U19z-ml3-Uu53PwUfu7AGe8s1oLiqdb5",
+    "categories": ["ai-ml", "coursework"],
+    "tags": ["diffusion", "audio", "Hugging Face"],
+    "featured": false
+  },
+  {
+    "title": "Speech AI with Transformers",
+    "type": "Coursework study",
+    "summary": "A systematic ASR and TTS study across modern transformer-based speech systems and evaluation questions.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/asr-tts-generativeaudio-study",
+    "github": "https://github.com/ryanjosephkamp/asr-tts-generativeaudio-study",
+    "docs": "https://drive.google.com/drive/folders/1fL5SjAHuUm-VPFcEBHMYWnl0ikcdJkJy",
+    "categories": ["ai-ml", "coursework"],
+    "tags": ["ASR", "TTS", "transformers"],
+    "featured": false
+  },
+  {
+    "title": "Classical Hopfield Networks",
+    "type": "Coursework project",
+    "summary": "A machine-learning coursework project focused on classical Hopfield networks and practical model behavior.",
+    "primaryUrl": "https://github.com/ryanjosephkamp/classical_hopfield_networks",
+    "github": "https://github.com/ryanjosephkamp/classical_hopfield_networks",
+    "docs": "https://drive.google.com/drive/folders/1WTaenAhEfU1h7pmOOSwVsuC1iJOzC4fb",
+    "categories": ["ai-ml", "coursework"],
+    "tags": ["ML", "benchmarking", "coursework"],
+    "featured": false
+  }
+]
