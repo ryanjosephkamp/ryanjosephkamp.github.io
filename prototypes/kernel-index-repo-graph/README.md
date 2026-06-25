@@ -1,6 +1,7 @@
 # Kernel Index Repository Graph Prototype
 
-This is an isolated personal website prototype. It does not replace the live root site.
+This is an isolated personal website prototype for a repositories / portfolio explorer tab.
+It does not replace the live root site or define the future homepage.
 
 ## Scope
 
@@ -9,6 +10,16 @@ This is an isolated personal website prototype. It does not replace the live roo
 - Data mode: generated static snapshot with optional public API refresh in the browser.
 - Secrets: none.
 - Token use: none for graph data.
+- Page role: repositories, projects, and GitHub exploration surface rather than landing page.
+
+## Interaction Notes
+
+- Primary graph edges show cluster membership.
+- Dashed secondary graph edges show secondary metadata affinity where a repository also matches another cluster.
+- The all-repository default view keeps labels restrained; labels become more available in focused, filtered, or selected states.
+- Cluster dragging lightly pulls child repositories so the graph feels more organic without adding dependencies.
+- The repository index is collapsed by default and opens to the most recently updated 25 repositories, with a show-all option for deeper review.
+- Mobile uses a compact explorer layout with graph, filters, selected detail, and card-style list rows instead of a desktop dashboard stack.
 
 ## Local Review
 

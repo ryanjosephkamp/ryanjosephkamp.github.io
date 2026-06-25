@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kernel Index Prototype - Ryan Kamp</title>
+    <title>Repository Explorer Prototype - Ryan Kamp</title>
     <meta
       name="description"
       content="Isolated prototype for a public GitHub repository graph on Ryan Kamp's personal website."
@@ -21,7 +21,7 @@
           <span class="brand-mark">RK</span>
           <span>
             <strong>Ryan Kamp</strong>
-            <small>Kernel Index prototype</small>
+            <small>Repository explorer prototype</small>
           </span>
         </a>
         <nav class="nav-links" aria-label="Primary links">
@@ -34,11 +34,12 @@
       <main class="workspace">
         <aside class="panel intro-panel" aria-label="About this prototype">
           <section>
-            <p class="console-label">// ABOUT</p>
-            <h1>Public repositories as a live research index.</h1>
+            <p class="console-label">// REPOSITORY EXPLORER</p>
+            <h1>Projects and repositories as an explorable graph.</h1>
             <p>
-              A graph-first prototype for exploring Ryan's public GitHub repositories by cluster,
-              language, recency, and public project metadata.
+              A portfolio tab prototype for exploring Ryan's public GitHub repositories by cluster,
+              language, recency, and public project metadata. It is intentionally not the personal
+              website landing page.
             </p>
           </section>
 
@@ -76,8 +77,8 @@
         <section class="graph-stage" aria-labelledby="graph-title">
           <div class="stage-head">
             <div>
-              <p class="console-label">// REPOSITORY GRAPH</p>
-              <h2 id="graph-title">Kernel Index</h2>
+              <p class="console-label">// PORTFOLIO GRAPH</p>
+              <h2 id="graph-title">Repository Explorer</h2>
             </div>
             <div class="stage-meta" aria-live="polite">
               <span id="visible-count">0 visible</span>
@@ -91,12 +92,18 @@
               <input id="search-input" type="search" placeholder="Search repositories, topics, clusters..." />
             </label>
             <div class="density-control">
-              <label for="density-input">Density</label>
-              <input id="density-input" type="range" min="0.65" max="1.35" step="0.05" value="1" />
+              <label for="density-input">Spread</label>
+              <input id="density-input" type="range" min="0.75" max="1.45" step="0.05" value="1.12" />
             </div>
           </div>
 
           <div class="filter-strip" id="cluster-filters" aria-label="Cluster filters"></div>
+
+          <div class="edge-legend" aria-label="Graph edge legend">
+            <span><i class="legend-line primary" aria-hidden="true"></i> Cluster membership</span>
+            <span><i class="legend-line secondary" aria-hidden="true"></i> Secondary metadata affinity</span>
+            <span><i class="legend-dot" aria-hidden="true"></i> Selected neighborhood</span>
+          </div>
 
           <div class="graph-frame">
             <svg id="repo-graph" role="img" aria-labelledby="graph-title graph-desc">
@@ -129,15 +136,22 @@
         </aside>
       </main>
 
-      <section class="list-panel" aria-labelledby="list-title">
+      <section class="list-panel is-collapsed" id="repository-list-panel" aria-labelledby="list-title">
         <div class="list-head">
           <div>
             <p class="console-label">// ACCESSIBLE LIST</p>
-            <h2 id="list-title">Repository table</h2>
+            <h2 id="list-title">Repository index</h2>
+            <p class="list-summary" id="list-summary">
+              Table collapsed by default. Open it for the most recent repositories.
+            </p>
           </div>
-          <button class="ghost-button" id="reset-button" type="button">Reset graph</button>
+          <div class="list-actions">
+            <button class="ghost-button" id="toggle-list-button" type="button" aria-controls="repository-table-wrap" aria-expanded="false">Show recent 25</button>
+            <button class="ghost-button" id="show-all-button" type="button" hidden>Show all</button>
+            <button class="ghost-button" id="reset-button" type="button">Reset graph</button>
+          </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" id="repository-table-wrap" hidden>
           <table>
             <thead>
               <tr>

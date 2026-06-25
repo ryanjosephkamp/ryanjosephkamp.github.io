@@ -1,6 +1,7 @@
 const DATA_URL = "./data/repos.snapshot.json";
 const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
+const RECENT_TABLE_LIMIT = 25;
 
 const clusterDefinitions = [
   { id: "s26-airp", label: "S26 AIRP", color: "#12b886" },
@@ -31,12 +32,17 @@ const filters = document.querySelector("#cluster-filters");
 const searchInput = document.querySelector("#search-input");
 const densityInput = document.querySelector("#density-input");
 const inspector = document.querySelector("#repo-inspector");
+const listPanel = document.querySelector("#repository-list-panel");
+const listSummary = document.querySelector("#list-summary");
+const tableWrap = document.querySelector("#repository-table-wrap");
 const visibleCount = document.querySelector("#visible-count");
 const clusterCount = document.querySelector("#cluster-count");
 const repoCount = document.querySelector("#repo-count");
 const snapshotTime = document.querySelector("#snapshot-time");
 const refreshButton = document.querySelector("#refresh-button");
 const refreshStatus = document.querySelector("#refresh-status");
+const toggleListButton = document.querySelector("#toggle-list-button");
+const showAllButton = document.querySelector("#show-all-button");
 const resetButton = document.querySelector("#reset-button");
 const clearSelectionButton = document.querySelector("#clear-selection");
 const emptyGraph = document.querySelector("#graph-empty");
@@ -48,6 +54,9 @@ let activeCluster = "all";
 let query = "";
 let nodePositions = new Map();
 let dragTarget = null;
+let listExpanded = false;
+let showAllRows = false;
+let graphRenderRequest = null;
 
 function formatDate(value) {
   if (!value) return "Unknown";
@@ -156,6 +165,14 @@ function getVisibleRepos() {
   });
 }
 
+function getVisibleReposSorted() {
+  return [...getVisibleRepos()].sort((a, b) => {
+    const aTime = new Date(a.pushed_at || a.updated_at || a.created_at || 0).getTime();
+    const bTime = new Date(b.pushed_at || b.updated_at || b.created_at || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
 function clusterFor(id) {
   return clusterDefinitions.find((cluster) => cluster.id === id) || clusterDefinitions.at(-1);
 }
@@ -214,18 +231,24 @@ function createSvgElement(name, attrs = {}) {
   return element;
 }
 
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
 function layoutNodes(visibleRepos) {
   const width = svg.clientWidth || 900;
   const height = svg.clientHeight || 560;
-  const compact = width < 520;
+  const compact = width < 620;
   const density = Number(densityInput.value);
   const centerX = width / 2;
   const centerY = height / 2;
-  const clusterRadius = Math.min(width, height) * (compact ? 0.22 : 0.31) * density;
+  const clusterRadius = Math.min(width, height) * (compact ? 0.22 : 0.33) * density;
   const grouped = groupByCluster(visibleRepos);
   const clusterNodes = [];
   const repoNodes = [];
   const edgeList = [];
+  const repoMargin = compact ? 22 : 30;
+  const clusterMargin = compact ? 54 : 72;
 
   grouped.forEach((cluster, index) => {
     const angle = grouped.length === 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / grouped.length - Math.PI / 2;
@@ -239,17 +262,24 @@ function layoutNodes(visibleRepos) {
       label: cluster.label,
       count: cluster.repos.length,
       color: cluster.color,
-      x: saved?.x ?? defaultX,
-      y: saved?.y ?? defaultY,
+      x: saved?.x ?? clamp(defaultX, clusterMargin, width - clusterMargin),
+      y: saved?.y ?? clamp(defaultY, clusterMargin, height - clusterMargin),
       r: Math.max(22, Math.min(42, 20 + cluster.repos.length * 0.45)),
       cluster: cluster.id,
     };
     clusterNodes.push(clusterNode);
 
-    const maxRepoRadius = Math.min(width, height) * (compact ? 0.22 : 0.27);
-    const repoRadius = Math.max(compact ? 44 : 80, Math.min(maxRepoRadius, 66 + cluster.repos.length * 3.2)) * density;
+    const maxRepoRadius = Math.min(width, height) * (compact ? 0.2 : 0.26);
+    const repoRadius = Math.max(compact ? 46 : 78, Math.min(maxRepoRadius, 70 + cluster.repos.length * 1.8)) * density;
+    const ringCount = cluster.repos.length > 54 ? 3 : cluster.repos.length > 26 ? 2 : 1;
+    const ringScales = ringCount === 3 ? [0.56, 0.82, 1.08] : ringCount === 2 ? [0.72, 1.06] : [1];
+
     cluster.repos.forEach((repo, repoIndex) => {
-      const repoAngle = (Math.PI * 2 * repoIndex) / cluster.repos.length - Math.PI / 3;
+      const ringIndex = repoIndex % ringCount;
+      const ringSlot = Math.floor(repoIndex / ringCount);
+      const slotsInRing = Math.ceil(cluster.repos.length / ringCount);
+      const repoAngle = (Math.PI * 2 * ringSlot) / slotsInRing - Math.PI / 3 + ringIndex * 0.12;
+      const ringRadius = repoRadius * ringScales[ringIndex];
       const jitter = ((repo.name.length % 7) - 3) * 5;
       const repoKey = `repo:${repo.name}`;
       const repoSaved = nodePositions.get(repoKey);
@@ -259,8 +289,8 @@ function layoutNodes(visibleRepos) {
         repo,
         label: repo.name,
         color: repo.cluster_color || cluster.color,
-        x: repoSaved?.x ?? clusterNode.x + Math.cos(repoAngle) * (repoRadius + jitter),
-        y: repoSaved?.y ?? clusterNode.y + Math.sin(repoAngle) * (repoRadius * 0.72 + jitter),
+        x: repoSaved?.x ?? clamp(clusterNode.x + Math.cos(repoAngle) * (ringRadius + jitter), repoMargin, width - repoMargin),
+        y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.72 + jitter), repoMargin, height - repoMargin),
         r: selectedRepo?.name === repo.name ? 10 : 6.5,
         cluster: cluster.id,
       };
@@ -282,7 +312,11 @@ function layoutNodes(visibleRepos) {
 
 function renderGraph() {
   const visibleRepos = getVisibleRepos();
-  const showRepoLabels = visibleRepos.length <= 35;
+  const compactViewport = (svg.clientWidth || 900) < 620;
+  const focusedView = activeCluster !== "all" || query.trim().length > 0;
+  const showRepoLabels = visibleRepos.length <= (compactViewport ? 12 : 18) || (focusedView && visibleRepos.length <= 48);
+  const showSecondaryEdges = focusedView || visibleRepos.length <= 42;
+  const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
   svg.innerHTML = "";
 
@@ -292,8 +326,11 @@ function renderGraph() {
   svg.append(edgeGroup, nodeGroup);
 
   for (const edge of edges) {
+    const selectedNeighborhood = selectedName
+      && (edge.source.repo?.name === selectedName || edge.target.repo?.name === selectedName);
+    if (edge.type === "secondary" && !showSecondaryEdges && !selectedNeighborhood) continue;
     edgeGroup.append(createSvgElement("line", {
-      class: `edge ${edge.type === "secondary" ? "secondary" : ""}`,
+      class: `edge ${edge.type} ${selectedNeighborhood ? "selected-neighborhood" : ""}`,
       x1: edge.source.x,
       y1: edge.source.y,
       x2: edge.target.x,
@@ -316,16 +353,18 @@ function renderGraph() {
       fill: node.type === "cluster" ? "rgba(10, 15, 21, 0.92)" : node.color,
     }));
 
-    const compactViewport = (svg.clientWidth || 900) < 520;
     const shouldShowClusterLabel = node.type === "cluster" && !(compactViewport && visibleRepos.length > 35);
     const shouldShowRepoLabel = node.type === "repo" && (showRepoLabels || selectedRepo?.name === node.repo?.name);
 
     if (shouldShowClusterLabel || shouldShowRepoLabel) {
       const compactClusterLabel = compactViewport && node.type === "cluster";
+      const clusterLabelOffsetY = node.type === "cluster" && node.y > (svg.clientHeight || 560) * 0.62
+        ? -node.r - 12
+        : node.r + 18;
       const label = createSvgElement("text", {
-        x: compactClusterLabel ? 0 : node.type === "cluster" ? node.r + 10 : 10,
-        y: compactClusterLabel ? node.r + 17 : 4,
-        "text-anchor": compactClusterLabel ? "middle" : "start",
+        x: node.type === "cluster" ? 0 : 10,
+        y: compactClusterLabel ? node.r + 17 : node.type === "cluster" ? clusterLabelOffsetY : 4,
+        "text-anchor": node.type === "cluster" ? "middle" : "start",
       });
       label.textContent = node.type === "cluster" ? `${node.label} (${node.count})` : node.label;
       group.append(label);
@@ -350,11 +389,41 @@ function renderGraph() {
   }
 }
 
+function scheduleGraphRender() {
+  if (graphRenderRequest) return;
+  graphRenderRequest = window.requestAnimationFrame(() => {
+    graphRenderRequest = null;
+    renderGraph();
+  });
+}
+
 function startDrag(event, node, group) {
   event.preventDefault();
   group.setPointerCapture(event.pointerId);
   const start = { x: event.clientX, y: event.clientY, nodeX: node.x, nodeY: node.y };
-  dragTarget = { node, group, start };
+  const layout = layoutNodes(getVisibleRepos());
+  const related = [];
+
+  if (node.type === "cluster") {
+    for (const relatedNode of layout.nodes) {
+      if (relatedNode.type === "repo" && relatedNode.cluster === node.cluster) {
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.56 });
+      }
+    }
+  }
+
+  if (node.type === "repo") {
+    for (const relatedNode of layout.nodes) {
+      if (relatedNode.type === "cluster" && relatedNode.cluster === node.cluster) {
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.1 });
+      }
+      if (relatedNode.type === "cluster" && (node.repo.secondary_clusters || []).includes(relatedNode.cluster)) {
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.06 });
+      }
+    }
+  }
+
+  dragTarget = { node, group, start, related };
   group.classList.add("dragging");
 
   window.addEventListener("pointermove", dragMove);
@@ -364,12 +433,27 @@ function startDrag(event, node, group) {
 
 function dragMove(event) {
   if (!dragTarget) return;
-  const { node, start } = dragTarget;
+  const { node, start, related } = dragTarget;
+  const dx = event.clientX - start.x;
+  const dy = event.clientY - start.y;
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 560;
+  const margin = node.type === "cluster" ? 64 : 24;
+
   nodePositions.set(node.id, {
-    x: start.nodeX + event.clientX - start.x,
-    y: start.nodeY + event.clientY - start.y,
+    x: clamp(start.nodeX + dx, margin, width - margin),
+    y: clamp(start.nodeY + dy, margin, height - margin),
   });
-  renderGraph();
+
+  for (const item of related) {
+    const relatedMargin = item.id.startsWith("cluster:") ? 64 : 24;
+    nodePositions.set(item.id, {
+      x: clamp(item.x + dx * item.influence, relatedMargin, width - relatedMargin),
+      y: clamp(item.y + dy * item.influence, relatedMargin, height - relatedMargin),
+    });
+  }
+
+  scheduleGraphRender();
 }
 
 function endDrag() {
@@ -380,20 +464,35 @@ function endDrag() {
 }
 
 function renderTable() {
-  const rows = getVisibleRepos().map((repo) => {
+  const visible = getVisibleReposSorted();
+  const shown = showAllRows ? visible : visible.slice(0, RECENT_TABLE_LIMIT);
+  const shownCount = Math.min(shown.length, visible.length);
+  const tableMode = listExpanded
+    ? showAllRows ? `Showing all ${visible.length} matching repositories.` : `Showing the ${shownCount} most recently updated of ${visible.length} matching repositories.`
+    : `Table collapsed. Open it for the ${Math.min(RECENT_TABLE_LIMIT, visible.length)} most recently updated matching repositories.`;
+
+  listPanel.classList.toggle("is-collapsed", !listExpanded);
+  tableWrap.hidden = !listExpanded;
+  listSummary.textContent = tableMode;
+  toggleListButton.setAttribute("aria-expanded", String(listExpanded));
+  toggleListButton.textContent = listExpanded ? "Collapse table" : `Show recent ${Math.min(RECENT_TABLE_LIMIT, visible.length)}`;
+  showAllButton.hidden = !listExpanded || visible.length <= RECENT_TABLE_LIMIT;
+  showAllButton.textContent = showAllRows ? `Show recent ${RECENT_TABLE_LIMIT}` : `Show all ${visible.length}`;
+
+  const rows = shown.map((repo) => {
     const homepage = repo.homepage
       ? `<a class="table-link" href="${repo.homepage}" target="_blank" rel="noreferrer">Demo</a>`
       : "";
     return `
       <tr>
-        <td>
+        <td data-label="Repository">
           <strong>${repo.name}</strong>
           <span>${shortDescription(repo)}</span>
         </td>
-        <td>${repo.cluster_label}</td>
-        <td>${repo.language}</td>
-        <td>${formatRelative(repo.pushed_at || repo.updated_at)}</td>
-        <td>
+        <td data-label="Cluster">${repo.cluster_label}</td>
+        <td data-label="Language">${repo.language}</td>
+        <td data-label="Updated">${formatRelative(repo.pushed_at || repo.updated_at)}</td>
+        <td data-label="Links">
           <a class="table-link" href="${repo.html_url}" target="_blank" rel="noreferrer">GitHub</a>
           ${homepage}
         </td>
@@ -472,7 +571,7 @@ async function loadSnapshot() {
   if (!response.ok) throw new Error(`Could not load ${DATA_URL}`);
   snapshot = await response.json();
   repos = snapshot.repos || [];
-  selectedRepo = repos[0] || null;
+  selectedRepo = null;
   render();
 }
 
@@ -507,7 +606,7 @@ async function fetchPublicRepos() {
     repos: included,
   };
   repos = included;
-  selectedRepo = repos[0] || null;
+  selectedRepo = null;
   nodePositions = new Map();
   render();
 }
@@ -534,13 +633,26 @@ refreshButton.addEventListener("click", async () => {
   }
 });
 
+toggleListButton.addEventListener("click", () => {
+  listExpanded = !listExpanded;
+  if (!listExpanded) showAllRows = false;
+  renderTable();
+});
+
+showAllButton.addEventListener("click", () => {
+  showAllRows = !showAllRows;
+  renderTable();
+});
+
 resetButton.addEventListener("click", () => {
   activeCluster = "all";
   query = "";
-  selectedRepo = repos[0] || null;
+  selectedRepo = null;
   nodePositions = new Map();
+  listExpanded = false;
+  showAllRows = false;
   searchInput.value = "";
-  densityInput.value = "1";
+  densityInput.value = "1.12";
   render();
 });
 
