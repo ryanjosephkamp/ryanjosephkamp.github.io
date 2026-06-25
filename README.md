@@ -1,2 +1,11 @@
 # ryanjosephkamp.github.io
-Personal academic website of Ryan Kamp - MS Computer Science student at University of Cincinnati. Research in computational biophysics, structural biology, generative AI, and machine learning. Built with modern static web technologies.
+
+Personal website of Ryan Kamp, hosted with GitHub Pages.
+
+## Structure
+
+- `index.html` - main static page
+- `assets/css/site.css` - site styling
+- `assets/js/site.js` - lightweight project filtering/rendering
+- `assets/data/projects.json` - selected project data
+- `assets/` - image assets
