@@ -97,6 +97,21 @@
             </div>
           </div>
 
+          <div class="graph-toolbar" aria-label="Graph view controls">
+            <div class="segmented-control" aria-label="Graph mode">
+              <button class="segment-button" id="cluster-view-button" type="button" aria-pressed="true">
+                Cluster view
+              </button>
+              <button class="segment-button" id="all-nodes-button" type="button" aria-pressed="false">
+                All nodes
+              </button>
+            </div>
+            <button class="ghost-button graph-reset-button" id="reset-button" type="button">Reset graph</button>
+          </div>
+          <p class="graph-mode-summary" id="graph-mode-summary">
+            Mobile opens in cluster view; choose a cluster to expand its repositories.
+          </p>
+
           <div class="filter-strip" id="cluster-filters" aria-label="Cluster filters"></div>
 
           <div class="edge-legend" aria-label="Graph edge legend">
@@ -148,7 +163,6 @@
           <div class="list-actions">
             <button class="ghost-button" id="toggle-list-button" type="button" aria-controls="repository-table-wrap" aria-expanded="false">Show recent 25</button>
             <button class="ghost-button" id="show-all-button" type="button" hidden>Show all</button>
-            <button class="ghost-button" id="reset-button" type="button">Reset graph</button>
           </div>
         </div>
         <div class="table-wrap" id="repository-table-wrap" hidden>

@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 const OWNER = "ryanjosephkamp";
 const API_ROOT = `https://api.github.com/users/${OWNER}/repos`;
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
+const PRIMARY_CLUSTER_OVERRIDES = new Map([
+  ["brrrdle", "games"],
+  ["brrrdle-dev", "games"],
+]);
 
 const CLUSTERS = [
   {
@@ -107,9 +111,20 @@ const CLUSTERS = [
     ],
   },
   {
+    id: "games",
+    label: "Games",
+    color: "#ff8787",
+    keywords: [
+      "brrrdle",
+      "game",
+      "hurdle",
+      "wordle",
+    ],
+  },
+  {
     id: "interactive",
     label: "Interactive Experiments",
-    color: "#ff8787",
+    color: "#ffae6d",
     keywords: [
       "app",
       "brrrdle",
@@ -185,7 +200,9 @@ function classify(repo) {
     return { cluster, score };
   }).sort((a, b) => b.score - a.score);
 
-  const winner = scores[0].score > 0 ? scores[0].cluster : CLUSTERS.at(-1);
+  const overrideId = PRIMARY_CLUSTER_OVERRIDES.get(repo.name);
+  const overrideCluster = overrideId ? CLUSTERS.find((cluster) => cluster.id === overrideId) : null;
+  const winner = overrideCluster || (scores[0].score > 0 ? scores[0].cluster : CLUSTERS.at(-1));
   const secondary = scores
     .filter((item) => item.score > 0 && item.cluster.id !== winner.id)
     .slice(0, 3)

@@ -15,9 +15,12 @@ It does not replace the live root site or define the future homepage.
 ## Interaction Notes
 
 - Primary graph edges show cluster membership.
-- Dashed secondary graph edges show secondary metadata affinity where a repository also matches another cluster.
-- The all-repository default view keeps labels restrained; labels become more available in focused, filtered, or selected states.
-- Cluster dragging lightly pulls child repositories so the graph feels more organic without adding dependencies.
+- Dashed secondary graph edges show pruned metadata affinity: shared language, homepage/demo presence, tags, or secondary cluster matches.
+- Mobile starts in a cluster overview so the default view is not a compressed all-node graph.
+- Tapping a cluster or choosing a filter expands that cluster's repositories; the all-node mode remains available for deeper review.
+- The all-repository view keeps labels restrained; labels become more available in focused, filtered, or selected states.
+- Dragging uses lightweight elastic influence plus short post-release momentum without adding dependencies.
+- The Games cluster is explicitly used for `brrrdle` and `brrrdle-dev`.
 - The repository index is collapsed by default and opens to the most recently updated 25 repositories, with a show-all option for deeper review.
 - Mobile uses a compact explorer layout with graph, filters, selected detail, and card-style list rows instead of a desktop dashboard stack.
 

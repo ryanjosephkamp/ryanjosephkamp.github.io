@@ -354,6 +354,53 @@ dd {
   accent-color: var(--accent);
 }
 
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.segmented-control {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.segment-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.segment-button[aria-pressed="true"] {
+  background: rgba(37, 230, 200, 0.12);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(37, 230, 200, 0.46);
+}
+
+.graph-reset-button {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.graph-mode-summary {
+  margin: -2px 0 12px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
 .filter-strip {
   display: flex;
   flex-wrap: wrap;
@@ -474,7 +521,7 @@ dd {
 
 .node.cluster circle {
   stroke-width: 2;
-  filter: drop-shadow(0 0 20px currentColor);
+  filter: drop-shadow(0 0 26px currentColor);
 }
 
 .node.repo.selected circle {
@@ -794,6 +841,23 @@ td span {
     justify-content: space-between;
   }
 
+  .graph-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+
+  .segment-button {
+    flex: 1 1 0;
+  }
+
+  .graph-reset-button {
+    width: 100%;
+  }
+
   .edge-legend {
     gap: 8px 12px;
   }
@@ -809,8 +873,8 @@ td span {
 
 @media (max-width: 520px) {
   .graph-frame {
-    height: min(56vh, 380px);
-    min-height: 310px;
+    height: min(64vh, 460px);
+    min-height: 380px;
   }
 
   .filter-strip {

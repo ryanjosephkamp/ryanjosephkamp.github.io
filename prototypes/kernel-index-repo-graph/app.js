@@ -2,6 +2,11 @@ const DATA_URL = "./data/repos.snapshot.json";
 const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
 const RECENT_TABLE_LIMIT = 25;
+const MOBILE_BREAKPOINT = 620;
+const PRIMARY_CLUSTER_OVERRIDES = new Map([
+  ["brrrdle", "games"],
+  ["brrrdle-dev", "games"],
+]);
 
 const clusterDefinitions = [
   { id: "s26-airp", label: "S26 AIRP", color: "#12b886" },
@@ -10,7 +15,8 @@ const clusterDefinitions = [
   { id: "computational-biology", label: "Computational Biology", color: "#c084fc" },
   { id: "data-tooling", label: "Data and Tooling", color: "#4dabf7" },
   { id: "web-portfolio", label: "Web and Portfolio", color: "#ffd43b" },
-  { id: "interactive", label: "Interactive Experiments", color: "#ff8787" },
+  { id: "games", label: "Games", color: "#ff8787" },
+  { id: "interactive", label: "Interactive Experiments", color: "#ffae6d" },
   { id: "writing-docs", label: "Writing and Docs", color: "#f783ac" },
   { id: "other", label: "Other / Review", color: "#adb5bd" },
 ];
@@ -22,6 +28,7 @@ const clusterRules = {
   "computational-biology": ["affinity", "antibiotic", "bio", "cell", "chem", "ferment", "gene", "klk5", "md", "molecular", "molecule", "protein", "sequence", "spink7", "structure"],
   "data-tooling": ["api", "automation", "catalog", "cli", "data", "dataset", "dictionary", "parser", "qr", "tooling", "voxel"],
   "web-portfolio": ["blog", "github.io", "portfolio", "site", "streamlit", "vercel", "web", "website"],
+  games: ["brrrdle", "game", "hurdle", "wordle"],
   interactive: ["app", "brrrdle", "canvas", "game", "interactive", "pac", "simulator"],
   "writing-docs": ["article", "cv", "docs", "latex", "notes", "paper", "readme", "tex", "writing"],
 };
@@ -35,6 +42,7 @@ const inspector = document.querySelector("#repo-inspector");
 const listPanel = document.querySelector("#repository-list-panel");
 const listSummary = document.querySelector("#list-summary");
 const tableWrap = document.querySelector("#repository-table-wrap");
+const graphModeSummary = document.querySelector("#graph-mode-summary");
 const visibleCount = document.querySelector("#visible-count");
 const clusterCount = document.querySelector("#cluster-count");
 const repoCount = document.querySelector("#repo-count");
@@ -43,6 +51,8 @@ const refreshButton = document.querySelector("#refresh-button");
 const refreshStatus = document.querySelector("#refresh-status");
 const toggleListButton = document.querySelector("#toggle-list-button");
 const showAllButton = document.querySelector("#show-all-button");
+const clusterViewButton = document.querySelector("#cluster-view-button");
+const allNodesButton = document.querySelector("#all-nodes-button");
 const resetButton = document.querySelector("#reset-button");
 const clearSelectionButton = document.querySelector("#clear-selection");
 const emptyGraph = document.querySelector("#graph-empty");
@@ -53,10 +63,13 @@ let selectedRepo = null;
 let activeCluster = "all";
 let query = "";
 let nodePositions = new Map();
+let nodeVelocities = new Map();
 let dragTarget = null;
 let listExpanded = false;
 let showAllRows = false;
 let graphRenderRequest = null;
+let graphMode = "clusters";
+let momentumFrame = null;
 
 function formatDate(value) {
   if (!value) return "Unknown";
@@ -94,6 +107,12 @@ function classifyRepo(repo) {
     ...(repo.topics || []),
   ]);
 
+  const tags = [];
+  if (repo.fork) tags.push("fork");
+  if (repo.archived) tags.push("archived");
+  if (repo.homepage) tags.push(repo.homepage.includes("streamlit.app") ? "interactive app" : "homepage");
+  if (repo.language) tags.push(repo.language);
+
   const scores = clusterDefinitions.map((cluster) => {
     let score = 0;
     if (cluster.id === "s26-airp" && (text.includes("s26 airp") || repo.name.startsWith("the-"))) score += 5;
@@ -104,11 +123,20 @@ function classifyRepo(repo) {
     return { ...cluster, score };
   }).sort((a, b) => b.score - a.score);
 
-  const winner = scores[0].score > 0 ? scores[0] : clusterDefinitions.at(-1);
+  const overrideId = PRIMARY_CLUSTER_OVERRIDES.get(repo.name);
+  const overrideCluster = overrideId ? clusterFor(overrideId) : null;
+  const winner = overrideCluster || (scores[0].score > 0 ? scores[0] : clusterDefinitions.at(-1));
+  const secondary = scores
+    .filter((item) => item.score > 0 && item.id !== winner.id)
+    .slice(0, 3)
+    .map((item) => item.id);
+
   return {
     cluster: winner.id,
     cluster_label: winner.label,
     cluster_color: winner.color,
+    secondary_clusters: secondary,
+    tags: Array.from(new Set(tags)),
   };
 }
 
@@ -133,7 +161,12 @@ function normalizeRepo(repo) {
     default_branch: repo.default_branch || "",
     size: repo.size || 0,
   };
-  return { ...normalized, ...classifyRepo(normalized) };
+  const classification = classifyRepo(normalized);
+  return {
+    ...normalized,
+    ...classification,
+    tags: Array.from(new Set([...(repo.tags || []), ...(classification.tags || [])])),
+  };
 }
 
 function shouldExclude(repo) {
@@ -184,6 +217,18 @@ function groupByCluster(items) {
   })).filter((cluster) => cluster.repos.length > 0);
 }
 
+function isCompactViewport() {
+  return (svg.clientWidth || window.innerWidth || 900) < MOBILE_BREAKPOINT;
+}
+
+function isClusterOverview(visibleRepos = getVisibleRepos()) {
+  return isCompactViewport()
+    && graphMode === "clusters"
+    && activeCluster === "all"
+    && query.trim() === ""
+    && visibleRepos.length > 0;
+}
+
 function updateMeta() {
   const visible = getVisibleRepos();
   const activeClusters = groupByCluster(visible);
@@ -218,6 +263,7 @@ function makeFilterButton(id, label, count) {
   button.innerHTML = `${label} <span class="count">${count}</span>`;
   button.addEventListener("click", () => {
     activeCluster = id;
+    if (id !== "all") graphMode = "all";
     render();
   });
   return button;
@@ -235,25 +281,94 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function layoutNodes(visibleRepos) {
+function buildAggregateClusterEdges(clusterNodes, grouped) {
+  const hubs = new Map(clusterNodes.map((node) => [node.cluster, node]));
+  const edgeWeights = new Map();
+
+  for (const cluster of grouped) {
+    for (const repo of cluster.repos) {
+      for (const secondary of repo.secondary_clusters || []) {
+        if (secondary === cluster.id || !hubs.has(secondary)) continue;
+        const key = [cluster.id, secondary].sort().join("::");
+        edgeWeights.set(key, (edgeWeights.get(key) || 0) + 1);
+      }
+    }
+  }
+
+  return [...edgeWeights.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 14)
+    .map(([key, weight]) => {
+      const [sourceId, targetId] = key.split("::");
+      return {
+        source: hubs.get(sourceId),
+        target: hubs.get(targetId),
+        type: "secondary",
+        weight,
+      };
+    });
+}
+
+function buildRepositoryAffinityEdges(repoNodes, limit) {
+  const edges = [];
+  const seen = new Set();
+  const groups = new Map();
+
+  function addToGroup(key, node) {
+    if (!key || key === "Unspecified") return;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(node);
+  }
+
+  for (const node of repoNodes) {
+    addToGroup(`language:${node.repo.language}`, node);
+    for (const tag of node.repo.tags || []) addToGroup(`tag:${tag}`, node);
+    if (node.repo.homepage) addToGroup("has-homepage", node);
+  }
+
+  for (const nodes of [...groups.values()].sort((a, b) => b.length - a.length)) {
+    if (nodes.length < 2) continue;
+    const sorted = [...nodes].sort((a, b) => {
+      const aTime = new Date(a.repo.pushed_at || a.repo.updated_at || 0).getTime();
+      const bTime = new Date(b.repo.pushed_at || b.repo.updated_at || 0).getTime();
+      return bTime - aTime;
+    });
+
+    for (let index = 0; index < sorted.length - 1; index += 1) {
+      const source = sorted[index];
+      const target = sorted[index + 1];
+      if (source.cluster === target.cluster && nodes.length > 6) continue;
+      const key = [source.id, target.id].sort().join("::");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push({ source, target, type: "secondary", weight: 1 });
+      if (edges.length >= limit) return edges;
+    }
+  }
+
+  return edges;
+}
+
+function layoutNodes(visibleRepos, options = {}) {
   const width = svg.clientWidth || 900;
   const height = svg.clientHeight || 560;
-  const compact = width < 620;
+  const compact = width < MOBILE_BREAKPOINT;
+  const clusterOverview = Boolean(options.clusterOverview);
   const density = Number(densityInput.value);
   const centerX = width / 2;
   const centerY = height / 2;
-  const clusterRadius = Math.min(width, height) * (compact ? 0.22 : 0.33) * density;
+  const clusterRadius = Math.min(width, height) * (clusterOverview ? 0.34 : compact ? 0.26 : 0.33) * density;
   const grouped = groupByCluster(visibleRepos);
   const clusterNodes = [];
   const repoNodes = [];
   const edgeList = [];
-  const repoMargin = compact ? 22 : 30;
-  const clusterMargin = compact ? 54 : 72;
+  const repoMargin = compact ? 20 : 30;
+  const clusterMargin = compact ? 48 : 72;
 
   grouped.forEach((cluster, index) => {
     const angle = grouped.length === 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / grouped.length - Math.PI / 2;
     const defaultX = centerX + Math.cos(angle) * clusterRadius;
-    const defaultY = centerY + Math.sin(angle) * clusterRadius * 0.78;
+    const defaultY = centerY + Math.sin(angle) * clusterRadius * (clusterOverview ? 0.92 : 0.78);
     const key = `cluster:${cluster.id}`;
     const saved = nodePositions.get(key);
     const clusterNode = {
@@ -264,15 +379,19 @@ function layoutNodes(visibleRepos) {
       color: cluster.color,
       x: saved?.x ?? clamp(defaultX, clusterMargin, width - clusterMargin),
       y: saved?.y ?? clamp(defaultY, clusterMargin, height - clusterMargin),
-      r: Math.max(22, Math.min(42, 20 + cluster.repos.length * 0.45)),
+      r: clusterOverview
+        ? Math.max(25, Math.min(46, 22 + cluster.repos.length * 0.34))
+        : Math.max(22, Math.min(42, 20 + cluster.repos.length * 0.45)),
       cluster: cluster.id,
     };
     clusterNodes.push(clusterNode);
 
-    const maxRepoRadius = Math.min(width, height) * (compact ? 0.2 : 0.26);
-    const repoRadius = Math.max(compact ? 46 : 78, Math.min(maxRepoRadius, 70 + cluster.repos.length * 1.8)) * density;
+    if (clusterOverview) return;
+
+    const maxRepoRadius = Math.min(width, height) * (compact ? 0.32 : 0.26);
+    const repoRadius = Math.max(compact ? 74 : 78, Math.min(maxRepoRadius, 82 + cluster.repos.length * 1.55)) * density;
     const ringCount = cluster.repos.length > 54 ? 3 : cluster.repos.length > 26 ? 2 : 1;
-    const ringScales = ringCount === 3 ? [0.56, 0.82, 1.08] : ringCount === 2 ? [0.72, 1.06] : [1];
+    const ringScales = ringCount === 3 ? [0.7, 1.02, 1.34] : ringCount === 2 ? [0.82, 1.22] : [1.04];
 
     cluster.repos.forEach((repo, repoIndex) => {
       const ringIndex = repoIndex % ringCount;
@@ -299,28 +418,35 @@ function layoutNodes(visibleRepos) {
     });
   });
 
-  const hubs = new Map(clusterNodes.map((node) => [node.cluster, node]));
-  for (const repoNode of repoNodes) {
-    for (const secondary of repoNode.repo.secondary_clusters || []) {
-      const hub = hubs.get(secondary);
-      if (hub) edgeList.push({ source: repoNode, target: hub, type: "secondary" });
-    }
+  if (clusterOverview) {
+    edgeList.push(...buildAggregateClusterEdges(clusterNodes, grouped));
+    return { nodes: clusterNodes, edges: edgeList };
   }
 
+  edgeList.push(...buildRepositoryAffinityEdges(repoNodes, compact ? 16 : 42));
   return { nodes: [...clusterNodes, ...repoNodes], edges: edgeList };
 }
 
 function renderGraph() {
   const visibleRepos = getVisibleRepos();
-  const compactViewport = (svg.clientWidth || 900) < 620;
+  const compactViewport = isCompactViewport();
+  const clusterOverview = isClusterOverview(visibleRepos);
   const focusedView = activeCluster !== "all" || query.trim().length > 0;
-  const showRepoLabels = visibleRepos.length <= (compactViewport ? 12 : 18) || (focusedView && visibleRepos.length <= 48);
-  const showSecondaryEdges = focusedView || visibleRepos.length <= 42;
+  const showRepoLabels = visibleRepos.length <= (compactViewport ? 10 : 18) || (focusedView && visibleRepos.length <= (compactViewport ? 24 : 48));
+  const showSecondaryEdges = clusterOverview || focusedView || graphMode === "all" || visibleRepos.length <= 42 || !compactViewport;
   const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
   svg.innerHTML = "";
 
-  const { nodes, edges } = layoutNodes(visibleRepos);
+  clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
+  allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
+  graphModeSummary.textContent = clusterOverview
+    ? "Cluster overview: choose a hub or filter to expand repositories."
+    : focusedView
+      ? "Focused view: repositories are expanded for the current search or cluster."
+      : "All-node view: every visible repository is shown in the graph.";
+
+  const { nodes, edges } = layoutNodes(visibleRepos, { clusterOverview });
   const edgeGroup = createSvgElement("g", { class: "edges" });
   const nodeGroup = createSvgElement("g", { class: "nodes" });
   svg.append(edgeGroup, nodeGroup);
@@ -375,6 +501,7 @@ function renderGraph() {
       if (node.type === "repo") selectRepo(node.repo);
       if (node.type === "cluster") {
         activeCluster = node.cluster;
+        graphMode = "all";
         render();
       }
     });
@@ -397,17 +524,72 @@ function scheduleGraphRender() {
   });
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function stopMomentum() {
+  if (momentumFrame) {
+    window.cancelAnimationFrame(momentumFrame);
+    momentumFrame = null;
+  }
+  nodeVelocities = new Map();
+}
+
+function shiftNodePosition(id, dx, dy, margin) {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 560;
+  const current = nodePositions.get(id);
+  if (!current) return;
+  nodePositions.set(id, {
+    x: clamp(current.x + dx, margin, width - margin),
+    y: clamp(current.y + dy, margin, height - margin),
+  });
+}
+
+function startMomentum(items, velocity) {
+  if (prefersReducedMotion()) return;
+  let vx = clamp(velocity.x, -22, 22);
+  let vy = clamp(velocity.y, -22, 22);
+  if (Math.hypot(vx, vy) < 1.6) return;
+
+  const step = () => {
+    vx *= 0.86;
+    vy *= 0.86;
+
+    for (const item of items) {
+      shiftNodePosition(item.id, vx * item.influence, vy * item.influence, item.margin);
+    }
+
+    scheduleGraphRender();
+
+    if (Math.hypot(vx, vy) > 0.28) {
+      momentumFrame = window.requestAnimationFrame(step);
+    } else {
+      momentumFrame = null;
+    }
+  };
+
+  momentumFrame = window.requestAnimationFrame(step);
+}
+
 function startDrag(event, node, group) {
   event.preventDefault();
-  group.setPointerCapture(event.pointerId);
+  stopMomentum();
+  try {
+    group.setPointerCapture(event.pointerId);
+  } catch {
+    // Synthetic QA events do not always create an active pointer capture target.
+  }
   const start = { x: event.clientX, y: event.clientY, nodeX: node.x, nodeY: node.y };
-  const layout = layoutNodes(getVisibleRepos());
+  const visibleRepos = getVisibleRepos();
+  const layout = layoutNodes(visibleRepos, { clusterOverview: isClusterOverview(visibleRepos) });
   const related = [];
 
   if (node.type === "cluster") {
     for (const relatedNode of layout.nodes) {
       if (relatedNode.type === "repo" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.56 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.68, margin: 24 });
       }
     }
   }
@@ -415,15 +597,22 @@ function startDrag(event, node, group) {
   if (node.type === "repo") {
     for (const relatedNode of layout.nodes) {
       if (relatedNode.type === "cluster" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.1 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.14, margin: 64 });
       }
       if (relatedNode.type === "cluster" && (node.repo.secondary_clusters || []).includes(relatedNode.cluster)) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.06 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.08, margin: 64 });
       }
     }
   }
 
-  dragTarget = { node, group, start, related };
+  dragTarget = {
+    node,
+    group,
+    start,
+    related,
+    last: { x: event.clientX, y: event.clientY, t: performance.now() },
+    velocity: { x: 0, y: 0 },
+  };
   group.classList.add("dragging");
 
   window.addEventListener("pointermove", dragMove);
@@ -434,6 +623,14 @@ function startDrag(event, node, group) {
 function dragMove(event) {
   if (!dragTarget) return;
   const { node, start, related } = dragTarget;
+  const now = performance.now();
+  const elapsed = Math.max(16, now - dragTarget.last.t);
+  dragTarget.velocity = {
+    x: ((event.clientX - dragTarget.last.x) / elapsed) * 16,
+    y: ((event.clientY - dragTarget.last.y) / elapsed) * 16,
+  };
+  dragTarget.last = { x: event.clientX, y: event.clientY, t: now };
+
   const dx = event.clientX - start.x;
   const dy = event.clientY - start.y;
   const width = svg.clientWidth || 900;
@@ -459,8 +656,31 @@ function dragMove(event) {
 function endDrag() {
   if (!dragTarget) return;
   dragTarget.group.classList.remove("dragging");
+  const currentPosition = nodePositions.get(dragTarget.node.id);
+  const fallbackVelocity = currentPosition
+    ? {
+        x: (currentPosition.x - dragTarget.start.nodeX) * 0.1,
+        y: (currentPosition.y - dragTarget.start.nodeY) * 0.1,
+      }
+    : { x: 0, y: 0 };
+  const momentumItems = [
+    {
+      id: dragTarget.node.id,
+      influence: 1,
+      margin: dragTarget.node.type === "cluster" ? 64 : 24,
+    },
+    ...dragTarget.related.map((item) => ({
+      id: item.id,
+      influence: item.influence,
+      margin: item.margin || (item.id.startsWith("cluster:") ? 64 : 24),
+    })),
+  ];
+  const velocity = Math.hypot(dragTarget.velocity.x, dragTarget.velocity.y) > 1.6
+    ? dragTarget.velocity
+    : fallbackVelocity;
   dragTarget = null;
   window.removeEventListener("pointermove", dragMove);
+  startMomentum(momentumItems, velocity);
 }
 
 function renderTable() {
@@ -570,7 +790,7 @@ async function loadSnapshot() {
   const response = await fetch(DATA_URL);
   if (!response.ok) throw new Error(`Could not load ${DATA_URL}`);
   snapshot = await response.json();
-  repos = snapshot.repos || [];
+  repos = (snapshot.repos || []).map(normalizeRepo);
   selectedRepo = null;
   render();
 }
@@ -613,6 +833,7 @@ async function fetchPublicRepos() {
 
 searchInput.addEventListener("input", (event) => {
   query = event.target.value;
+  if (query.trim()) graphMode = "all";
   render();
 });
 
@@ -644,11 +865,28 @@ showAllButton.addEventListener("click", () => {
   renderTable();
 });
 
-resetButton.addEventListener("click", () => {
+clusterViewButton.addEventListener("click", () => {
+  graphMode = "clusters";
   activeCluster = "all";
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
+  searchInput.value = "";
+  render();
+});
+
+allNodesButton.addEventListener("click", () => {
+  graphMode = "all";
+  render();
+});
+
+resetButton.addEventListener("click", () => {
+  stopMomentum();
+  activeCluster = "all";
+  query = "";
+  selectedRepo = null;
+  nodePositions = new Map();
+  graphMode = "clusters";
   listExpanded = false;
   showAllRows = false;
   searchInput.value = "";
@@ -670,6 +908,7 @@ document.addEventListener("keydown", (event) => {
     activeCluster = "all";
     query = "";
     searchInput.value = "";
+    graphMode = "clusters";
     render();
   }
   if (event.key === "Enter" && selectedRepo && document.activeElement === document.body) {
