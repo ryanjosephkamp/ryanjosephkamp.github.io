@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kernel Index Prototype - Ryan Kamp</title>
+    <meta
+      name="description"
+      content="Isolated prototype for a public GitHub repository graph on Ryan Kamp's personal website."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305070a'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%2325e6c8' font-family='monospace' font-size='20'%3ERK%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell" data-view="graph">
+      <header class="topbar" aria-label="Prototype navigation">
+        <a class="brand" href="../../index.html" aria-label="Back to current live-site source">
+          <span class="brand-mark">RK</span>
+          <span>
+            <strong>Ryan Kamp</strong>
+            <small>Kernel Index prototype</small>
+          </span>
+        </a>
+        <nav class="nav-links" aria-label="Primary links">
+          <a href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://ryanjosephkamp.github.io/blog/" target="_blank" rel="noreferrer">Blog</a>
+          <a href="../../index.html">Current site</a>
+        </nav>
+      </header>
+
+      <main class="workspace">
+        <aside class="panel intro-panel" aria-label="About this prototype">
+          <section>
+            <p class="console-label">// ABOUT</p>
+            <h1>Public repositories as a live research index.</h1>
+            <p>
+              A graph-first prototype for exploring Ryan's public GitHub repositories by cluster,
+              language, recency, and public project metadata.
+            </p>
+          </section>
+
+          <section class="notice-card">
+            <p class="console-label">S26 AIRP NOTE</p>
+            <p>
+              S26 AIRP entries are AI-assisted research software prototypes. Scientific and
+              domain-specific content is provisional and not presented as validated scientific claims.
+            </p>
+          </section>
+
+          <section class="source-card">
+            <p class="console-label">// DATA SOURCE</p>
+            <dl>
+              <div>
+                <dt>Snapshot</dt>
+                <dd id="snapshot-time">Loading</dd>
+              </div>
+              <div>
+                <dt>Public repos</dt>
+                <dd id="repo-count">0</dd>
+              </div>
+              <div>
+                <dt>Auth</dt>
+                <dd>No token</dd>
+              </div>
+            </dl>
+            <button class="ghost-button" id="refresh-button" type="button">Refresh from public API</button>
+            <p class="microcopy" id="refresh-status" role="status">
+              Static snapshot is used by default.
+            </p>
+          </section>
+        </aside>
+
+        <section class="graph-stage" aria-labelledby="graph-title">
+          <div class="stage-head">
+            <div>
+              <p class="console-label">// REPOSITORY GRAPH</p>
+              <h2 id="graph-title">Kernel Index</h2>
+            </div>
+            <div class="stage-meta" aria-live="polite">
+              <span id="visible-count">0 visible</span>
+              <span id="cluster-count">0 clusters</span>
+            </div>
+          </div>
+
+          <div class="search-row">
+            <label class="search-box" for="search-input">
+              <span aria-hidden="true">&gt;</span>
+              <input id="search-input" type="search" placeholder="Search repositories, topics, clusters..." />
+            </label>
+            <div class="density-control">
+              <label for="density-input">Density</label>
+              <input id="density-input" type="range" min="0.65" max="1.35" step="0.05" value="1" />
+            </div>
+          </div>
+
+          <div class="filter-strip" id="cluster-filters" aria-label="Cluster filters"></div>
+
+          <div class="graph-frame">
+            <svg id="repo-graph" role="img" aria-labelledby="graph-title graph-desc">
+              <desc id="graph-desc">
+                Interactive graph of public GitHub repositories clustered by public metadata.
+              </desc>
+            </svg>
+            <div class="graph-empty" id="graph-empty" hidden>
+              No repositories match the current filters.
+            </div>
+          </div>
+
+          <div class="keyboard-strip" aria-label="Prototype shortcuts">
+            <span><kbd>/</kbd> focus search</span>
+            <span><kbd>esc</kbd> clear filters</span>
+            <span><kbd>drag</kbd> move nodes</span>
+            <span><kbd>enter</kbd> open selected</span>
+          </div>
+        </section>
+
+        <aside class="panel inspector-panel" aria-label="Selected repository inspector">
+          <div class="inspector-head">
+            <p class="console-label">// INSPECTOR</p>
+            <button class="icon-button" id="clear-selection" type="button" aria-label="Clear selected repository">x</button>
+          </div>
+
+          <article id="repo-inspector" class="repo-inspector" tabindex="-1">
+            <p class="empty-state">Select a repository node to inspect public metadata.</p>
+          </article>
+        </aside>
+      </main>
+
+      <section class="list-panel" aria-labelledby="list-title">
+        <div class="list-head">
+          <div>
+            <p class="console-label">// ACCESSIBLE LIST</p>
+            <h2 id="list-title">Repository table</h2>
+          </div>
+          <button class="ghost-button" id="reset-button" type="button">Reset graph</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Repository</th>
+                <th scope="col">Cluster</th>
+                <th scope="col">Language</th>
+                <th scope="col">Updated</th>
+                <th scope="col">Links</th>
+              </tr>
+            </thead>
+            <tbody id="repo-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
