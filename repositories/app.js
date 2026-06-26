@@ -12,16 +12,16 @@ const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle-dev", "games"],
 ]);
 const CLUSTER_OVERVIEW_ANCHORS = new Map([
-  ["s26-airp", { x: 0.52, y: 0.36 }],
-  ["ai-ml", { x: 0.78, y: 0.42 }],
-  ["research-software", { x: 0.79, y: 0.67 }],
-  ["computational-biology", { x: 0.72, y: 0.22 }],
-  ["data-tooling", { x: 0.58, y: 0.76 }],
-  ["web-portfolio", { x: 0.34, y: 0.74 }],
-  ["games", { x: 0.17, y: 0.57 }],
-  ["interactive", { x: 0.21, y: 0.36 }],
-  ["writing-docs", { x: 0.31, y: 0.22 }],
-  ["other", { x: 0.49, y: 0.18 }],
+  ["s26-airp", { x: 0.51, y: 0.33 }],
+  ["ai-ml", { x: 0.85, y: 0.43 }],
+  ["research-software", { x: 0.82, y: 0.71 }],
+  ["computational-biology", { x: 0.73, y: 0.17 }],
+  ["data-tooling", { x: 0.56, y: 0.82 }],
+  ["web-portfolio", { x: 0.27, y: 0.8 }],
+  ["games", { x: 0.13, y: 0.6 }],
+  ["interactive", { x: 0.18, y: 0.35 }],
+  ["writing-docs", { x: 0.31, y: 0.16 }],
+  ["other", { x: 0.5, y: 0.12 }],
 ]);
 
 const clusterDefinitions = [
@@ -737,9 +737,10 @@ function clusterOverviewPosition(cluster, index, total, width, height, margin) {
 
 function relaxClusterNodes(nodes, width, height, margin) {
   if (nodes.length < 2) return;
-  const minDistance = Math.max(78, Math.min(width, height) * 0.19);
+  const isCompact = width < MOBILE_BREAKPOINT;
+  const minDistance = Math.max(isCompact ? 92 : 86, Math.min(width, height) * (isCompact ? 0.23 : 0.21));
 
-  for (let pass = 0; pass < 12; pass += 1) {
+  for (let pass = 0; pass < 14; pass += 1) {
     for (let first = 0; first < nodes.length; first += 1) {
       for (let second = first + 1; second < nodes.length; second += 1) {
         const a = nodes[first];
@@ -749,7 +750,7 @@ function relaxClusterNodes(nodes, width, height, margin) {
         const distance = Math.max(0.001, Math.hypot(dx, dy));
         if (distance >= minDistance) continue;
 
-        const push = ((minDistance - distance) / distance) * 0.42;
+        const push = ((minDistance - distance) / distance) * 0.46;
         const x = dx * push;
         const y = dy * push;
         a.x = clamp(a.x - x, margin, width - margin);

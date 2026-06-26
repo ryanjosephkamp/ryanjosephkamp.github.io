@@ -290,12 +290,26 @@ p {
 }
 
 .hero-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   max-width: 780px;
   margin-bottom: 20px;
   color: #d8fffb;
   font-size: 1.42rem;
   font-weight: 680;
   line-height: 1.38;
+}
+
+.hero-subtitle a {
+  color: var(--accent);
+  text-decoration-color: rgba(37, 230, 200, 0.42);
+  text-underline-offset: 0.16em;
+}
+
+.hero-subtitle a:hover,
+.hero-subtitle a:focus-visible {
+  color: #cffff8;
 }
 
 .hero-text {
@@ -445,7 +459,7 @@ p {
 
 .signal-list li {
   display: grid;
-  grid-template-columns: 34px 1fr;
+  grid-template-columns: 48px 1fr;
   gap: 12px;
   align-items: start;
 }
@@ -537,10 +551,21 @@ p {
 }
 
 .project-card {
+  position: relative;
   display: flex;
   min-height: 320px;
   flex-direction: column;
   padding: 22px;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.project-card:hover,
+.project-card:focus-within {
+  border-color: rgba(37, 230, 200, 0.42);
+  background:
+    radial-gradient(circle at 82% 0%, rgba(37, 230, 200, 0.11), transparent 14rem),
+    linear-gradient(180deg, rgba(11, 20, 27, 0.9), rgba(9, 14, 20, 0.62));
+  transform: translateY(-2px);
 }
 
 .project-card[data-featured="true"] {
@@ -639,14 +664,38 @@ p {
 }
 
 .site-footer {
+  width: min(100%, 1180px);
+  margin: 0 auto;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(5, 8, 12, 0.74);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
 }
 
 .site-footer .wrap {
-  padding: 28px 0;
+  width: 100%;
+  padding: 26px;
+}
+
+.site-footer .footer-grid {
+  grid-template-columns: minmax(260px, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+}
+
+.site-footer .social-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  justify-content: stretch;
+  width: 100%;
+}
+
+.site-footer .social-links a {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .footer-name {
@@ -699,6 +748,10 @@ p {
     justify-content: flex-start;
   }
 
+  .site-footer .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
   .split,
   .s26-grid,
   .footer-grid,
@@ -722,6 +775,10 @@ p {
 
   .wrap,
   .topbar {
+    width: calc(100% - 20px);
+  }
+
+  .site-footer {
     width: calc(100% - 20px);
   }
 
@@ -768,6 +825,7 @@ p {
 
   .hero-subtitle {
     font-size: 1.12rem;
+    flex-wrap: wrap;
   }
 
   .hero-text {
@@ -799,5 +857,9 @@ p {
   .filter-button {
     width: 100%;
     white-space: normal;
+  }
+
+  .site-footer .wrap {
+    padding: 18px;
   }
 }
