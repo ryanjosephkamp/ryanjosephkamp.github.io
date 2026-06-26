@@ -354,6 +354,18 @@ dd {
   accent-color: var(--accent);
 }
 
+.density-control input:disabled {
+  cursor: not-allowed;
+}
+
+.density-control.is-disabled {
+  opacity: 0.58;
+}
+
+.density-control.is-disabled label {
+  color: var(--faint);
+}
+
 .graph-toolbar {
   display: flex;
   align-items: center;
@@ -484,8 +496,8 @@ dd {
 .graph-frame {
   position: relative;
   overflow: hidden;
-  height: min(640px, calc(100vh - 312px));
-  min-height: 430px;
+  height: min(700px, calc(100vh - 260px));
+  min-height: 500px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background:
@@ -547,12 +559,12 @@ dd {
 .node circle {
   stroke: rgba(255, 255, 255, 0.42);
   stroke-width: 1.2;
-  filter: drop-shadow(0 0 10px rgba(37, 230, 200, 0.16));
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.32)) drop-shadow(0 0 10px rgba(37, 230, 200, 0.13));
 }
 
 .node.cluster circle {
   stroke-width: 2;
-  filter: drop-shadow(0 0 26px currentColor);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.44)) drop-shadow(0 0 28px currentColor);
 }
 
 .node.repo.selected circle {
@@ -573,6 +585,17 @@ dd {
 .node.cluster text {
   font-size: 13px;
   font-weight: 700;
+}
+
+.node.repo text.hover-label {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.node.repo:hover text.hover-label,
+.node.repo:focus-visible text.hover-label,
+.node.repo.selected text.hover-label {
+  opacity: 1;
 }
 
 #repo-graph[data-compact="true"][data-graph-mode="all"] .node.repo circle {
@@ -726,6 +749,77 @@ kbd {
   box-shadow: var(--shadow);
 }
 
+.contribution-panel {
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  padding: 22px 24px 24px;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(37, 230, 200, 0.08), transparent 26rem),
+    rgba(5, 8, 12, 0.82);
+}
+
+.contribution-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.contribution-head p {
+  max-width: 62ch;
+  margin: 7px 0 0;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+}
+
+.ghost-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ghost-link:hover,
+.ghost-link:focus-visible {
+  border-color: rgba(37, 230, 200, 0.58);
+  color: var(--accent);
+}
+
+.contribution-graph-link {
+  display: grid;
+  gap: 10px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.contribution-graph-link img {
+  display: block;
+  width: min(100%, 760px);
+  min-height: 104px;
+  border: 1px solid rgba(197, 242, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(3, 7, 10, 0.76);
+  object-fit: contain;
+}
+
+.contribution-graph-link:hover span,
+.contribution-graph-link:focus-visible span {
+  color: var(--accent);
+}
+
 .list-head {
   align-items: center;
   margin-bottom: 16px;
@@ -757,7 +851,7 @@ kbd {
   max-height: min(720px, 70vh);
   border: 1px solid var(--line);
   border-radius: 14px;
-  transition: opacity 180ms ease, max-height 180ms ease, border-color 180ms ease;
+  transition: opacity 180ms ease, border-color 180ms ease;
 }
 
 .list-panel.is-collapsed .table-wrap {
@@ -879,8 +973,8 @@ td span {
   }
 
   .graph-frame {
-    height: min(58vh, 430px);
-    min-height: 330px;
+    height: min(62vh, 480px);
+    min-height: 360px;
   }
 
   .density-control {
@@ -915,6 +1009,19 @@ td span {
 
   .list-actions .ghost-button {
     flex: 1 1 160px;
+  }
+
+  .contribution-panel {
+    padding: 16px;
+  }
+
+  .contribution-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ghost-link {
+    width: 100%;
   }
 }
 

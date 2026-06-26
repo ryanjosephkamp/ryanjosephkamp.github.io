@@ -24,6 +24,19 @@ const CLUSTER_OVERVIEW_ANCHORS = new Map([
   ["other", { x: 0.5, y: 0.12 }],
 ]);
 
+const EXPANDED_CLUSTER_ANCHORS = new Map([
+  ["s26-airp", { x: 0.47, y: 0.34 }],
+  ["ai-ml", { x: 0.85, y: 0.34 }],
+  ["research-software", { x: 0.82, y: 0.73 }],
+  ["computational-biology", { x: 0.72, y: 0.16 }],
+  ["data-tooling", { x: 0.52, y: 0.82 }],
+  ["web-portfolio", { x: 0.28, y: 0.78 }],
+  ["games", { x: 0.14, y: 0.62 }],
+  ["interactive", { x: 0.17, y: 0.36 }],
+  ["writing-docs", { x: 0.29, y: 0.17 }],
+  ["other", { x: 0.5, y: 0.12 }],
+]);
+
 const clusterDefinitions = [
   { id: "s26-airp", label: "S26 AIRP", color: "#12b886" },
   { id: "ai-ml", label: "AI and ML", color: "#7c5cff" },
@@ -735,10 +748,27 @@ function clusterOverviewPosition(cluster, index, total, width, height, margin) {
   };
 }
 
+function expandedClusterPosition(cluster, index, total, width, height, margin, density) {
+  const anchor = EXPANDED_CLUSTER_ANCHORS.get(cluster.id);
+  if (anchor) {
+    const spread = clamp(density, 0.86, 1.34);
+    return {
+      x: clamp(width * (0.5 + (anchor.x - 0.5) * spread), margin, width - margin),
+      y: clamp(height * (0.5 + (anchor.y - 0.5) * spread), margin, height - margin),
+    };
+  }
+
+  return clusterOverviewPosition(cluster, index, total, width, height, margin);
+}
+
 function relaxClusterNodes(nodes, width, height, margin) {
   if (nodes.length < 2) return;
   const isCompact = width < MOBILE_BREAKPOINT;
-  const minDistance = Math.max(isCompact ? 92 : 86, Math.min(width, height) * (isCompact ? 0.23 : 0.21));
+  const expandedGraph = !isClusterOverview(getVisibleRepos());
+  const minDistance = Math.max(
+    isCompact ? 92 : 98,
+    Math.min(width, height) * (isCompact ? 0.23 : expandedGraph ? 0.25 : 0.21),
+  );
 
   for (let pass = 0; pass < 14; pass += 1) {
     for (let first = 0; first < nodes.length; first += 1) {
@@ -768,9 +798,6 @@ function layoutNodes(visibleRepos, options = {}) {
   const compact = width < MOBILE_BREAKPOINT;
   const clusterOverview = Boolean(options.clusterOverview);
   const density = Number(densityInput.value);
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const clusterRadius = Math.min(width, height) * (clusterOverview ? 0.34 : compact ? 0.26 : 0.33) * density;
   const grouped = groupByCluster(visibleRepos);
   const clusterNodes = [];
   const repoNodes = [];
@@ -779,12 +806,11 @@ function layoutNodes(visibleRepos, options = {}) {
   const clusterMargin = compact ? 48 : 72;
 
   grouped.forEach((cluster, index) => {
-    const angle = grouped.length === 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / grouped.length - Math.PI / 2;
     const organicPosition = clusterOverview
       ? clusterOverviewPosition(cluster, index, grouped.length, width, height, clusterMargin)
-      : null;
-    const defaultX = organicPosition?.x ?? centerX + Math.cos(angle) * clusterRadius;
-    const defaultY = organicPosition?.y ?? centerY + Math.sin(angle) * clusterRadius * 0.78;
+      : expandedClusterPosition(cluster, index, grouped.length, width, height, clusterMargin, density);
+    const defaultX = organicPosition.x;
+    const defaultY = organicPosition.y;
     const key = `cluster:${cluster.id}`;
     const saved = nodePositions.get(key);
     const clusterNode = {
@@ -828,6 +854,7 @@ function layoutNodes(visibleRepos, options = {}) {
         y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.72 + jitter), repoMargin, height - repoMargin),
         r: selectedRepo?.name === repo.name ? 10 : 6.5,
         cluster: cluster.id,
+        anchored: !repoSaved,
       };
       repoNodes.push(repoNode);
       edgeList.push({ source: clusterNode, target: repoNode, type: "primary" });
@@ -840,6 +867,19 @@ function layoutNodes(visibleRepos, options = {}) {
     return { nodes: clusterNodes, edges: edgeList };
   }
 
+  const clusterPositionsBeforeRelax = new Map(clusterNodes.map((node) => [
+    node.cluster,
+    { x: node.x, y: node.y },
+  ]));
+  relaxClusterNodes(clusterNodes, width, height, clusterMargin);
+  for (const repoNode of repoNodes) {
+    if (!repoNode.anchored) continue;
+    const before = clusterPositionsBeforeRelax.get(repoNode.cluster);
+    const after = clusterNodes.find((node) => node.cluster === repoNode.cluster);
+    if (!before || !after) continue;
+    repoNode.x = clamp(repoNode.x + after.x - before.x, repoMargin, width - repoMargin);
+    repoNode.y = clamp(repoNode.y + after.y - before.y, repoMargin, height - repoMargin);
+  }
   edgeList.push(...buildRepositoryAffinityEdges(repoNodes, compact ? 16 : 42));
   return { nodes: [...clusterNodes, ...repoNodes], edges: edgeList };
 }
@@ -849,7 +889,9 @@ function renderGraph() {
   const compactViewport = isCompactViewport();
   const clusterOverview = isClusterOverview(visibleRepos);
   const focusedView = activeCluster !== "all" || query.trim().length > 0;
-  const showRepoLabels = visibleRepos.length <= (compactViewport ? 10 : 18) || (focusedView && visibleRepos.length <= (compactViewport ? 24 : 48));
+  const repoLabelLimit = focusedView ? (compactViewport ? 10 : 18) : (compactViewport ? 8 : 14);
+  const showRepoLabels = visibleRepos.length <= repoLabelLimit;
+  const allowHoverRepoLabels = !compactViewport && visibleRepos.length <= 72;
   const showSecondaryEdges = clusterOverview || focusedView || graphMode === "all" || visibleRepos.length <= 42 || !compactViewport;
   const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
@@ -862,8 +904,14 @@ function renderGraph() {
 
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
+  densityInput.disabled = clusterOverview;
+  densityInput.setAttribute("aria-disabled", String(clusterOverview));
+  densityInput.closest(".density-control")?.classList.toggle("is-disabled", clusterOverview);
+  densityInput.title = clusterOverview
+    ? "Spread applies after expanding a cluster or switching to all nodes."
+    : "Adjust expanded graph spread.";
   graphModeSummary.textContent = clusterOverview
-    ? "Cluster overview: choose a center to expand repositories."
+    ? "Cluster overview: choose a center to expand repositories. Spread is available in expanded graph views."
     : focusedView
       ? compactViewport && !query.trim()
         ? "Focused center: tap empty graph space to return; pinch to zoom."
@@ -921,10 +969,17 @@ function renderGraph() {
       fill: node.type === "cluster" ? "rgba(10, 15, 21, 0.92)" : node.color,
     }));
 
+    if (node.type === "repo") {
+      const title = createSvgElement("title");
+      title.textContent = node.repo.name;
+      group.append(title);
+    }
+
     const shouldShowClusterLabel = node.type === "cluster" && !(compactViewport && visibleRepos.length > 35);
     const shouldShowRepoLabel = node.type === "repo" && (showRepoLabels || selectedRepo?.name === node.repo?.name);
+    const shouldRenderHoverRepoLabel = node.type === "repo" && !shouldShowRepoLabel && allowHoverRepoLabels;
 
-    if (shouldShowClusterLabel || shouldShowRepoLabel) {
+    if (shouldShowClusterLabel || shouldShowRepoLabel || shouldRenderHoverRepoLabel) {
       const compactClusterLabel = compactViewport && node.type === "cluster";
       const clusterLabelOffsetY = node.type === "cluster" && node.y > (svg.clientHeight || 560) * 0.62
         ? -node.r - 12
@@ -935,6 +990,7 @@ function renderGraph() {
         "text-anchor": node.type === "cluster" ? "middle" : "start",
       });
       label.textContent = node.type === "cluster" ? `${node.label} (${node.count})` : node.label;
+      if (node.type === "repo" && shouldRenderHoverRepoLabel) label.classList.add("hover-label");
       group.append(label);
     }
 
@@ -1486,7 +1542,7 @@ resetButton.addEventListener("click", () => {
   listExpanded = false;
   showAllRows = false;
   searchInput.value = "";
-  densityInput.value = "1.12";
+  densityInput.value = "1.25";
   render();
 });
 
