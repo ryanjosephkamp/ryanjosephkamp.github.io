@@ -2,12 +2,13 @@ const DATA_URL = "./data/repos.snapshot.json";
 const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
 const RECENT_TABLE_LIMIT = 25;
-const DEFAULT_GRAPH_DENSITY = "1.6";
+const DEFAULT_GRAPH_DENSITY = "1";
 const MOBILE_BREAKPOINT = 620;
 const MIN_GRAPH_SCALE = 0.58;
 const MAX_GRAPH_SCALE = 2.4;
 const FRAME_MS = 16.67;
 const MAX_SIMULATION_STEP = 2.2;
+const ACTIVE_VELOCITY_EPSILON = 0.045;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
@@ -347,9 +348,9 @@ function defaultGraphScale() {
   const compact = isCompactViewport();
   const clusterOverview = graphMode === "clusters" && activeCluster === "all" && query.trim() === "";
   if (clusterOverview) return 1;
-  if (query.trim()) return compact ? 0.78 : 0.66;
-  if (graphMode === "all" && activeCluster === "all") return compact ? 0.76 : 0.64;
-  return compact ? 0.84 : 0.74;
+  if (query.trim()) return compact ? 0.8 : 0.72;
+  if (graphMode === "all" && activeCluster === "all") return compact ? 0.78 : 0.7;
+  return compact ? 0.86 : 0.78;
 }
 
 function resetGraphTransform() {
@@ -393,6 +394,28 @@ function hashString(value) {
 
 function graphInteractionActive() {
   return Boolean(dragTarget || graphGesture || graphPointers.size > 0);
+}
+
+function isDenseAllNodeView() {
+  return graphMode === "all" && activeCluster === "all" && query.trim() === "";
+}
+
+function hasActivePhysics(nodes = [...physicsNodes.values()]) {
+  return nodes.some((node) => (
+    Math.abs(node.vx) > ACTIVE_VELOCITY_EPSILON
+    || Math.abs(node.vy) > ACTIVE_VELOCITY_EPSILON
+    || node.dragging
+    || Math.hypot(node.x - node.anchorX, node.y - node.anchorY) > 0.75
+  ));
+}
+
+function shouldUseAmbientMotion() {
+  if (prefersReducedMotion()) return false;
+  if (graphInteractionActive()) return true;
+  if (isCompactViewport()) return false;
+  if (isDenseAllNodeView()) return false;
+  const nodeLimit = 58;
+  return physicsNodes.size > 0 && physicsNodes.size <= nodeLimit;
 }
 
 function resetGraphMotion() {
@@ -556,10 +579,18 @@ function addSpringForce(source, target, restLength, strength, delta) {
 
 function applyClusterSeparation(nodes, delta) {
   const collidable = nodes.filter((node) => node.type === "cluster");
+  const dragged = dragTarget ? physicsNodes.get(dragTarget.nodeId) : null;
   if (activeCluster !== "all" || query.trim()) {
-    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 36));
-  } else if (!isCompactViewport() && graphMode === "all") {
-    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 92));
+    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 24));
+  } else if (dragged && !isCompactViewport() && graphMode === "all") {
+    collidable.push(
+      ...nodes
+        .filter((node) => node.type === "repo")
+        .sort((a, b) => (
+          Math.hypot(a.x - dragged.x, a.y - dragged.y) - Math.hypot(b.x - dragged.x, b.y - dragged.y)
+        ))
+        .slice(0, 24),
+    );
   }
 
   for (let first = 0; first < collidable.length; first += 1) {
@@ -599,6 +630,7 @@ function stepGraphPhysics(timestamp) {
 
   const reducedMotion = prefersReducedMotion();
   const nodes = [...physicsNodes.values()];
+  const ambientEnabled = shouldUseAmbientMotion();
 
   if (reducedMotion) {
     for (const node of nodes) {
@@ -608,23 +640,27 @@ function stepGraphPhysics(timestamp) {
       node.y += (node.anchorY - node.y) * 0.35;
     }
     paintGraphMotion();
-    startAmbientMotionLoop();
+    if (hasActivePhysics(nodes)) startAmbientMotionLoop();
     return;
   }
 
   for (const node of nodes) {
     if (node.dragging) continue;
-    const ambient = ambientOffsetForNode(node, timestamp);
+    const ambient = ambientEnabled ? ambientOffsetForNode(node, timestamp) : { x: 0, y: 0 };
     const targetX = node.anchorX + ambient.x;
     const targetY = node.anchorY + ambient.y;
-    const anchorSpring = node.type === "cluster" ? 0.043 : 0.036;
+    const anchorSpring = ambientEnabled
+      ? node.type === "cluster" ? 0.043 : 0.036
+      : node.type === "cluster" ? 0.09 : 0.075;
     node.vx += (targetX - node.x) * anchorSpring * delta;
     node.vy += (targetY - node.y) * anchorSpring * delta;
   }
 
   const compactAllNodes = isCompactViewport() && graphMode === "all" && activeCluster === "all" && !query.trim();
+  const shouldApplyLinkSprings = graphInteractionActive() || !isDenseAllNodeView();
   for (const edge of physicsEdges) {
-    if (compactAllNodes && edge.type === "secondary") continue;
+    if (!shouldApplyLinkSprings) break;
+    if ((compactAllNodes || isDenseAllNodeView()) && edge.type === "secondary") continue;
     const source = physicsNodes.get(edge.sourceId);
     const target = physicsNodes.get(edge.targetId);
     if (!source || !target) continue;
@@ -651,11 +687,18 @@ function stepGraphPhysics(timestamp) {
   }
 
   paintGraphMotion();
-  startAmbientMotionLoop();
+  if (ambientEnabled || graphInteractionActive() || hasActivePhysics(nodes)) {
+    startAmbientMotionLoop();
+  } else {
+    lastPhysicsTick = 0;
+  }
 }
 
 function startAmbientMotionLoop() {
   if (physicsFrame) return;
+  if (!physicsNodes.size) return;
+  const nodes = [...physicsNodes.values()];
+  if (!shouldUseAmbientMotion() && !graphInteractionActive() && !hasActivePhysics(nodes)) return;
   physicsFrame = window.requestAnimationFrame(stepGraphPhysics);
 }
 
@@ -676,6 +719,18 @@ function midpointBetweenPoints(a, b) {
     x: (a.x + b.x) / 2,
     y: (a.y + b.y) / 2,
   };
+}
+
+function zoomGraphAt(point, nextScale) {
+  const scale = clamp(nextScale, MIN_GRAPH_SCALE, MAX_GRAPH_SCALE);
+  const worldX = (point.x - graphTransform.x) / graphTransform.scale;
+  const worldY = (point.y - graphTransform.y) / graphTransform.scale;
+  graphTransform = normalizedGraphTransform({
+    scale,
+    x: point.x - worldX * scale,
+    y: point.y - worldY * scale,
+  });
+  scheduleTransformPaint();
 }
 
 function returnToDefaultGraphView() {
@@ -1162,6 +1217,7 @@ function startDrag(event, node, group) {
   window.addEventListener("pointermove", dragMove);
   window.addEventListener("pointerup", endDrag, { once: true });
   window.addEventListener("pointercancel", endDrag, { once: true });
+  startAmbientMotionLoop();
 }
 
 function dragMove(event) {
@@ -1271,17 +1327,16 @@ function graphPointerMove(event) {
     const [first, second] = [...graphPointers.values()];
     const midpoint = midpointBetweenPoints(first, second);
     const distance = distanceBetweenPoints(first, second);
-    const nextScale = clamp(
-      graphGesture.startTransform.scale * (distance / graphGesture.initialDistance),
-      MIN_GRAPH_SCALE,
-      MAX_GRAPH_SCALE,
-    );
-    const worldX = (graphGesture.initialMidpoint.x - graphGesture.startTransform.x) / graphGesture.startTransform.scale;
-    const worldY = (graphGesture.initialMidpoint.y - graphGesture.startTransform.y) / graphGesture.startTransform.scale;
+    const nextScale = graphGesture.startTransform.scale * (distance / graphGesture.initialDistance);
+    const clampedScale = clamp(nextScale, MIN_GRAPH_SCALE, MAX_GRAPH_SCALE);
+    const worldX = (graphGesture.initialMidpoint.x - graphGesture.startTransform.x)
+      / graphGesture.startTransform.scale;
+    const worldY = (graphGesture.initialMidpoint.y - graphGesture.startTransform.y)
+      / graphGesture.startTransform.scale;
     graphTransform = normalizedGraphTransform({
-      scale: nextScale,
-      x: midpoint.x - worldX * nextScale,
-      y: midpoint.y - worldY * nextScale,
+      scale: clampedScale,
+      x: midpoint.x - worldX * clampedScale,
+      y: midpoint.y - worldY * clampedScale,
     });
     graphGesture.moved = true;
     scheduleTransformPaint();
@@ -1343,6 +1398,16 @@ function graphPointerEnd(event) {
 function graphBackgroundClick(event) {
   if (event.target.closest(".node")) return;
   if (activeCluster !== "all") returnToDefaultGraphView();
+}
+
+function graphWheel(event) {
+  if (!event.shiftKey) return;
+  event.preventDefault();
+  event.stopPropagation();
+  clearGraphGesture();
+  const point = graphPointFromEvent(event);
+  const scaleFactor = Math.exp(-event.deltaY * 0.0016);
+  zoomGraphAt(point, graphTransform.scale * scaleFactor);
 }
 
 function renderTable() {
@@ -1676,6 +1741,7 @@ document.addEventListener("keydown", (event) => {
 
 svg.addEventListener("pointerdown", graphPointerDown);
 svg.addEventListener("click", graphBackgroundClick);
+svg.addEventListener("wheel", graphWheel, { passive: false });
 
 window.addEventListener("resize", () => {
   graphTransform = normalizedGraphTransform(graphTransform);

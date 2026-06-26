@@ -54,11 +54,6 @@ input {
   margin: 0 auto;
 }
 
-.activity-panel {
-  width: min(1180px, calc(100% - 48px));
-  margin: 18px auto 0;
-}
-
 .topbar {
   display: flex;
   align-items: center;
@@ -207,7 +202,8 @@ p {
 }
 
 .notice-card,
-.source-card {
+.source-card,
+.activity-panel {
   margin-top: 28px;
   padding: 18px;
   border: 1px solid var(--line);
@@ -564,12 +560,11 @@ dd {
 .node circle {
   stroke: rgba(255, 255, 255, 0.42);
   stroke-width: 1.2;
-  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.32)) drop-shadow(0 0 10px rgba(37, 230, 200, 0.13));
 }
 
 .node.cluster circle {
   stroke-width: 2;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.44)) drop-shadow(0 0 28px currentColor);
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, 0.38)) drop-shadow(0 0 14px currentColor);
 }
 
 .node.repo.selected circle {
@@ -755,25 +750,18 @@ kbd {
 }
 
 .activity-panel {
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 18px 20px 20px;
   background:
-    radial-gradient(circle at 88% 18%, rgba(37, 230, 200, 0.1), transparent 24rem),
-    rgba(5, 8, 12, 0.82);
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+    radial-gradient(circle at 92% 12%, rgba(37, 230, 200, 0.1), transparent 16rem),
+    rgba(255, 255, 255, 0.025);
 }
 
 .activity-head {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 14px;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .activity-head p {
-  max-width: 62ch;
   margin: 7px 0 0;
   color: var(--faint);
   font-family: var(--mono);
@@ -804,31 +792,30 @@ kbd {
 
 .activity-content {
   display: grid;
-  gap: 12px;
-  max-width: 780px;
+  gap: 10px;
 }
 
 .activity-bars {
   display: grid;
-  grid-template-columns: repeat(12, 18px);
+  grid-template-columns: repeat(12, minmax(7px, 1fr));
   align-items: end;
-  justify-content: start;
-  gap: 7px;
-  min-height: 92px;
+  gap: 5px;
+  min-height: 70px;
   border: 1px solid rgba(197, 242, 255, 0.14);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 12px;
   background:
     linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
     rgba(3, 7, 10, 0.54);
-  background-size: 100% 24px, auto;
+  background-size: 100% 20px, auto;
 }
 
 .activity-bar {
   position: relative;
   display: block;
-  width: 18px;
-  height: 64px;
+  width: 100%;
+  min-width: 7px;
+  height: 46px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.045);
   overflow: hidden;
@@ -853,10 +840,10 @@ kbd {
 .activity-notes {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   color: var(--faint);
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.66rem;
 }
 
 .activity-notes span {
@@ -1058,30 +1045,22 @@ td span {
   }
 
   .activity-panel {
-    width: 100%;
-    margin-top: 12px;
-    padding: 16px;
+    margin-top: 20px;
   }
 
   .activity-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .activity-content {
-    max-width: none;
+    gap: 12px;
   }
 
   .activity-bars {
     gap: 5px;
-    grid-template-columns: repeat(12, 15px);
-    min-height: 84px;
+    grid-template-columns: repeat(12, minmax(12px, 1fr));
+    min-height: 76px;
     padding: 12px;
   }
 
   .activity-bar {
-    width: 15px;
-    height: 58px;
+    height: 52px;
   }
 
   .ghost-link {

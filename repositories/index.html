@@ -71,6 +71,29 @@
               Static snapshot is used by default.
             </p>
           </section>
+
+          <section class="activity-panel" aria-labelledby="activity-title">
+            <div class="activity-head">
+              <div>
+                <p class="console-label">// GITHUB ACTIVITY</p>
+                <h2 id="activity-title">Public repo activity</h2>
+                <p id="activity-summary">
+                  Recent public repository updates from the local GitHub metadata snapshot.
+                </p>
+              </div>
+              <a class="ghost-link" href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">
+                Open GitHub profile
+              </a>
+            </div>
+            <div class="activity-content">
+              <div id="repo-activity-bars" class="activity-bars" aria-label="Recent public repository update activity"></div>
+              <div class="activity-notes" aria-label="Activity module notes">
+                <span id="activity-window">Snapshot activity window</span>
+                <span id="activity-peak">Peak update week</span>
+                <span>Not the full GitHub contribution calendar.</span>
+              </div>
+            </div>
+          </section>
         </aside>
 
         <section class="graph-stage" aria-labelledby="graph-title">
@@ -134,6 +157,7 @@
             <span><kbd>/</kbd> focus search</span>
             <span><kbd>esc</kbd> clear filters</span>
             <span><kbd>drag</kbd> move nodes</span>
+            <span><kbd>shift</kbd> + scroll zoom</span>
             <span><kbd>enter</kbd> open selected</span>
           </div>
         </section>
@@ -149,29 +173,6 @@
           </article>
         </aside>
       </main>
-
-      <section class="activity-panel" aria-labelledby="activity-title">
-        <div class="activity-head">
-          <div>
-            <p class="console-label">// GITHUB ACTIVITY</p>
-            <h2 id="activity-title">Public repo activity</h2>
-            <p id="activity-summary">
-              Recent public repository updates from the local GitHub metadata snapshot.
-            </p>
-          </div>
-          <a class="ghost-link" href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">
-            Open GitHub profile
-          </a>
-        </div>
-        <div class="activity-content">
-          <div id="repo-activity-bars" class="activity-bars" aria-label="Recent public repository update activity"></div>
-          <div class="activity-notes" aria-label="Activity module notes">
-            <span id="activity-window">Snapshot activity window</span>
-            <span id="activity-peak">Peak update week</span>
-            <span>Not the full GitHub contribution calendar.</span>
-          </div>
-        </div>
-      </section>
 
       <section class="list-panel is-collapsed" id="repository-list-panel" aria-labelledby="list-title">
         <div class="list-head">
