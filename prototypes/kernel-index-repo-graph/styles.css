@@ -516,6 +516,7 @@ dd {
 .node {
   cursor: grab;
   transition: opacity 160ms ease;
+  will-change: transform;
 }
 
 .node.dragging {

@@ -5,6 +5,7 @@ const RECENT_TABLE_LIMIT = 25;
 const MOBILE_BREAKPOINT = 620;
 const MIN_GRAPH_SCALE = 0.72;
 const MAX_GRAPH_SCALE = 2.4;
+const AMBIENT_FRAME_INTERVAL = 66;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
@@ -65,16 +66,23 @@ let selectedRepo = null;
 let activeCluster = "all";
 let query = "";
 let nodePositions = new Map();
-let nodeVelocities = new Map();
+let nodeImpulses = new Map();
 let dragTarget = null;
 let listExpanded = false;
 let showAllRows = false;
 let graphRenderRequest = null;
+let motionPaintRequest = null;
+let graphNodeElements = new Map();
+let graphEdgeElements = [];
 let graphMode = "clusters";
 let momentumFrame = null;
 let graphTransform = { scale: 1, x: 0, y: 0 };
 let graphPointers = new Map();
 let graphGesture = null;
+let ambientFrame = null;
+let lastAmbientPaint = 0;
+let lastMotionTick = 0;
+let motionClock = 0;
 
 function formatDate(value) {
   if (!value) return "Unknown";
@@ -317,6 +325,157 @@ function graphTransformAttribute() {
   return `translate(${graphTransform.x} ${graphTransform.y}) scale(${graphTransform.scale})`;
 }
 
+function hashString(value) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function graphInteractionActive() {
+  return Boolean(dragTarget || graphGesture || graphPointers.size > 0);
+}
+
+function resetGraphMotion() {
+  nodeImpulses = new Map();
+  lastMotionTick = 0;
+  motionClock = performance.now();
+  scheduleGraphRender();
+}
+
+function boundedVector(vector, limit) {
+  const magnitude = Math.hypot(vector.x, vector.y);
+  if (magnitude <= limit || magnitude === 0) return vector;
+  const scale = limit / magnitude;
+  return { x: vector.x * scale, y: vector.y * scale };
+}
+
+function ambientOffsetForNode(node) {
+  if (prefersReducedMotion() || !motionClock) return { x: 0, y: 0 };
+
+  const seed = hashString(node.id);
+  const compact = isCompactViewport();
+  const focused = activeCluster !== "all" || query.trim().length > 0;
+  const allNodeDense = graphMode === "all" && activeCluster === "all" && !query.trim();
+  const interactionDamp = graphInteractionActive() ? 0.2 : 1;
+  const modeDamp = allNodeDense ? 0.55 : focused ? 0.78 : 0.92;
+  const baseAmplitude = node.type === "cluster"
+    ? compact ? 1.7 : 2.35
+    : compact ? 0.75 : 1.35;
+  const amplitude = baseAmplitude * modeDamp * interactionDamp;
+  const phase = (seed % 6283) / 1000;
+  const drift = motionClock * (0.00016 + (seed % 5) * 0.000012);
+
+  return {
+    x: Math.sin(drift + phase) * amplitude
+      + Math.sin(drift * 0.43 + phase * 1.7) * amplitude * 0.38,
+    y: Math.cos(drift * 0.86 + phase * 1.23) * amplitude * 0.8
+      + Math.sin(drift * 0.31 + phase * 0.9) * amplitude * 0.28,
+  };
+}
+
+function impulseOffsetForNode(id) {
+  const impulse = nodeImpulses.get(id);
+  return impulse ? { x: impulse.x, y: impulse.y } : { x: 0, y: 0 };
+}
+
+function applyMotionToLayout(nodes) {
+  for (const node of nodes) {
+    node.stableX = node.x;
+    node.stableY = node.y;
+    const ambient = ambientOffsetForNode(node);
+    const impulse = impulseOffsetForNode(node.id);
+    const limit = node.type === "cluster" ? 6.5 : 4.8;
+    const offset = boundedVector({
+      x: ambient.x + impulse.x,
+      y: ambient.y + impulse.y,
+    }, limit);
+    node.x += offset.x;
+    node.y += offset.y;
+  }
+}
+
+function addNodeImpulse(id, velocity, influence = 1) {
+  if (prefersReducedMotion()) return;
+
+  const current = nodeImpulses.get(id) || { x: 0, y: 0, vx: 0, vy: 0 };
+  const cap = id.startsWith("cluster:") ? 3.2 : 2.4;
+  const impulse = boundedVector({
+    x: velocity.x * influence,
+    y: velocity.y * influence,
+  }, cap);
+
+  nodeImpulses.set(id, {
+    x: current.x,
+    y: current.y,
+    vx: clamp(current.vx + impulse.x, -4, 4),
+    vy: clamp(current.vy + impulse.y, -4, 4),
+  });
+}
+
+function updateNodeImpulses(delta) {
+  if (!nodeImpulses.size) return false;
+
+  const next = new Map();
+  const frameScale = Math.min(2.4, Math.max(0.5, delta / 16.67));
+  const damping = Math.pow(graphInteractionActive() ? 0.72 : 0.84, frameScale);
+  const spring = 0.028 * frameScale;
+
+  for (const [id, impulse] of nodeImpulses) {
+    const vx = (impulse.vx - impulse.x * spring) * damping;
+    const vy = (impulse.vy - impulse.y * spring) * damping;
+    const limit = id.startsWith("cluster:") ? 6.5 : 4.8;
+    const position = boundedVector({
+      x: impulse.x + vx * frameScale,
+      y: impulse.y + vy * frameScale,
+    }, limit);
+
+    if (Math.hypot(position.x, position.y, vx, vy) > 0.08) {
+      next.set(id, { x: position.x, y: position.y, vx, vy });
+    }
+  }
+
+  nodeImpulses = next;
+  return nodeImpulses.size > 0;
+}
+
+function ambientTick(timestamp) {
+  ambientFrame = null;
+  const delta = lastMotionTick ? Math.min(80, timestamp - lastMotionTick) : 16.67;
+  lastMotionTick = timestamp;
+
+  if (prefersReducedMotion()) {
+    if (nodeImpulses.size) {
+      nodeImpulses = new Map();
+      scheduleMotionPaint();
+    }
+    ambientFrame = window.requestAnimationFrame(ambientTick);
+    return;
+  }
+
+  motionClock = timestamp;
+  const impulsesActive = updateNodeImpulses(delta);
+  const paintInterval = impulsesActive ? AMBIENT_FRAME_INTERVAL * 0.75 : AMBIENT_FRAME_INTERVAL;
+  const shouldPaint = document.visibilityState !== "hidden"
+    && timestamp - lastAmbientPaint >= paintInterval
+    && (!graphInteractionActive() || impulsesActive);
+
+  if (shouldPaint) {
+    lastAmbientPaint = timestamp;
+    scheduleMotionPaint();
+  }
+
+  ambientFrame = window.requestAnimationFrame(ambientTick);
+}
+
+function startAmbientMotionLoop() {
+  if (ambientFrame) return;
+  motionClock = performance.now();
+  lastAmbientPaint = 0;
+  ambientFrame = window.requestAnimationFrame(ambientTick);
+}
+
 function graphPointFromEvent(event) {
   const rect = svg.getBoundingClientRect();
   return {
@@ -343,6 +502,7 @@ function returnToMobileClusterOverview() {
   selectedRepo = null;
   graphMode = "clusters";
   nodePositions = new Map();
+  resetGraphMotion();
   resetGraphTransform();
   render();
   return true;
@@ -504,6 +664,8 @@ function renderGraph() {
   const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
   svg.innerHTML = "";
+  graphNodeElements = new Map();
+  graphEdgeElements = [];
 
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
@@ -516,6 +678,7 @@ function renderGraph() {
       : "All-node view: every visible repository is shown in the graph.";
 
   const { nodes, edges } = layoutNodes(visibleRepos, { clusterOverview });
+  applyMotionToLayout(nodes);
   const viewportGroup = createSvgElement("g", {
     class: "graph-viewport",
     transform: graphTransformAttribute(),
@@ -529,13 +692,19 @@ function renderGraph() {
     const selectedNeighborhood = selectedName
       && (edge.source.repo?.name === selectedName || edge.target.repo?.name === selectedName);
     if (edge.type === "secondary" && !showSecondaryEdges && !selectedNeighborhood) continue;
-    edgeGroup.append(createSvgElement("line", {
+    const line = createSvgElement("line", {
       class: `edge ${edge.type} ${selectedNeighborhood ? "selected-neighborhood" : ""}`,
       x1: edge.source.x,
       y1: edge.source.y,
       x2: edge.target.x,
       y2: edge.target.y,
-    }));
+    });
+    edgeGroup.append(line);
+    graphEdgeElements.push({
+      element: line,
+      sourceId: edge.source.id,
+      targetId: edge.target.id,
+    });
   }
 
   for (const node of nodes) {
@@ -587,14 +756,52 @@ function renderGraph() {
     });
 
     nodeGroup.append(group);
+    graphNodeElements.set(node.id, group);
   }
 }
 
 function scheduleGraphRender() {
   if (graphRenderRequest) return;
+  if (motionPaintRequest) {
+    window.cancelAnimationFrame(motionPaintRequest);
+    motionPaintRequest = null;
+  }
   graphRenderRequest = window.requestAnimationFrame(() => {
     graphRenderRequest = null;
     renderGraph();
+  });
+}
+
+function paintGraphMotion() {
+  if (!graphNodeElements.size) return;
+
+  const visibleRepos = getVisibleRepos();
+  const clusterOverview = isClusterOverview(visibleRepos);
+  const { nodes } = layoutNodes(visibleRepos, { clusterOverview });
+  applyMotionToLayout(nodes);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+  for (const [id, element] of graphNodeElements) {
+    const node = nodeById.get(id);
+    if (node) element.setAttribute("transform", `translate(${node.x} ${node.y})`);
+  }
+
+  for (const edgeRef of graphEdgeElements) {
+    const source = nodeById.get(edgeRef.sourceId);
+    const target = nodeById.get(edgeRef.targetId);
+    if (!source || !target) continue;
+    edgeRef.element.setAttribute("x1", source.x);
+    edgeRef.element.setAttribute("y1", source.y);
+    edgeRef.element.setAttribute("x2", target.x);
+    edgeRef.element.setAttribute("y2", target.y);
+  }
+}
+
+function scheduleMotionPaint() {
+  if (motionPaintRequest || graphRenderRequest) return;
+  motionPaintRequest = window.requestAnimationFrame(() => {
+    motionPaintRequest = null;
+    paintGraphMotion();
   });
 }
 
@@ -607,7 +814,6 @@ function stopMomentum() {
     window.cancelAnimationFrame(momentumFrame);
     momentumFrame = null;
   }
-  nodeVelocities = new Map();
 }
 
 function shiftNodePosition(id, dx, dy, margin) {
@@ -623,13 +829,13 @@ function shiftNodePosition(id, dx, dy, margin) {
 
 function startMomentum(items, velocity) {
   if (prefersReducedMotion()) return;
-  let vx = clamp(velocity.x, -30, 30);
-  let vy = clamp(velocity.y, -30, 30);
-  if (Math.hypot(vx, vy) < 1.2) return;
+  let vx = clamp(velocity.x, -20, 20);
+  let vy = clamp(velocity.y, -20, 20);
+  if (Math.hypot(vx, vy) < 1) return;
 
   const step = () => {
-    vx *= 0.9;
-    vy *= 0.9;
+    vx *= 0.87;
+    vy *= 0.87;
 
     for (const item of items) {
       shiftNodePosition(item.id, vx * item.influence, vy * item.influence, item.margin);
@@ -637,7 +843,7 @@ function startMomentum(items, velocity) {
 
     scheduleGraphRender();
 
-    if (Math.hypot(vx, vy) > 0.22) {
+    if (Math.hypot(vx, vy) > 0.26) {
       momentumFrame = window.requestAnimationFrame(step);
     } else {
       momentumFrame = null;
@@ -754,9 +960,13 @@ function endDrag() {
   const velocity = Math.hypot(dragTarget.velocity.x, dragTarget.velocity.y) > 1.2
     ? dragTarget.velocity
     : fallbackVelocity;
+  for (const item of momentumItems) {
+    addNodeImpulse(item.id, { x: velocity.x * 0.12, y: velocity.y * 0.12 }, item.influence);
+  }
   dragTarget = null;
   window.removeEventListener("pointermove", dragMove);
   startMomentum(momentumItems, velocity);
+  startAmbientMotionLoop();
 }
 
 function clearGraphGesture() {
@@ -1003,7 +1213,9 @@ async function loadSnapshot() {
   snapshot = await response.json();
   repos = (snapshot.repos || []).map(normalizeRepo);
   selectedRepo = null;
+  resetGraphMotion();
   render();
+  startAmbientMotionLoop();
 }
 
 async function fetchPublicRepos() {
@@ -1039,7 +1251,9 @@ async function fetchPublicRepos() {
   repos = included;
   selectedRepo = null;
   nodePositions = new Map();
+  resetGraphMotion();
   render();
+  startAmbientMotionLoop();
 }
 
 searchInput.addEventListener("input", (event) => {
@@ -1047,6 +1261,7 @@ searchInput.addEventListener("input", (event) => {
   if (query.trim()) {
     graphMode = "all";
     resetGraphTransform();
+    resetGraphMotion();
   }
   render();
 });
@@ -1087,6 +1302,7 @@ clusterViewButton.addEventListener("click", () => {
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
+  resetGraphMotion();
   resetGraphTransform();
   searchInput.value = "";
   render();
@@ -1096,6 +1312,7 @@ allNodesButton.addEventListener("click", () => {
   stopMomentum();
   clearGraphGesture();
   graphMode = "all";
+  resetGraphMotion();
   resetGraphTransform();
   render();
 });
@@ -1107,6 +1324,7 @@ resetButton.addEventListener("click", () => {
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
+  resetGraphMotion();
   resetGraphTransform();
   graphMode = "clusters";
   listExpanded = false;
@@ -1132,6 +1350,9 @@ document.addEventListener("keydown", (event) => {
     activeCluster = "all";
     query = "";
     searchInput.value = "";
+    selectedRepo = null;
+    nodePositions = new Map();
+    resetGraphMotion();
     resetGraphTransform();
     graphMode = "clusters";
     render();

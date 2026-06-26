@@ -22,6 +22,7 @@ It does not replace the live root site or define the future homepage.
 - Mobile supports dependency-free pinch zoom and lightweight background panning when zoomed.
 - The all-repository view keeps labels restrained; labels become more available in focused, filtered, or selected states.
 - Dragging uses lightweight elastic influence plus tuned post-release momentum without adding dependencies.
+- The graph uses subtle bounded ambient motion so nodes feel alive while staying near stable layout positions; reduced-motion users receive heavily damped behavior.
 - The Games cluster is explicitly used for `brrrdle` and `brrrdle-dev`.
 - The repository index is collapsed by default and opens to the most recently updated 25 repositories, with a show-all option for deeper review.
 - Mobile uses a compact explorer layout with graph, filters, selected detail, and card-style list rows instead of a desktop dashboard stack.
