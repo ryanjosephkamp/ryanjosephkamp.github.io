@@ -54,6 +54,11 @@ input {
   margin: 0 auto;
 }
 
+.activity-panel {
+  width: min(1180px, calc(100% - 48px));
+  margin: 18px auto 0;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -496,8 +501,8 @@ dd {
 .graph-frame {
   position: relative;
   overflow: hidden;
-  height: min(700px, calc(100vh - 260px));
-  min-height: 500px;
+  height: min(860px, calc(100vh - 160px));
+  min-height: 640px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background:
@@ -749,16 +754,17 @@ kbd {
   box-shadow: var(--shadow);
 }
 
-.contribution-panel {
+.activity-panel {
   border: 1px solid var(--line);
-  border-bottom: 0;
-  padding: 22px 24px 24px;
+  border-radius: 18px;
+  padding: 18px 20px 20px;
   background:
-    radial-gradient(circle at 85% 10%, rgba(37, 230, 200, 0.08), transparent 26rem),
+    radial-gradient(circle at 88% 18%, rgba(37, 230, 200, 0.1), transparent 24rem),
     rgba(5, 8, 12, 0.82);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
 }
 
-.contribution-head {
+.activity-head {
   display: flex;
   align-items: end;
   justify-content: space-between;
@@ -766,7 +772,7 @@ kbd {
   margin-bottom: 14px;
 }
 
-.contribution-head p {
+.activity-head p {
   max-width: 62ch;
   margin: 7px 0 0;
   color: var(--faint);
@@ -796,28 +802,68 @@ kbd {
   color: var(--accent);
 }
 
-.contribution-graph-link {
+.activity-content {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  max-width: 780px;
+}
+
+.activity-bars {
+  display: grid;
+  grid-template-columns: repeat(12, 18px);
+  align-items: end;
+  justify-content: start;
+  gap: 7px;
+  min-height: 92px;
+  border: 1px solid rgba(197, 242, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    rgba(3, 7, 10, 0.54);
+  background-size: 100% 24px, auto;
+}
+
+.activity-bar {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 64px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow: hidden;
+}
+
+.activity-bar-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: calc(var(--bar-scale, 0.08) * 100%);
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(37, 230, 200, 0.95), rgba(18, 184, 134, 0.58));
+  box-shadow: 0 0 20px rgba(37, 230, 200, 0.2);
+}
+
+.activity-bar[data-count="0"] .activity-bar-fill {
+  opacity: 0.16;
+}
+
+.activity-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   color: var(--faint);
   font-family: var(--mono);
-  font-size: 0.72rem;
-  text-decoration: none;
+  font-size: 0.7rem;
 }
 
-.contribution-graph-link img {
-  display: block;
-  width: min(100%, 760px);
-  min-height: 104px;
-  border: 1px solid rgba(197, 242, 255, 0.16);
-  border-radius: 12px;
-  background: rgba(3, 7, 10, 0.76);
-  object-fit: contain;
-}
-
-.contribution-graph-link:hover span,
-.contribution-graph-link:focus-visible span {
-  color: var(--accent);
+.activity-notes span {
+  border: 1px solid rgba(197, 242, 255, 0.12);
+  border-radius: 999px;
+  padding: 6px 9px;
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .list-head {
@@ -1011,13 +1057,31 @@ td span {
     flex: 1 1 160px;
   }
 
-  .contribution-panel {
+  .activity-panel {
+    width: 100%;
+    margin-top: 12px;
     padding: 16px;
   }
 
-  .contribution-head {
+  .activity-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .activity-content {
+    max-width: none;
+  }
+
+  .activity-bars {
+    gap: 5px;
+    grid-template-columns: repeat(12, 15px);
+    min-height: 84px;
+    padding: 12px;
+  }
+
+  .activity-bar {
+    width: 15px;
+    height: 58px;
   }
 
   .ghost-link {

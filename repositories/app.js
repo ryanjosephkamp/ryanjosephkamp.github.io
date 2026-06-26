@@ -2,8 +2,9 @@ const DATA_URL = "./data/repos.snapshot.json";
 const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
 const RECENT_TABLE_LIMIT = 25;
+const DEFAULT_GRAPH_DENSITY = "1.6";
 const MOBILE_BREAKPOINT = 620;
-const MIN_GRAPH_SCALE = 0.72;
+const MIN_GRAPH_SCALE = 0.58;
 const MAX_GRAPH_SCALE = 2.4;
 const FRAME_MS = 16.67;
 const MAX_SIMULATION_STEP = 2.2;
@@ -25,15 +26,15 @@ const CLUSTER_OVERVIEW_ANCHORS = new Map([
 ]);
 
 const EXPANDED_CLUSTER_ANCHORS = new Map([
-  ["s26-airp", { x: 0.47, y: 0.34 }],
-  ["ai-ml", { x: 0.85, y: 0.34 }],
-  ["research-software", { x: 0.82, y: 0.73 }],
-  ["computational-biology", { x: 0.72, y: 0.16 }],
-  ["data-tooling", { x: 0.52, y: 0.82 }],
-  ["web-portfolio", { x: 0.28, y: 0.78 }],
-  ["games", { x: 0.14, y: 0.62 }],
-  ["interactive", { x: 0.17, y: 0.36 }],
-  ["writing-docs", { x: 0.29, y: 0.17 }],
+  ["s26-airp", { x: 0.46, y: 0.47 }],
+  ["ai-ml", { x: 0.9, y: 0.32 }],
+  ["research-software", { x: 0.88, y: 0.82 }],
+  ["computational-biology", { x: 0.69, y: 0.12 }],
+  ["data-tooling", { x: 0.52, y: 0.92 }],
+  ["web-portfolio", { x: 0.24, y: 0.88 }],
+  ["games", { x: 0.08, y: 0.67 }],
+  ["interactive", { x: 0.12, y: 0.34 }],
+  ["writing-docs", { x: 0.24, y: 0.1 }],
   ["other", { x: 0.5, y: 0.12 }],
 ]);
 
@@ -85,6 +86,10 @@ const allNodesButton = document.querySelector("#all-nodes-button");
 const resetButton = document.querySelector("#reset-button");
 const clearSelectionButton = document.querySelector("#clear-selection");
 const emptyGraph = document.querySelector("#graph-empty");
+const activityBars = document.querySelector("#repo-activity-bars");
+const activitySummary = document.querySelector("#activity-summary");
+const activityWindow = document.querySelector("#activity-window");
+const activityPeak = document.querySelector("#activity-peak");
 
 let snapshot = null;
 let repos = [];
@@ -128,6 +133,19 @@ function formatRelative(value) {
   const months = Math.floor(days / 30);
   if (months < 12) return `${months} mo ago`;
   return `${Math.floor(months / 12)} yr ago`;
+}
+
+function activityDateForRepo(repo) {
+  const value = repo.pushed_at || repo.updated_at || repo.created_at;
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function startOfWeek(date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return start;
 }
 
 function shortDescription(repo) {
@@ -325,8 +343,17 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function defaultGraphScale() {
+  const compact = isCompactViewport();
+  const clusterOverview = graphMode === "clusters" && activeCluster === "all" && query.trim() === "";
+  if (clusterOverview) return 1;
+  if (query.trim()) return compact ? 0.78 : 0.66;
+  if (graphMode === "all" && activeCluster === "all") return compact ? 0.76 : 0.64;
+  return compact ? 0.84 : 0.74;
+}
+
 function resetGraphTransform() {
-  graphTransform = { scale: 1, x: 0, y: 0 };
+  graphTransform = normalizedGraphTransform({ scale: defaultGraphScale(), x: 0, y: 0 });
 }
 
 function normalizedGraphTransform(next = graphTransform) {
@@ -384,7 +411,9 @@ function boundedVector(vector, limit) {
 }
 
 function nodeMargin(node) {
-  return node.type === "cluster" ? (isCompactViewport() ? 52 : 68) : (isCompactViewport() ? 18 : 24);
+  if (node.type === "cluster") return isCompactViewport() ? 52 : 68;
+  if (graphMode === "all" && !isClusterOverview()) return isCompactViewport() ? -34 : -130;
+  return isCompactViewport() ? 18 : 24;
 }
 
 function clampNodePoint(node, point) {
@@ -529,6 +558,8 @@ function applyClusterSeparation(nodes, delta) {
   const collidable = nodes.filter((node) => node.type === "cluster");
   if (activeCluster !== "all" || query.trim()) {
     collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 36));
+  } else if (!isCompactViewport() && graphMode === "all") {
+    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 92));
   }
 
   for (let first = 0; first < collidable.length; first += 1) {
@@ -751,7 +782,7 @@ function clusterOverviewPosition(cluster, index, total, width, height, margin) {
 function expandedClusterPosition(cluster, index, total, width, height, margin, density) {
   const anchor = EXPANDED_CLUSTER_ANCHORS.get(cluster.id);
   if (anchor) {
-    const spread = clamp(density, 0.86, 1.34);
+    const spread = clamp(density, 1, 1.72);
     return {
       x: clamp(width * (0.5 + (anchor.x - 0.5) * spread), margin, width - margin),
       y: clamp(height * (0.5 + (anchor.y - 0.5) * spread), margin, height - margin),
@@ -766,8 +797,8 @@ function relaxClusterNodes(nodes, width, height, margin) {
   const isCompact = width < MOBILE_BREAKPOINT;
   const expandedGraph = !isClusterOverview(getVisibleRepos());
   const minDistance = Math.max(
-    isCompact ? 92 : 98,
-    Math.min(width, height) * (isCompact ? 0.23 : expandedGraph ? 0.25 : 0.21),
+    isCompact ? 98 : expandedGraph ? 154 : 98,
+    Math.min(width, height) * (isCompact ? 0.25 : expandedGraph ? 0.34 : 0.21),
   );
 
   for (let pass = 0; pass < 14; pass += 1) {
@@ -802,7 +833,7 @@ function layoutNodes(visibleRepos, options = {}) {
   const clusterNodes = [];
   const repoNodes = [];
   const edgeList = [];
-  const repoMargin = compact ? 20 : 30;
+  const repoMargin = compact ? 18 : 22;
   const clusterMargin = compact ? 48 : 72;
 
   grouped.forEach((cluster, index) => {
@@ -830,10 +861,10 @@ function layoutNodes(visibleRepos, options = {}) {
 
     if (clusterOverview) return;
 
-    const maxRepoRadius = Math.min(width, height) * (compact ? 0.32 : 0.26);
-    const repoRadius = Math.max(compact ? 74 : 78, Math.min(maxRepoRadius, 82 + cluster.repos.length * 1.55)) * density;
+    const maxRepoRadius = Math.min(width, height) * (compact ? 0.36 : 0.38);
+    const repoRadius = Math.max(compact ? 82 : 104, Math.min(maxRepoRadius, 112 + cluster.repos.length * 2.25)) * density;
     const ringCount = cluster.repos.length > 54 ? 3 : cluster.repos.length > 26 ? 2 : 1;
-    const ringScales = ringCount === 3 ? [0.7, 1.02, 1.34] : ringCount === 2 ? [0.82, 1.22] : [1.04];
+    const ringScales = ringCount === 3 ? [0.62, 1.05, 1.52] : ringCount === 2 ? [0.78, 1.34] : [1.12];
 
     cluster.repos.forEach((repo, repoIndex) => {
       const ringIndex = repoIndex % ringCount;
@@ -851,7 +882,7 @@ function layoutNodes(visibleRepos, options = {}) {
         label: repo.name,
         color: repo.cluster_color || cluster.color,
         x: repoSaved?.x ?? clamp(clusterNode.x + Math.cos(repoAngle) * (ringRadius + jitter), repoMargin, width - repoMargin),
-        y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.72 + jitter), repoMargin, height - repoMargin),
+        y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.84 + jitter), repoMargin, height - repoMargin),
         r: selectedRepo?.name === repo.name ? 10 : 6.5,
         cluster: cluster.id,
         anchored: !repoSaved,
@@ -1409,10 +1440,74 @@ function selectRepo(repo) {
   inspector.focus({ preventScroll: true });
 }
 
+function renderActivityModule() {
+  if (!activityBars || !activitySummary || !activityWindow || !activityPeak) return;
+
+  activityBars.innerHTML = "";
+  const datedRepos = repos
+    .map((repo) => ({ repo, date: activityDateForRepo(repo) }))
+    .filter((item) => item.date);
+
+  if (!datedRepos.length) {
+    activitySummary.textContent = "No public repository update timestamps are available in this snapshot.";
+    activityWindow.textContent = "No activity window";
+    activityPeak.textContent = "No peak week";
+    return;
+  }
+
+  const weekCount = 12;
+  const weekMs = 7 * 86_400_000;
+  const latestDate = datedRepos.reduce((latest, item) => (
+    item.date > latest ? item.date : latest
+  ), datedRepos[0].date);
+  const endWeek = startOfWeek(latestDate);
+  const firstWeek = new Date(endWeek.getTime() - (weekCount - 1) * weekMs);
+  const buckets = Array.from({ length: weekCount }, (_, index) => ({
+    start: new Date(firstWeek.getTime() + index * weekMs),
+    repos: [],
+  }));
+
+  for (const item of datedRepos) {
+    const index = Math.floor((startOfWeek(item.date).getTime() - firstWeek.getTime()) / weekMs);
+    if (index >= 0 && index < buckets.length) buckets[index].repos.push(item.repo);
+  }
+
+  const maxCount = Math.max(1, ...buckets.map((bucket) => bucket.repos.length));
+  const activeRepoCount = new Set(buckets.flatMap((bucket) => bucket.repos.map((repo) => repo.name))).size;
+  const peakBucket = buckets.reduce((peak, bucket) => (
+    bucket.repos.length > peak.repos.length ? bucket : peak
+  ), buckets[0]);
+
+  activitySummary.textContent = `${activeRepoCount} public repositories show recent push or update activity in this metadata snapshot.`;
+  activityWindow.textContent = `${formatDate(firstWeek)} - ${formatDate(new Date(endWeek.getTime() + 6 * 86_400_000))}`;
+  activityPeak.textContent = peakBucket.repos.length
+    ? `Peak: ${peakBucket.repos.length} repo${peakBucket.repos.length === 1 ? "" : "s"} updated week of ${formatDate(peakBucket.start)}`
+    : "No updates in this window";
+
+  for (const bucket of buckets) {
+    const bar = document.createElement("span");
+    const count = bucket.repos.length;
+    const scale = count / maxCount;
+    const names = bucket.repos.slice(0, 5).map((repo) => repo.name).join(", ");
+    bar.className = "activity-bar";
+    bar.style.setProperty("--bar-scale", String(Math.max(0.08, scale)));
+    bar.dataset.count = String(count);
+    bar.title = count
+      ? `${formatDate(bucket.start)}: ${count} repo${count === 1 ? "" : "s"} updated${names ? ` (${names}${bucket.repos.length > 5 ? ", ..." : ""})` : ""}`
+      : `${formatDate(bucket.start)}: no repository updates in this snapshot`;
+
+    const fill = document.createElement("span");
+    fill.className = "activity-bar-fill";
+    bar.append(fill);
+    activityBars.append(bar);
+  }
+}
+
 function render() {
   renderFilters();
   updateMeta();
   renderGraph();
+  renderActivityModule();
   renderTable();
   renderInspector();
 }
@@ -1423,7 +1518,9 @@ async function loadSnapshot() {
   snapshot = await response.json();
   repos = (snapshot.repos || []).map(normalizeRepo);
   selectedRepo = null;
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
   graphMode = defaultGraphMode();
+  resetGraphTransform();
   resetGraphMotion();
   render();
   startAmbientMotionLoop();
@@ -1461,8 +1558,10 @@ async function fetchPublicRepos() {
   };
   repos = included;
   selectedRepo = null;
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
   graphMode = defaultGraphMode();
   nodePositions = new Map();
+  resetGraphTransform();
   resetGraphMotion();
   render();
   startAmbientMotionLoop();
@@ -1536,13 +1635,13 @@ resetButton.addEventListener("click", () => {
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
-  resetGraphMotion();
-  resetGraphTransform();
   graphMode = defaultGraphMode();
   listExpanded = false;
   showAllRows = false;
   searchInput.value = "";
-  densityInput.value = "1.25";
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
+  resetGraphMotion();
+  resetGraphTransform();
   render();
 });
 
@@ -1564,9 +1663,10 @@ document.addEventListener("keydown", (event) => {
     searchInput.value = "";
     selectedRepo = null;
     nodePositions = new Map();
+    graphMode = defaultGraphMode();
+    densityInput.value = DEFAULT_GRAPH_DENSITY;
     resetGraphMotion();
     resetGraphTransform();
-    graphMode = defaultGraphMode();
     render();
   }
   if (event.key === "Enter" && selectedRepo && document.activeElement === document.body) {
