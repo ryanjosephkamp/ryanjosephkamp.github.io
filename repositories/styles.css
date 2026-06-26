@@ -50,7 +50,7 @@ input {
 .topbar,
 .workspace,
 .list-panel {
-  width: min(1680px, calc(100vw - 28px));
+  width: min(1680px, 100%);
   margin: 0 auto;
 }
 
@@ -406,6 +406,22 @@ dd {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 14px;
+  scrollbar-color: rgba(37, 230, 200, 0.58) rgba(255, 255, 255, 0.06);
+  scrollbar-width: thin;
+}
+
+.filter-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.filter-strip::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.filter-strip::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(37, 230, 200, 0.58);
 }
 
 .filter-button {
@@ -816,7 +832,7 @@ td span {
   .topbar,
   .workspace,
   .list-panel {
-    width: min(100%, calc(100vw - 16px));
+    width: 100%;
   }
 
   .topbar,
@@ -911,7 +927,8 @@ td span {
   .filter-strip {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding: 0 10px 8px 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   .filter-button {
