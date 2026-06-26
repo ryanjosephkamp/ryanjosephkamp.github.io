@@ -1,0 +1,10 @@
+{
+  "files": [
+    "index.html",
+    "repositories/index.html",
+    "prototypes/kernel-index-repo-graph/index.html"
+  ],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

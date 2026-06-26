@@ -37,7 +37,7 @@
             <p class="console-label">// REPOSITORY EXPLORER</p>
             <h1>Projects and repositories as an explorable graph.</h1>
             <p>
-              A dedicated projects page for exploring Ryan's public GitHub repositories by cluster,
+              A dedicated projects page for exploring my public GitHub repositories by cluster,
               language, recency, and public project metadata.
             </p>
           </section>
@@ -71,6 +71,29 @@
               Static snapshot is used by default.
             </p>
           </section>
+
+          <section class="activity-panel" aria-labelledby="activity-title">
+            <div class="activity-head">
+              <div>
+                <p class="console-label">// GITHUB ACTIVITY</p>
+                <h2 id="activity-title">Public repo activity</h2>
+                <p id="activity-summary">
+                  Recent public repository updates from the local GitHub metadata snapshot.
+                </p>
+              </div>
+              <a class="ghost-link" href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">
+                Open GitHub profile
+              </a>
+            </div>
+            <div class="activity-content">
+              <div id="repo-activity-bars" class="activity-bars" aria-label="Recent public repository update activity"></div>
+              <div class="activity-notes" aria-label="Activity module notes">
+                <span id="activity-window">Snapshot activity window</span>
+                <span id="activity-peak">Peak update week</span>
+                <span>Not the full GitHub contribution calendar.</span>
+              </div>
+            </div>
+          </section>
         </aside>
 
         <section class="graph-stage" aria-labelledby="graph-title">
@@ -92,7 +115,7 @@
             </label>
             <div class="density-control">
               <label for="density-input">Spread</label>
-              <input id="density-input" type="range" min="0.75" max="1.45" step="0.05" value="1.12" />
+              <input id="density-input" type="range" min="1" max="1.95" step="0.05" value="1.6" />
             </div>
           </div>
 
@@ -134,6 +157,7 @@
             <span><kbd>/</kbd> focus search</span>
             <span><kbd>esc</kbd> clear filters</span>
             <span><kbd>drag</kbd> move nodes</span>
+            <span><kbd>shift</kbd> + scroll zoom</span>
             <span><kbd>enter</kbd> open selected</span>
           </div>
         </section>

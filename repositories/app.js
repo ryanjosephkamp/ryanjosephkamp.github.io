@@ -2,26 +2,41 @@ const DATA_URL = "./data/repos.snapshot.json";
 const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
 const RECENT_TABLE_LIMIT = 25;
+const DEFAULT_GRAPH_DENSITY = "1";
 const MOBILE_BREAKPOINT = 620;
-const MIN_GRAPH_SCALE = 0.72;
+const MIN_GRAPH_SCALE = 0.58;
 const MAX_GRAPH_SCALE = 2.4;
 const FRAME_MS = 16.67;
 const MAX_SIMULATION_STEP = 2.2;
+const ACTIVE_VELOCITY_EPSILON = 0.045;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
 ]);
 const CLUSTER_OVERVIEW_ANCHORS = new Map([
-  ["s26-airp", { x: 0.52, y: 0.36 }],
-  ["ai-ml", { x: 0.78, y: 0.42 }],
-  ["research-software", { x: 0.79, y: 0.67 }],
-  ["computational-biology", { x: 0.72, y: 0.22 }],
-  ["data-tooling", { x: 0.58, y: 0.76 }],
-  ["web-portfolio", { x: 0.34, y: 0.74 }],
-  ["games", { x: 0.17, y: 0.57 }],
-  ["interactive", { x: 0.21, y: 0.36 }],
-  ["writing-docs", { x: 0.31, y: 0.22 }],
-  ["other", { x: 0.49, y: 0.18 }],
+  ["s26-airp", { x: 0.51, y: 0.33 }],
+  ["ai-ml", { x: 0.85, y: 0.43 }],
+  ["research-software", { x: 0.82, y: 0.71 }],
+  ["computational-biology", { x: 0.73, y: 0.17 }],
+  ["data-tooling", { x: 0.56, y: 0.82 }],
+  ["web-portfolio", { x: 0.27, y: 0.8 }],
+  ["games", { x: 0.13, y: 0.6 }],
+  ["interactive", { x: 0.18, y: 0.35 }],
+  ["writing-docs", { x: 0.31, y: 0.16 }],
+  ["other", { x: 0.5, y: 0.12 }],
+]);
+
+const EXPANDED_CLUSTER_ANCHORS = new Map([
+  ["s26-airp", { x: 0.46, y: 0.47 }],
+  ["ai-ml", { x: 0.9, y: 0.32 }],
+  ["research-software", { x: 0.88, y: 0.82 }],
+  ["computational-biology", { x: 0.69, y: 0.12 }],
+  ["data-tooling", { x: 0.52, y: 0.92 }],
+  ["web-portfolio", { x: 0.24, y: 0.88 }],
+  ["games", { x: 0.08, y: 0.67 }],
+  ["interactive", { x: 0.12, y: 0.34 }],
+  ["writing-docs", { x: 0.24, y: 0.1 }],
+  ["other", { x: 0.5, y: 0.12 }],
 ]);
 
 const clusterDefinitions = [
@@ -72,6 +87,10 @@ const allNodesButton = document.querySelector("#all-nodes-button");
 const resetButton = document.querySelector("#reset-button");
 const clearSelectionButton = document.querySelector("#clear-selection");
 const emptyGraph = document.querySelector("#graph-empty");
+const activityBars = document.querySelector("#repo-activity-bars");
+const activitySummary = document.querySelector("#activity-summary");
+const activityWindow = document.querySelector("#activity-window");
+const activityPeak = document.querySelector("#activity-peak");
 
 let snapshot = null;
 let repos = [];
@@ -115,6 +134,19 @@ function formatRelative(value) {
   const months = Math.floor(days / 30);
   if (months < 12) return `${months} mo ago`;
   return `${Math.floor(months / 12)} yr ago`;
+}
+
+function activityDateForRepo(repo) {
+  const value = repo.pushed_at || repo.updated_at || repo.created_at;
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime()) ? date : null;
+}
+
+function startOfWeek(date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return start;
 }
 
 function shortDescription(repo) {
@@ -312,8 +344,17 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function defaultGraphScale() {
+  const compact = isCompactViewport();
+  const clusterOverview = graphMode === "clusters" && activeCluster === "all" && query.trim() === "";
+  if (clusterOverview) return 1;
+  if (query.trim()) return compact ? 0.8 : 0.72;
+  if (graphMode === "all" && activeCluster === "all") return compact ? 0.78 : 0.7;
+  return compact ? 0.86 : 0.78;
+}
+
 function resetGraphTransform() {
-  graphTransform = { scale: 1, x: 0, y: 0 };
+  graphTransform = normalizedGraphTransform({ scale: defaultGraphScale(), x: 0, y: 0 });
 }
 
 function normalizedGraphTransform(next = graphTransform) {
@@ -355,6 +396,28 @@ function graphInteractionActive() {
   return Boolean(dragTarget || graphGesture || graphPointers.size > 0);
 }
 
+function isDenseAllNodeView() {
+  return graphMode === "all" && activeCluster === "all" && query.trim() === "";
+}
+
+function hasActivePhysics(nodes = [...physicsNodes.values()]) {
+  return nodes.some((node) => (
+    Math.abs(node.vx) > ACTIVE_VELOCITY_EPSILON
+    || Math.abs(node.vy) > ACTIVE_VELOCITY_EPSILON
+    || node.dragging
+    || Math.hypot(node.x - node.anchorX, node.y - node.anchorY) > 0.75
+  ));
+}
+
+function shouldUseAmbientMotion() {
+  if (prefersReducedMotion()) return false;
+  if (graphInteractionActive()) return true;
+  if (isCompactViewport()) return false;
+  if (isDenseAllNodeView()) return false;
+  const nodeLimit = 58;
+  return physicsNodes.size > 0 && physicsNodes.size <= nodeLimit;
+}
+
 function resetGraphMotion() {
   physicsNodes = new Map();
   physicsEdges = [];
@@ -371,7 +434,9 @@ function boundedVector(vector, limit) {
 }
 
 function nodeMargin(node) {
-  return node.type === "cluster" ? (isCompactViewport() ? 52 : 68) : (isCompactViewport() ? 18 : 24);
+  if (node.type === "cluster") return isCompactViewport() ? 52 : 68;
+  if (graphMode === "all" && !isClusterOverview()) return isCompactViewport() ? -34 : -130;
+  return isCompactViewport() ? 18 : 24;
 }
 
 function clampNodePoint(node, point) {
@@ -514,8 +579,18 @@ function addSpringForce(source, target, restLength, strength, delta) {
 
 function applyClusterSeparation(nodes, delta) {
   const collidable = nodes.filter((node) => node.type === "cluster");
+  const dragged = dragTarget ? physicsNodes.get(dragTarget.nodeId) : null;
   if (activeCluster !== "all" || query.trim()) {
-    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 36));
+    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 24));
+  } else if (dragged && !isCompactViewport() && graphMode === "all") {
+    collidable.push(
+      ...nodes
+        .filter((node) => node.type === "repo")
+        .sort((a, b) => (
+          Math.hypot(a.x - dragged.x, a.y - dragged.y) - Math.hypot(b.x - dragged.x, b.y - dragged.y)
+        ))
+        .slice(0, 24),
+    );
   }
 
   for (let first = 0; first < collidable.length; first += 1) {
@@ -555,6 +630,7 @@ function stepGraphPhysics(timestamp) {
 
   const reducedMotion = prefersReducedMotion();
   const nodes = [...physicsNodes.values()];
+  const ambientEnabled = shouldUseAmbientMotion();
 
   if (reducedMotion) {
     for (const node of nodes) {
@@ -564,23 +640,27 @@ function stepGraphPhysics(timestamp) {
       node.y += (node.anchorY - node.y) * 0.35;
     }
     paintGraphMotion();
-    startAmbientMotionLoop();
+    if (hasActivePhysics(nodes)) startAmbientMotionLoop();
     return;
   }
 
   for (const node of nodes) {
     if (node.dragging) continue;
-    const ambient = ambientOffsetForNode(node, timestamp);
+    const ambient = ambientEnabled ? ambientOffsetForNode(node, timestamp) : { x: 0, y: 0 };
     const targetX = node.anchorX + ambient.x;
     const targetY = node.anchorY + ambient.y;
-    const anchorSpring = node.type === "cluster" ? 0.043 : 0.036;
+    const anchorSpring = ambientEnabled
+      ? node.type === "cluster" ? 0.043 : 0.036
+      : node.type === "cluster" ? 0.09 : 0.075;
     node.vx += (targetX - node.x) * anchorSpring * delta;
     node.vy += (targetY - node.y) * anchorSpring * delta;
   }
 
   const compactAllNodes = isCompactViewport() && graphMode === "all" && activeCluster === "all" && !query.trim();
+  const shouldApplyLinkSprings = graphInteractionActive() || !isDenseAllNodeView();
   for (const edge of physicsEdges) {
-    if (compactAllNodes && edge.type === "secondary") continue;
+    if (!shouldApplyLinkSprings) break;
+    if ((compactAllNodes || isDenseAllNodeView()) && edge.type === "secondary") continue;
     const source = physicsNodes.get(edge.sourceId);
     const target = physicsNodes.get(edge.targetId);
     if (!source || !target) continue;
@@ -607,11 +687,18 @@ function stepGraphPhysics(timestamp) {
   }
 
   paintGraphMotion();
-  startAmbientMotionLoop();
+  if (ambientEnabled || graphInteractionActive() || hasActivePhysics(nodes)) {
+    startAmbientMotionLoop();
+  } else {
+    lastPhysicsTick = 0;
+  }
 }
 
 function startAmbientMotionLoop() {
   if (physicsFrame) return;
+  if (!physicsNodes.size) return;
+  const nodes = [...physicsNodes.values()];
+  if (!shouldUseAmbientMotion() && !graphInteractionActive() && !hasActivePhysics(nodes)) return;
   physicsFrame = window.requestAnimationFrame(stepGraphPhysics);
 }
 
@@ -632,6 +719,18 @@ function midpointBetweenPoints(a, b) {
     x: (a.x + b.x) / 2,
     y: (a.y + b.y) / 2,
   };
+}
+
+function zoomGraphAt(point, nextScale) {
+  const scale = clamp(nextScale, MIN_GRAPH_SCALE, MAX_GRAPH_SCALE);
+  const worldX = (point.x - graphTransform.x) / graphTransform.scale;
+  const worldY = (point.y - graphTransform.y) / graphTransform.scale;
+  graphTransform = normalizedGraphTransform({
+    scale,
+    x: point.x - worldX * scale,
+    y: point.y - worldY * scale,
+  });
+  scheduleTransformPaint();
 }
 
 function returnToDefaultGraphView() {
@@ -735,11 +834,29 @@ function clusterOverviewPosition(cluster, index, total, width, height, margin) {
   };
 }
 
+function expandedClusterPosition(cluster, index, total, width, height, margin, density) {
+  const anchor = EXPANDED_CLUSTER_ANCHORS.get(cluster.id);
+  if (anchor) {
+    const spread = clamp(density, 1, 1.72);
+    return {
+      x: clamp(width * (0.5 + (anchor.x - 0.5) * spread), margin, width - margin),
+      y: clamp(height * (0.5 + (anchor.y - 0.5) * spread), margin, height - margin),
+    };
+  }
+
+  return clusterOverviewPosition(cluster, index, total, width, height, margin);
+}
+
 function relaxClusterNodes(nodes, width, height, margin) {
   if (nodes.length < 2) return;
-  const minDistance = Math.max(78, Math.min(width, height) * 0.19);
+  const isCompact = width < MOBILE_BREAKPOINT;
+  const expandedGraph = !isClusterOverview(getVisibleRepos());
+  const minDistance = Math.max(
+    isCompact ? 98 : expandedGraph ? 154 : 98,
+    Math.min(width, height) * (isCompact ? 0.25 : expandedGraph ? 0.34 : 0.21),
+  );
 
-  for (let pass = 0; pass < 12; pass += 1) {
+  for (let pass = 0; pass < 14; pass += 1) {
     for (let first = 0; first < nodes.length; first += 1) {
       for (let second = first + 1; second < nodes.length; second += 1) {
         const a = nodes[first];
@@ -749,7 +866,7 @@ function relaxClusterNodes(nodes, width, height, margin) {
         const distance = Math.max(0.001, Math.hypot(dx, dy));
         if (distance >= minDistance) continue;
 
-        const push = ((minDistance - distance) / distance) * 0.42;
+        const push = ((minDistance - distance) / distance) * 0.46;
         const x = dx * push;
         const y = dy * push;
         a.x = clamp(a.x - x, margin, width - margin);
@@ -767,23 +884,19 @@ function layoutNodes(visibleRepos, options = {}) {
   const compact = width < MOBILE_BREAKPOINT;
   const clusterOverview = Boolean(options.clusterOverview);
   const density = Number(densityInput.value);
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const clusterRadius = Math.min(width, height) * (clusterOverview ? 0.34 : compact ? 0.26 : 0.33) * density;
   const grouped = groupByCluster(visibleRepos);
   const clusterNodes = [];
   const repoNodes = [];
   const edgeList = [];
-  const repoMargin = compact ? 20 : 30;
+  const repoMargin = compact ? 18 : 22;
   const clusterMargin = compact ? 48 : 72;
 
   grouped.forEach((cluster, index) => {
-    const angle = grouped.length === 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / grouped.length - Math.PI / 2;
     const organicPosition = clusterOverview
       ? clusterOverviewPosition(cluster, index, grouped.length, width, height, clusterMargin)
-      : null;
-    const defaultX = organicPosition?.x ?? centerX + Math.cos(angle) * clusterRadius;
-    const defaultY = organicPosition?.y ?? centerY + Math.sin(angle) * clusterRadius * 0.78;
+      : expandedClusterPosition(cluster, index, grouped.length, width, height, clusterMargin, density);
+    const defaultX = organicPosition.x;
+    const defaultY = organicPosition.y;
     const key = `cluster:${cluster.id}`;
     const saved = nodePositions.get(key);
     const clusterNode = {
@@ -803,10 +916,10 @@ function layoutNodes(visibleRepos, options = {}) {
 
     if (clusterOverview) return;
 
-    const maxRepoRadius = Math.min(width, height) * (compact ? 0.32 : 0.26);
-    const repoRadius = Math.max(compact ? 74 : 78, Math.min(maxRepoRadius, 82 + cluster.repos.length * 1.55)) * density;
+    const maxRepoRadius = Math.min(width, height) * (compact ? 0.36 : 0.38);
+    const repoRadius = Math.max(compact ? 82 : 104, Math.min(maxRepoRadius, 112 + cluster.repos.length * 2.25)) * density;
     const ringCount = cluster.repos.length > 54 ? 3 : cluster.repos.length > 26 ? 2 : 1;
-    const ringScales = ringCount === 3 ? [0.7, 1.02, 1.34] : ringCount === 2 ? [0.82, 1.22] : [1.04];
+    const ringScales = ringCount === 3 ? [0.62, 1.05, 1.52] : ringCount === 2 ? [0.78, 1.34] : [1.12];
 
     cluster.repos.forEach((repo, repoIndex) => {
       const ringIndex = repoIndex % ringCount;
@@ -824,9 +937,10 @@ function layoutNodes(visibleRepos, options = {}) {
         label: repo.name,
         color: repo.cluster_color || cluster.color,
         x: repoSaved?.x ?? clamp(clusterNode.x + Math.cos(repoAngle) * (ringRadius + jitter), repoMargin, width - repoMargin),
-        y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.72 + jitter), repoMargin, height - repoMargin),
+        y: repoSaved?.y ?? clamp(clusterNode.y + Math.sin(repoAngle) * (ringRadius * 0.84 + jitter), repoMargin, height - repoMargin),
         r: selectedRepo?.name === repo.name ? 10 : 6.5,
         cluster: cluster.id,
+        anchored: !repoSaved,
       };
       repoNodes.push(repoNode);
       edgeList.push({ source: clusterNode, target: repoNode, type: "primary" });
@@ -839,6 +953,19 @@ function layoutNodes(visibleRepos, options = {}) {
     return { nodes: clusterNodes, edges: edgeList };
   }
 
+  const clusterPositionsBeforeRelax = new Map(clusterNodes.map((node) => [
+    node.cluster,
+    { x: node.x, y: node.y },
+  ]));
+  relaxClusterNodes(clusterNodes, width, height, clusterMargin);
+  for (const repoNode of repoNodes) {
+    if (!repoNode.anchored) continue;
+    const before = clusterPositionsBeforeRelax.get(repoNode.cluster);
+    const after = clusterNodes.find((node) => node.cluster === repoNode.cluster);
+    if (!before || !after) continue;
+    repoNode.x = clamp(repoNode.x + after.x - before.x, repoMargin, width - repoMargin);
+    repoNode.y = clamp(repoNode.y + after.y - before.y, repoMargin, height - repoMargin);
+  }
   edgeList.push(...buildRepositoryAffinityEdges(repoNodes, compact ? 16 : 42));
   return { nodes: [...clusterNodes, ...repoNodes], edges: edgeList };
 }
@@ -848,7 +975,9 @@ function renderGraph() {
   const compactViewport = isCompactViewport();
   const clusterOverview = isClusterOverview(visibleRepos);
   const focusedView = activeCluster !== "all" || query.trim().length > 0;
-  const showRepoLabels = visibleRepos.length <= (compactViewport ? 10 : 18) || (focusedView && visibleRepos.length <= (compactViewport ? 24 : 48));
+  const repoLabelLimit = focusedView ? (compactViewport ? 10 : 18) : (compactViewport ? 8 : 14);
+  const showRepoLabels = visibleRepos.length <= repoLabelLimit;
+  const allowHoverRepoLabels = !compactViewport && visibleRepos.length <= 72;
   const showSecondaryEdges = clusterOverview || focusedView || graphMode === "all" || visibleRepos.length <= 42 || !compactViewport;
   const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
@@ -861,8 +990,14 @@ function renderGraph() {
 
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
+  densityInput.disabled = clusterOverview;
+  densityInput.setAttribute("aria-disabled", String(clusterOverview));
+  densityInput.closest(".density-control")?.classList.toggle("is-disabled", clusterOverview);
+  densityInput.title = clusterOverview
+    ? "Spread applies after expanding a cluster or switching to all nodes."
+    : "Adjust expanded graph spread.";
   graphModeSummary.textContent = clusterOverview
-    ? "Cluster overview: choose a center to expand repositories."
+    ? "Cluster overview: choose a center to expand repositories. Spread is available in expanded graph views."
     : focusedView
       ? compactViewport && !query.trim()
         ? "Focused center: tap empty graph space to return; pinch to zoom."
@@ -920,10 +1055,17 @@ function renderGraph() {
       fill: node.type === "cluster" ? "rgba(10, 15, 21, 0.92)" : node.color,
     }));
 
+    if (node.type === "repo") {
+      const title = createSvgElement("title");
+      title.textContent = node.repo.name;
+      group.append(title);
+    }
+
     const shouldShowClusterLabel = node.type === "cluster" && !(compactViewport && visibleRepos.length > 35);
     const shouldShowRepoLabel = node.type === "repo" && (showRepoLabels || selectedRepo?.name === node.repo?.name);
+    const shouldRenderHoverRepoLabel = node.type === "repo" && !shouldShowRepoLabel && allowHoverRepoLabels;
 
-    if (shouldShowClusterLabel || shouldShowRepoLabel) {
+    if (shouldShowClusterLabel || shouldShowRepoLabel || shouldRenderHoverRepoLabel) {
       const compactClusterLabel = compactViewport && node.type === "cluster";
       const clusterLabelOffsetY = node.type === "cluster" && node.y > (svg.clientHeight || 560) * 0.62
         ? -node.r - 12
@@ -934,6 +1076,7 @@ function renderGraph() {
         "text-anchor": node.type === "cluster" ? "middle" : "start",
       });
       label.textContent = node.type === "cluster" ? `${node.label} (${node.count})` : node.label;
+      if (node.type === "repo" && shouldRenderHoverRepoLabel) label.classList.add("hover-label");
       group.append(label);
     }
 
@@ -1074,6 +1217,7 @@ function startDrag(event, node, group) {
   window.addEventListener("pointermove", dragMove);
   window.addEventListener("pointerup", endDrag, { once: true });
   window.addEventListener("pointercancel", endDrag, { once: true });
+  startAmbientMotionLoop();
 }
 
 function dragMove(event) {
@@ -1183,17 +1327,16 @@ function graphPointerMove(event) {
     const [first, second] = [...graphPointers.values()];
     const midpoint = midpointBetweenPoints(first, second);
     const distance = distanceBetweenPoints(first, second);
-    const nextScale = clamp(
-      graphGesture.startTransform.scale * (distance / graphGesture.initialDistance),
-      MIN_GRAPH_SCALE,
-      MAX_GRAPH_SCALE,
-    );
-    const worldX = (graphGesture.initialMidpoint.x - graphGesture.startTransform.x) / graphGesture.startTransform.scale;
-    const worldY = (graphGesture.initialMidpoint.y - graphGesture.startTransform.y) / graphGesture.startTransform.scale;
+    const nextScale = graphGesture.startTransform.scale * (distance / graphGesture.initialDistance);
+    const clampedScale = clamp(nextScale, MIN_GRAPH_SCALE, MAX_GRAPH_SCALE);
+    const worldX = (graphGesture.initialMidpoint.x - graphGesture.startTransform.x)
+      / graphGesture.startTransform.scale;
+    const worldY = (graphGesture.initialMidpoint.y - graphGesture.startTransform.y)
+      / graphGesture.startTransform.scale;
     graphTransform = normalizedGraphTransform({
-      scale: nextScale,
-      x: midpoint.x - worldX * nextScale,
-      y: midpoint.y - worldY * nextScale,
+      scale: clampedScale,
+      x: midpoint.x - worldX * clampedScale,
+      y: midpoint.y - worldY * clampedScale,
     });
     graphGesture.moved = true;
     scheduleTransformPaint();
@@ -1255,6 +1398,16 @@ function graphPointerEnd(event) {
 function graphBackgroundClick(event) {
   if (event.target.closest(".node")) return;
   if (activeCluster !== "all") returnToDefaultGraphView();
+}
+
+function graphWheel(event) {
+  if (!event.shiftKey) return;
+  event.preventDefault();
+  event.stopPropagation();
+  clearGraphGesture();
+  const point = graphPointFromEvent(event);
+  const scaleFactor = Math.exp(-event.deltaY * 0.0016);
+  zoomGraphAt(point, graphTransform.scale * scaleFactor);
 }
 
 function renderTable() {
@@ -1352,10 +1505,74 @@ function selectRepo(repo) {
   inspector.focus({ preventScroll: true });
 }
 
+function renderActivityModule() {
+  if (!activityBars || !activitySummary || !activityWindow || !activityPeak) return;
+
+  activityBars.innerHTML = "";
+  const datedRepos = repos
+    .map((repo) => ({ repo, date: activityDateForRepo(repo) }))
+    .filter((item) => item.date);
+
+  if (!datedRepos.length) {
+    activitySummary.textContent = "No public repository update timestamps are available in this snapshot.";
+    activityWindow.textContent = "No activity window";
+    activityPeak.textContent = "No peak week";
+    return;
+  }
+
+  const weekCount = 12;
+  const weekMs = 7 * 86_400_000;
+  const latestDate = datedRepos.reduce((latest, item) => (
+    item.date > latest ? item.date : latest
+  ), datedRepos[0].date);
+  const endWeek = startOfWeek(latestDate);
+  const firstWeek = new Date(endWeek.getTime() - (weekCount - 1) * weekMs);
+  const buckets = Array.from({ length: weekCount }, (_, index) => ({
+    start: new Date(firstWeek.getTime() + index * weekMs),
+    repos: [],
+  }));
+
+  for (const item of datedRepos) {
+    const index = Math.floor((startOfWeek(item.date).getTime() - firstWeek.getTime()) / weekMs);
+    if (index >= 0 && index < buckets.length) buckets[index].repos.push(item.repo);
+  }
+
+  const maxCount = Math.max(1, ...buckets.map((bucket) => bucket.repos.length));
+  const activeRepoCount = new Set(buckets.flatMap((bucket) => bucket.repos.map((repo) => repo.name))).size;
+  const peakBucket = buckets.reduce((peak, bucket) => (
+    bucket.repos.length > peak.repos.length ? bucket : peak
+  ), buckets[0]);
+
+  activitySummary.textContent = `${activeRepoCount} public repositories show recent push or update activity in this metadata snapshot.`;
+  activityWindow.textContent = `${formatDate(firstWeek)} - ${formatDate(new Date(endWeek.getTime() + 6 * 86_400_000))}`;
+  activityPeak.textContent = peakBucket.repos.length
+    ? `Peak: ${peakBucket.repos.length} repo${peakBucket.repos.length === 1 ? "" : "s"} updated week of ${formatDate(peakBucket.start)}`
+    : "No updates in this window";
+
+  for (const bucket of buckets) {
+    const bar = document.createElement("span");
+    const count = bucket.repos.length;
+    const scale = count / maxCount;
+    const names = bucket.repos.slice(0, 5).map((repo) => repo.name).join(", ");
+    bar.className = "activity-bar";
+    bar.style.setProperty("--bar-scale", String(Math.max(0.08, scale)));
+    bar.dataset.count = String(count);
+    bar.title = count
+      ? `${formatDate(bucket.start)}: ${count} repo${count === 1 ? "" : "s"} updated${names ? ` (${names}${bucket.repos.length > 5 ? ", ..." : ""})` : ""}`
+      : `${formatDate(bucket.start)}: no repository updates in this snapshot`;
+
+    const fill = document.createElement("span");
+    fill.className = "activity-bar-fill";
+    bar.append(fill);
+    activityBars.append(bar);
+  }
+}
+
 function render() {
   renderFilters();
   updateMeta();
   renderGraph();
+  renderActivityModule();
   renderTable();
   renderInspector();
 }
@@ -1366,7 +1583,9 @@ async function loadSnapshot() {
   snapshot = await response.json();
   repos = (snapshot.repos || []).map(normalizeRepo);
   selectedRepo = null;
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
   graphMode = defaultGraphMode();
+  resetGraphTransform();
   resetGraphMotion();
   render();
   startAmbientMotionLoop();
@@ -1404,8 +1623,10 @@ async function fetchPublicRepos() {
   };
   repos = included;
   selectedRepo = null;
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
   graphMode = defaultGraphMode();
   nodePositions = new Map();
+  resetGraphTransform();
   resetGraphMotion();
   render();
   startAmbientMotionLoop();
@@ -1479,13 +1700,13 @@ resetButton.addEventListener("click", () => {
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
-  resetGraphMotion();
-  resetGraphTransform();
   graphMode = defaultGraphMode();
   listExpanded = false;
   showAllRows = false;
   searchInput.value = "";
-  densityInput.value = "1.12";
+  densityInput.value = DEFAULT_GRAPH_DENSITY;
+  resetGraphMotion();
+  resetGraphTransform();
   render();
 });
 
@@ -1507,9 +1728,10 @@ document.addEventListener("keydown", (event) => {
     searchInput.value = "";
     selectedRepo = null;
     nodePositions = new Map();
+    graphMode = defaultGraphMode();
+    densityInput.value = DEFAULT_GRAPH_DENSITY;
     resetGraphMotion();
     resetGraphTransform();
-    graphMode = defaultGraphMode();
     render();
   }
   if (event.key === "Enter" && selectedRepo && document.activeElement === document.body) {
@@ -1519,6 +1741,7 @@ document.addEventListener("keydown", (event) => {
 
 svg.addEventListener("pointerdown", graphPointerDown);
 svg.addEventListener("click", graphBackgroundClick);
+svg.addEventListener("wheel", graphWheel, { passive: false });
 
 window.addEventListener("resize", () => {
   graphTransform = normalizedGraphTransform(graphTransform);
