@@ -3,6 +3,8 @@ const API_ROOT = "https://api.github.com/users/ryanjosephkamp/repos";
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
 const RECENT_TABLE_LIMIT = 25;
 const MOBILE_BREAKPOINT = 620;
+const MIN_GRAPH_SCALE = 0.72;
+const MAX_GRAPH_SCALE = 2.4;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
@@ -70,6 +72,9 @@ let showAllRows = false;
 let graphRenderRequest = null;
 let graphMode = "clusters";
 let momentumFrame = null;
+let graphTransform = { scale: 1, x: 0, y: 0 };
+let graphPointers = new Map();
+let graphGesture = null;
 
 function formatDate(value) {
   if (!value) return "Unknown";
@@ -281,6 +286,68 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+function resetGraphTransform() {
+  graphTransform = { scale: 1, x: 0, y: 0 };
+}
+
+function normalizedGraphTransform(next = graphTransform) {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 560;
+  const scale = clamp(next.scale, MIN_GRAPH_SCALE, MAX_GRAPH_SCALE);
+
+  if (scale < 1) {
+    return {
+      scale,
+      x: (width * (1 - scale)) / 2,
+      y: (height * (1 - scale)) / 2,
+    };
+  }
+
+  const minX = width - width * scale - 24;
+  const minY = height - height * scale - 24;
+  return {
+    scale,
+    x: clamp(next.x, minX, 24),
+    y: clamp(next.y, minY, 24),
+  };
+}
+
+function graphTransformAttribute() {
+  graphTransform = normalizedGraphTransform(graphTransform);
+  return `translate(${graphTransform.x} ${graphTransform.y}) scale(${graphTransform.scale})`;
+}
+
+function graphPointFromEvent(event) {
+  const rect = svg.getBoundingClientRect();
+  return {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+}
+
+function distanceBetweenPoints(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function midpointBetweenPoints(a, b) {
+  return {
+    x: (a.x + b.x) / 2,
+    y: (a.y + b.y) / 2,
+  };
+}
+
+function returnToMobileClusterOverview() {
+  if (!isCompactViewport() || query.trim()) return false;
+  stopMomentum();
+  activeCluster = "all";
+  selectedRepo = null;
+  graphMode = "clusters";
+  nodePositions = new Map();
+  resetGraphTransform();
+  render();
+  return true;
+}
+
 function buildAggregateClusterEdges(clusterNodes, grouped) {
   const hubs = new Map(clusterNodes.map((node) => [node.cluster, node]));
   const edgeWeights = new Map();
@@ -441,15 +508,22 @@ function renderGraph() {
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
   graphModeSummary.textContent = clusterOverview
-    ? "Cluster overview: choose a hub or filter to expand repositories."
+    ? "Cluster overview: tap a center to expand repositories."
     : focusedView
-      ? "Focused view: repositories are expanded for the current search or cluster."
+      ? compactViewport && !query.trim()
+        ? "Focused center: tap empty graph space to return; pinch to zoom."
+        : "Focused view: repositories are expanded for the current search or cluster."
       : "All-node view: every visible repository is shown in the graph.";
 
   const { nodes, edges } = layoutNodes(visibleRepos, { clusterOverview });
+  const viewportGroup = createSvgElement("g", {
+    class: "graph-viewport",
+    transform: graphTransformAttribute(),
+  });
   const edgeGroup = createSvgElement("g", { class: "edges" });
   const nodeGroup = createSvgElement("g", { class: "nodes" });
-  svg.append(edgeGroup, nodeGroup);
+  viewportGroup.append(edgeGroup, nodeGroup);
+  svg.append(viewportGroup);
 
   for (const edge of edges) {
     const selectedNeighborhood = selectedName
@@ -549,13 +623,13 @@ function shiftNodePosition(id, dx, dy, margin) {
 
 function startMomentum(items, velocity) {
   if (prefersReducedMotion()) return;
-  let vx = clamp(velocity.x, -22, 22);
-  let vy = clamp(velocity.y, -22, 22);
-  if (Math.hypot(vx, vy) < 1.6) return;
+  let vx = clamp(velocity.x, -30, 30);
+  let vy = clamp(velocity.y, -30, 30);
+  if (Math.hypot(vx, vy) < 1.2) return;
 
   const step = () => {
-    vx *= 0.86;
-    vy *= 0.86;
+    vx *= 0.9;
+    vy *= 0.9;
 
     for (const item of items) {
       shiftNodePosition(item.id, vx * item.influence, vy * item.influence, item.margin);
@@ -563,7 +637,7 @@ function startMomentum(items, velocity) {
 
     scheduleGraphRender();
 
-    if (Math.hypot(vx, vy) > 0.28) {
+    if (Math.hypot(vx, vy) > 0.22) {
       momentumFrame = window.requestAnimationFrame(step);
     } else {
       momentumFrame = null;
@@ -575,6 +649,7 @@ function startMomentum(items, velocity) {
 
 function startDrag(event, node, group) {
   event.preventDefault();
+  event.stopPropagation();
   stopMomentum();
   try {
     group.setPointerCapture(event.pointerId);
@@ -589,7 +664,7 @@ function startDrag(event, node, group) {
   if (node.type === "cluster") {
     for (const relatedNode of layout.nodes) {
       if (relatedNode.type === "repo" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.68, margin: 24 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.78, margin: 24 });
       }
     }
   }
@@ -597,10 +672,10 @@ function startDrag(event, node, group) {
   if (node.type === "repo") {
     for (const relatedNode of layout.nodes) {
       if (relatedNode.type === "cluster" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.14, margin: 64 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.2, margin: 64 });
       }
       if (relatedNode.type === "cluster" && (node.repo.secondary_clusters || []).includes(relatedNode.cluster)) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.08, margin: 64 });
+        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.12, margin: 64 });
       }
     }
   }
@@ -625,14 +700,15 @@ function dragMove(event) {
   const { node, start, related } = dragTarget;
   const now = performance.now();
   const elapsed = Math.max(16, now - dragTarget.last.t);
+  const scale = graphTransform.scale || 1;
   dragTarget.velocity = {
-    x: ((event.clientX - dragTarget.last.x) / elapsed) * 16,
-    y: ((event.clientY - dragTarget.last.y) / elapsed) * 16,
+    x: (((event.clientX - dragTarget.last.x) / scale) / elapsed) * 18,
+    y: (((event.clientY - dragTarget.last.y) / scale) / elapsed) * 18,
   };
   dragTarget.last = { x: event.clientX, y: event.clientY, t: now };
 
-  const dx = event.clientX - start.x;
-  const dy = event.clientY - start.y;
+  const dx = (event.clientX - start.x) / scale;
+  const dy = (event.clientY - start.y) / scale;
   const width = svg.clientWidth || 900;
   const height = svg.clientHeight || 560;
   const margin = node.type === "cluster" ? 64 : 24;
@@ -659,8 +735,8 @@ function endDrag() {
   const currentPosition = nodePositions.get(dragTarget.node.id);
   const fallbackVelocity = currentPosition
     ? {
-        x: (currentPosition.x - dragTarget.start.nodeX) * 0.1,
-        y: (currentPosition.y - dragTarget.start.nodeY) * 0.1,
+        x: (currentPosition.x - dragTarget.start.nodeX) * 0.13,
+        y: (currentPosition.y - dragTarget.start.nodeY) * 0.13,
       }
     : { x: 0, y: 0 };
   const momentumItems = [
@@ -675,12 +751,147 @@ function endDrag() {
       margin: item.margin || (item.id.startsWith("cluster:") ? 64 : 24),
     })),
   ];
-  const velocity = Math.hypot(dragTarget.velocity.x, dragTarget.velocity.y) > 1.6
+  const velocity = Math.hypot(dragTarget.velocity.x, dragTarget.velocity.y) > 1.2
     ? dragTarget.velocity
     : fallbackVelocity;
   dragTarget = null;
   window.removeEventListener("pointermove", dragMove);
   startMomentum(momentumItems, velocity);
+}
+
+function clearGraphGesture() {
+  graphPointers = new Map();
+  graphGesture = null;
+  window.removeEventListener("pointermove", graphPointerMove);
+  window.removeEventListener("pointerup", graphPointerEnd);
+  window.removeEventListener("pointercancel", graphPointerEnd);
+}
+
+function startPinchGesture() {
+  const points = [...graphPointers.values()];
+  if (points.length < 2) return;
+  const [first, second] = points;
+  graphGesture = {
+    mode: "pinch",
+    initialDistance: Math.max(1, distanceBetweenPoints(first, second)),
+    initialMidpoint: midpointBetweenPoints(first, second),
+    startTransform: { ...graphTransform },
+    moved: false,
+  };
+  stopMomentum();
+}
+
+function graphPointerDown(event) {
+  if (event.target.closest(".node")) return;
+
+  const point = graphPointFromEvent(event);
+  graphPointers.set(event.pointerId, point);
+  try {
+    svg.setPointerCapture(event.pointerId);
+  } catch {
+    // Some synthetic browser checks do not create an active capture target.
+  }
+
+  if (graphPointers.size >= 2) {
+    startPinchGesture();
+  } else {
+    graphGesture = {
+      mode: "tap",
+      pointerId: event.pointerId,
+      start: point,
+      last: point,
+      startTransform: { ...graphTransform },
+      moved: false,
+    };
+  }
+
+  window.addEventListener("pointermove", graphPointerMove);
+  window.addEventListener("pointerup", graphPointerEnd);
+  window.addEventListener("pointercancel", graphPointerEnd);
+}
+
+function graphPointerMove(event) {
+  if (!graphPointers.has(event.pointerId) || !graphGesture) return;
+  const point = graphPointFromEvent(event);
+  graphPointers.set(event.pointerId, point);
+
+  if (graphPointers.size >= 2) {
+    if (graphGesture.mode !== "pinch") startPinchGesture();
+    const [first, second] = [...graphPointers.values()];
+    const midpoint = midpointBetweenPoints(first, second);
+    const distance = distanceBetweenPoints(first, second);
+    const nextScale = clamp(
+      graphGesture.startTransform.scale * (distance / graphGesture.initialDistance),
+      MIN_GRAPH_SCALE,
+      MAX_GRAPH_SCALE,
+    );
+    const worldX = (graphGesture.initialMidpoint.x - graphGesture.startTransform.x) / graphGesture.startTransform.scale;
+    const worldY = (graphGesture.initialMidpoint.y - graphGesture.startTransform.y) / graphGesture.startTransform.scale;
+    graphTransform = normalizedGraphTransform({
+      scale: nextScale,
+      x: midpoint.x - worldX * nextScale,
+      y: midpoint.y - worldY * nextScale,
+    });
+    graphGesture.moved = true;
+    scheduleGraphRender();
+    return;
+  }
+
+  if (graphGesture.mode === "tap") {
+    const dx = point.x - graphGesture.start.x;
+    const dy = point.y - graphGesture.start.y;
+    if (Math.hypot(dx, dy) > 6 && graphTransform.scale > 1.02) {
+      graphGesture.mode = "pan";
+      graphGesture.moved = true;
+    }
+  }
+
+  if (graphGesture.mode === "pan") {
+    const dx = point.x - graphGesture.start.x;
+    const dy = point.y - graphGesture.start.y;
+    graphTransform = normalizedGraphTransform({
+      scale: graphGesture.startTransform.scale,
+      x: graphGesture.startTransform.x + dx,
+      y: graphGesture.startTransform.y + dy,
+    });
+    scheduleGraphRender();
+  }
+}
+
+function graphPointerEnd(event) {
+  const endedPoint = graphPointers.get(event.pointerId);
+  graphPointers.delete(event.pointerId);
+
+  if (graphGesture?.mode === "pinch" && graphPointers.size === 1) {
+    const [remaining] = [...graphPointers.values()];
+    graphGesture = {
+      mode: graphTransform.scale > 1.02 ? "pan" : "tap",
+      pointerId: [...graphPointers.keys()][0],
+      start: remaining,
+      last: remaining,
+      startTransform: { ...graphTransform },
+      moved: true,
+    };
+    return;
+  }
+
+  if (graphPointers.size > 0) return;
+
+  const wasTap = graphGesture?.mode === "tap"
+    && !graphGesture.moved
+    && endedPoint
+    && distanceBetweenPoints(endedPoint, graphGesture.start) < 8;
+
+  clearGraphGesture();
+
+  if (wasTap && activeCluster !== "all") {
+    returnToMobileClusterOverview();
+  }
+}
+
+function graphBackgroundClick(event) {
+  if (event.target.closest(".node")) return;
+  if (activeCluster !== "all") returnToMobileClusterOverview();
 }
 
 function renderTable() {
@@ -833,7 +1044,10 @@ async function fetchPublicRepos() {
 
 searchInput.addEventListener("input", (event) => {
   query = event.target.value;
-  if (query.trim()) graphMode = "all";
+  if (query.trim()) {
+    graphMode = "all";
+    resetGraphTransform();
+  }
   render();
 });
 
@@ -866,26 +1080,34 @@ showAllButton.addEventListener("click", () => {
 });
 
 clusterViewButton.addEventListener("click", () => {
+  stopMomentum();
+  clearGraphGesture();
   graphMode = "clusters";
   activeCluster = "all";
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
+  resetGraphTransform();
   searchInput.value = "";
   render();
 });
 
 allNodesButton.addEventListener("click", () => {
+  stopMomentum();
+  clearGraphGesture();
   graphMode = "all";
+  resetGraphTransform();
   render();
 });
 
 resetButton.addEventListener("click", () => {
   stopMomentum();
+  clearGraphGesture();
   activeCluster = "all";
   query = "";
   selectedRepo = null;
   nodePositions = new Map();
+  resetGraphTransform();
   graphMode = "clusters";
   listExpanded = false;
   showAllRows = false;
@@ -905,9 +1127,12 @@ document.addEventListener("keydown", (event) => {
     searchInput.focus();
   }
   if (event.key === "Escape") {
+    stopMomentum();
+    clearGraphGesture();
     activeCluster = "all";
     query = "";
     searchInput.value = "";
+    resetGraphTransform();
     graphMode = "clusters";
     render();
   }
@@ -916,7 +1141,13 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("resize", () => renderGraph());
+svg.addEventListener("pointerdown", graphPointerDown);
+svg.addEventListener("click", graphBackgroundClick);
+
+window.addEventListener("resize", () => {
+  graphTransform = normalizedGraphTransform(graphTransform);
+  renderGraph();
+});
 
 loadSnapshot().catch((error) => {
   refreshStatus.textContent = `Snapshot load failed: ${error.message}`;
