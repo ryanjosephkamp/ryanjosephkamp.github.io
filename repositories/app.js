@@ -249,9 +249,12 @@ function isCompactViewport() {
   return (svg.clientWidth || window.innerWidth || 900) < MOBILE_BREAKPOINT;
 }
 
+function defaultGraphMode() {
+  return isCompactViewport() ? "clusters" : "all";
+}
+
 function isClusterOverview(visibleRepos = getVisibleRepos()) {
-  return isCompactViewport()
-    && graphMode === "clusters"
+  return graphMode === "clusters"
     && activeCluster === "all"
     && query.trim() === ""
     && visibleRepos.length > 0;
@@ -631,12 +634,12 @@ function midpointBetweenPoints(a, b) {
   };
 }
 
-function returnToMobileClusterOverview() {
-  if (!isCompactViewport() || query.trim()) return false;
+function returnToDefaultGraphView() {
+  if (query.trim()) return false;
   stopMomentum();
   activeCluster = "all";
   selectedRepo = null;
-  graphMode = "clusters";
+  graphMode = defaultGraphMode();
   nodePositions = new Map();
   resetGraphMotion();
   resetGraphTransform();
@@ -859,7 +862,7 @@ function renderGraph() {
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
   graphModeSummary.textContent = clusterOverview
-    ? "Cluster overview: tap a center to expand repositories."
+    ? "Cluster overview: choose a center to expand repositories."
     : focusedView
       ? compactViewport && !query.trim()
         ? "Focused center: tap empty graph space to return; pinch to zoom."
@@ -1245,13 +1248,13 @@ function graphPointerEnd(event) {
   clearGraphGesture();
 
   if (wasTap && activeCluster !== "all") {
-    returnToMobileClusterOverview();
+    returnToDefaultGraphView();
   }
 }
 
 function graphBackgroundClick(event) {
   if (event.target.closest(".node")) return;
-  if (activeCluster !== "all") returnToMobileClusterOverview();
+  if (activeCluster !== "all") returnToDefaultGraphView();
 }
 
 function renderTable() {
@@ -1363,6 +1366,7 @@ async function loadSnapshot() {
   snapshot = await response.json();
   repos = (snapshot.repos || []).map(normalizeRepo);
   selectedRepo = null;
+  graphMode = defaultGraphMode();
   resetGraphMotion();
   render();
   startAmbientMotionLoop();
@@ -1400,6 +1404,7 @@ async function fetchPublicRepos() {
   };
   repos = included;
   selectedRepo = null;
+  graphMode = defaultGraphMode();
   nodePositions = new Map();
   resetGraphMotion();
   render();
@@ -1476,7 +1481,7 @@ resetButton.addEventListener("click", () => {
   nodePositions = new Map();
   resetGraphMotion();
   resetGraphTransform();
-  graphMode = "clusters";
+  graphMode = defaultGraphMode();
   listExpanded = false;
   showAllRows = false;
   searchInput.value = "";
@@ -1504,7 +1509,7 @@ document.addEventListener("keydown", (event) => {
     nodePositions = new Map();
     resetGraphMotion();
     resetGraphTransform();
-    graphMode = "clusters";
+    graphMode = defaultGraphMode();
     render();
   }
   if (event.key === "Enter" && selectedRepo && document.activeElement === document.body) {
