@@ -478,6 +478,7 @@ dd {
     radial-gradient(circle at 50% 42%, rgba(37, 230, 200, 0.09), transparent 28rem),
     rgba(0, 0, 0, 0.2);
   background-size: 42px 42px, 42px 42px, auto, auto;
+  contain: layout paint;
 }
 
 #repo-graph {
@@ -522,6 +523,11 @@ dd {
   cursor: grabbing;
 }
 
+.is-dragging .node circle,
+#repo-graph[data-compact="true"].is-dragging .node.cluster circle {
+  filter: none;
+}
+
 .node circle {
   stroke: rgba(255, 255, 255, 0.42);
   stroke-width: 1.2;
@@ -563,6 +569,10 @@ dd {
 
 #repo-graph[data-compact="true"][data-graph-mode="all"] .edge.secondary {
   stroke-opacity: 0.76;
+}
+
+#repo-graph[data-compact="true"][data-graph-mode="all"].is-dragging .edge.secondary {
+  opacity: 0.18;
 }
 
 .graph-empty {

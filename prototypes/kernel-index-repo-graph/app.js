@@ -5,7 +5,8 @@ const RECENT_TABLE_LIMIT = 25;
 const MOBILE_BREAKPOINT = 620;
 const MIN_GRAPH_SCALE = 0.72;
 const MAX_GRAPH_SCALE = 2.4;
-const AMBIENT_FRAME_INTERVAL = 50;
+const FRAME_MS = 16.67;
+const MAX_SIMULATION_STEP = 2.2;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
@@ -78,7 +79,6 @@ let selectedRepo = null;
 let activeCluster = "all";
 let query = "";
 let nodePositions = new Map();
-let nodeImpulses = new Map();
 let dragTarget = null;
 let listExpanded = false;
 let showAllRows = false;
@@ -89,14 +89,15 @@ let graphViewportElement = null;
 let graphNodeElements = new Map();
 let graphEdgeElements = [];
 let graphMode = "clusters";
-let momentumFrame = null;
 let graphTransform = { scale: 1, x: 0, y: 0 };
 let graphPointers = new Map();
 let graphGesture = null;
-let ambientFrame = null;
-let lastAmbientPaint = 0;
-let lastMotionTick = 0;
-let motionClock = 0;
+let physicsNodes = new Map();
+let physicsEdges = [];
+let physicsFrame = null;
+let lastPhysicsTick = 0;
+let physicsSignature = "";
+let suppressNodeClickUntil = 0;
 
 function formatDate(value) {
   if (!value) return "Unknown";
@@ -352,9 +353,10 @@ function graphInteractionActive() {
 }
 
 function resetGraphMotion() {
-  nodeImpulses = new Map();
-  lastMotionTick = 0;
-  motionClock = performance.now();
+  physicsNodes = new Map();
+  physicsEdges = [];
+  physicsSignature = "";
+  lastPhysicsTick = 0;
   scheduleMotionPaint();
 }
 
@@ -365,21 +367,35 @@ function boundedVector(vector, limit) {
   return { x: vector.x * scale, y: vector.y * scale };
 }
 
-function ambientOffsetForNode(node) {
-  if (prefersReducedMotion() || !motionClock) return { x: 0, y: 0 };
+function nodeMargin(node) {
+  return node.type === "cluster" ? (isCompactViewport() ? 52 : 68) : (isCompactViewport() ? 18 : 24);
+}
 
-  const seed = hashString(node.id);
+function clampNodePoint(node, point) {
+  const width = svg.clientWidth || 900;
+  const height = svg.clientHeight || 560;
+  const margin = nodeMargin(node);
+  return {
+    x: clamp(point.x, margin, width - margin),
+    y: clamp(point.y, margin, height - margin),
+  };
+}
+
+function ambientOffsetForNode(node, timestamp) {
+  if (prefersReducedMotion()) return { x: 0, y: 0 };
+
+  const seed = node.seed ?? hashString(node.id);
   const compact = isCompactViewport();
   const focused = activeCluster !== "all" || query.trim().length > 0;
   const allNodeDense = graphMode === "all" && activeCluster === "all" && !query.trim();
-  const interactionDamp = graphInteractionActive() ? 0.2 : 1;
-  const modeDamp = allNodeDense ? 0.55 : focused ? 0.78 : 0.92;
+  const interactionDamp = graphInteractionActive() ? 0.35 : 1;
+  const modeDamp = allNodeDense ? 0.48 : focused ? 0.72 : 1;
   const baseAmplitude = node.type === "cluster"
-    ? compact ? 3.7 : 4.5
-    : compact ? 1.6 : 2.4;
+    ? compact ? 9.2 : 10.5
+    : compact ? 3.8 : 5.2;
   const amplitude = baseAmplitude * modeDamp * interactionDamp;
   const phase = (seed % 6283) / 1000;
-  const drift = motionClock * (0.00042 + (seed % 5) * 0.000024);
+  const drift = timestamp * (0.00135 + (seed % 7) * 0.000055);
 
   return {
     x: Math.sin(drift + phase) * amplitude
@@ -389,105 +405,211 @@ function ambientOffsetForNode(node) {
   };
 }
 
-function impulseOffsetForNode(id) {
-  const impulse = nodeImpulses.get(id);
-  return impulse ? { x: impulse.x, y: impulse.y } : { x: 0, y: 0 };
+function graphWorldPointFromEvent(event) {
+  const point = graphPointFromEvent(event);
+  const scale = graphTransform.scale || 1;
+  return {
+    x: (point.x - graphTransform.x) / scale,
+    y: (point.y - graphTransform.y) / scale,
+  };
 }
 
-function applyMotionToLayout(nodes) {
+function buildPhysicsSignature(nodes) {
+  const width = Math.round(svg.clientWidth || 900);
+  const height = Math.round(svg.clientHeight || 560);
+  return [
+    width,
+    height,
+    graphMode,
+    activeCluster,
+    query.trim().toLowerCase(),
+    densityInput.value,
+    nodes.map((node) => node.id).join(","),
+  ].join("|");
+}
+
+function syncPhysicsLayout(nodes, edges) {
+  const nextSignature = buildPhysicsSignature(nodes);
+  const reset = nextSignature !== physicsSignature;
+  const nextNodes = new Map();
+
   for (const node of nodes) {
-    node.stableX = node.x;
-    node.stableY = node.y;
-    const ambient = ambientOffsetForNode(node);
-    const impulse = impulseOffsetForNode(node.id);
-    const limit = node.type === "cluster" ? 8 : 6;
-    const offset = boundedVector({
-      x: ambient.x + impulse.x,
-      y: ambient.y + impulse.y,
-    }, limit);
-    node.x += offset.x;
-    node.y += offset.y;
+    const existing = physicsNodes.get(node.id);
+    const seed = hashString(node.id);
+    const anchorX = node.x;
+    const anchorY = node.y;
+
+    if (existing && !reset) {
+      const anchorShiftX = anchorX - existing.anchorX;
+      const anchorShiftY = anchorY - existing.anchorY;
+      nextNodes.set(node.id, {
+        ...existing,
+        ...node,
+        seed,
+        anchorX,
+        anchorY,
+        x: clampNodePoint(node, { x: existing.x + anchorShiftX, y: existing.y + anchorShiftY }).x,
+        y: clampNodePoint(node, { x: existing.x + anchorShiftX, y: existing.y + anchorShiftY }).y,
+        vx: existing.vx,
+        vy: existing.vy,
+        dragging: existing.dragging,
+      });
+    } else {
+      nextNodes.set(node.id, {
+        ...node,
+        seed,
+        anchorX,
+        anchorY,
+        x: anchorX,
+        y: anchorY,
+        vx: 0,
+        vy: 0,
+        dragging: false,
+      });
+    }
   }
+
+  physicsNodes = nextNodes;
+  physicsEdges = edges.map((edge) => ({
+    sourceId: edge.source.id,
+    targetId: edge.target.id,
+    type: edge.type,
+    weight: edge.weight || 1,
+    restLength: Math.max(
+      edge.type === "primary" ? 56 : 92,
+      Math.hypot(edge.target.x - edge.source.x, edge.target.y - edge.source.y),
+    ),
+  }));
+  physicsSignature = nextSignature;
+  startAmbientMotionLoop();
 }
 
-function addNodeImpulse(id, velocity, influence = 1) {
-  if (prefersReducedMotion()) return;
-
-  const current = nodeImpulses.get(id) || { x: 0, y: 0, vx: 0, vy: 0 };
-  const cap = id.startsWith("cluster:") ? 3.2 : 2.4;
-  const impulse = boundedVector({
-    x: velocity.x * influence,
-    y: velocity.y * influence,
-  }, cap);
-
-  nodeImpulses.set(id, {
-    x: current.x,
-    y: current.y,
-    vx: clamp(current.vx + impulse.x, -4, 4),
-    vy: clamp(current.vy + impulse.y, -4, 4),
+function renderNodesFromPhysics(nodes) {
+  return nodes.map((node) => {
+    const physicsNode = physicsNodes.get(node.id);
+    return physicsNode ? { ...node, x: physicsNode.x, y: physicsNode.y } : node;
   });
 }
 
-function updateNodeImpulses(delta) {
-  if (!nodeImpulses.size) return false;
+function addSpringForce(source, target, restLength, strength, delta) {
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  const distance = Math.max(0.001, Math.hypot(dx, dy));
+  const force = (distance - restLength) * strength * delta;
+  const fx = (dx / distance) * force;
+  const fy = (dy / distance) * force;
 
-  const next = new Map();
-  const frameScale = Math.min(2.4, Math.max(0.5, delta / 16.67));
-  const damping = Math.pow(graphInteractionActive() ? 0.72 : 0.84, frameScale);
-  const spring = 0.028 * frameScale;
-
-  for (const [id, impulse] of nodeImpulses) {
-    const vx = (impulse.vx - impulse.x * spring) * damping;
-    const vy = (impulse.vy - impulse.y * spring) * damping;
-    const limit = id.startsWith("cluster:") ? 6.5 : 4.8;
-    const position = boundedVector({
-      x: impulse.x + vx * frameScale,
-      y: impulse.y + vy * frameScale,
-    }, limit);
-
-    if (Math.hypot(position.x, position.y, vx, vy) > 0.08) {
-      next.set(id, { x: position.x, y: position.y, vx, vy });
-    }
+  if (!source.dragging) {
+    source.vx += fx;
+    source.vy += fy;
   }
-
-  nodeImpulses = next;
-  return nodeImpulses.size > 0;
+  if (!target.dragging) {
+    target.vx -= fx;
+    target.vy -= fy;
+  }
 }
 
-function ambientTick(timestamp) {
-  ambientFrame = null;
-  const delta = lastMotionTick ? Math.min(80, timestamp - lastMotionTick) : 16.67;
-  lastMotionTick = timestamp;
+function applyClusterSeparation(nodes, delta) {
+  const collidable = nodes.filter((node) => node.type === "cluster");
+  if (activeCluster !== "all" || query.trim()) {
+    collidable.push(...nodes.filter((node) => node.type === "repo").slice(0, 36));
+  }
 
-  if (prefersReducedMotion()) {
-    if (nodeImpulses.size) {
-      nodeImpulses = new Map();
-      scheduleMotionPaint();
+  for (let first = 0; first < collidable.length; first += 1) {
+    for (let second = first + 1; second < collidable.length; second += 1) {
+      const a = collidable[first];
+      const b = collidable[second];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const distance = Math.max(0.001, Math.hypot(dx, dy));
+      const desired = a.r + b.r + (a.type === "cluster" || b.type === "cluster" ? 18 : 8);
+      if (distance >= desired) continue;
+
+      const force = ((desired - distance) / desired) * 0.52 * delta;
+      const fx = (dx / distance) * force;
+      const fy = (dy / distance) * force;
+      if (!a.dragging) {
+        a.vx -= fx;
+        a.vy -= fy;
+      }
+      if (!b.dragging) {
+        b.vx += fx;
+        b.vy += fy;
+      }
     }
-    ambientFrame = window.requestAnimationFrame(ambientTick);
+  }
+}
+
+function stepGraphPhysics(timestamp) {
+  physicsFrame = null;
+  const delta = Math.min(MAX_SIMULATION_STEP, Math.max(0.45, (timestamp - (lastPhysicsTick || timestamp)) / FRAME_MS || 1));
+  lastPhysicsTick = timestamp;
+
+  if (!physicsNodes.size || document.visibilityState === "hidden") {
+    startAmbientMotionLoop();
     return;
   }
 
-  motionClock = timestamp;
-  const impulsesActive = updateNodeImpulses(delta);
-  const paintInterval = impulsesActive ? AMBIENT_FRAME_INTERVAL * 0.75 : AMBIENT_FRAME_INTERVAL;
-  const shouldPaint = document.visibilityState !== "hidden"
-    && timestamp - lastAmbientPaint >= paintInterval
-    && (!graphInteractionActive() || impulsesActive);
+  const reducedMotion = prefersReducedMotion();
+  const nodes = [...physicsNodes.values()];
 
-  if (shouldPaint) {
-    lastAmbientPaint = timestamp;
-    scheduleMotionPaint();
+  if (reducedMotion) {
+    for (const node of nodes) {
+      node.vx = 0;
+      node.vy = 0;
+      node.x += (node.anchorX - node.x) * 0.35;
+      node.y += (node.anchorY - node.y) * 0.35;
+    }
+    paintGraphMotion();
+    startAmbientMotionLoop();
+    return;
   }
 
-  ambientFrame = window.requestAnimationFrame(ambientTick);
+  for (const node of nodes) {
+    if (node.dragging) continue;
+    const ambient = ambientOffsetForNode(node, timestamp);
+    const targetX = node.anchorX + ambient.x;
+    const targetY = node.anchorY + ambient.y;
+    const anchorSpring = node.type === "cluster" ? 0.043 : 0.036;
+    node.vx += (targetX - node.x) * anchorSpring * delta;
+    node.vy += (targetY - node.y) * anchorSpring * delta;
+  }
+
+  const compactAllNodes = isCompactViewport() && graphMode === "all" && activeCluster === "all" && !query.trim();
+  for (const edge of physicsEdges) {
+    if (compactAllNodes && edge.type === "secondary") continue;
+    const source = physicsNodes.get(edge.sourceId);
+    const target = physicsNodes.get(edge.targetId);
+    if (!source || !target) continue;
+    const strength = edge.type === "primary" ? 0.0038 : 0.0013;
+    addSpringForce(source, target, edge.restLength, strength, delta);
+  }
+
+  applyClusterSeparation(nodes, delta);
+
+  const damping = Math.pow(graphInteractionActive() ? 0.82 : 0.9, delta);
+  for (const node of nodes) {
+    if (node.dragging) continue;
+    node.vx = clamp(node.vx * damping, -18, 18);
+    node.vy = clamp(node.vy * damping, -18, 18);
+
+    const next = clampNodePoint(node, {
+      x: node.x + node.vx * delta,
+      y: node.y + node.vy * delta,
+    });
+    if (next.x !== node.x + node.vx * delta) node.vx *= -0.18;
+    if (next.y !== node.y + node.vy * delta) node.vy *= -0.18;
+    node.x = next.x;
+    node.y = next.y;
+  }
+
+  paintGraphMotion();
+  startAmbientMotionLoop();
 }
 
 function startAmbientMotionLoop() {
-  if (ambientFrame) return;
-  motionClock = performance.now();
-  lastAmbientPaint = 0;
-  ambientFrame = window.requestAnimationFrame(ambientTick);
+  if (physicsFrame) return;
+  physicsFrame = window.requestAnimationFrame(stepGraphPhysics);
 }
 
 function graphPointFromEvent(event) {
@@ -745,7 +867,9 @@ function renderGraph() {
       : "All-node view: every visible repository is shown in the graph.";
 
   const { nodes, edges } = layoutNodes(visibleRepos, { clusterOverview });
-  applyMotionToLayout(nodes);
+  syncPhysicsLayout(nodes, edges);
+  const renderNodes = renderNodesFromPhysics(nodes);
+  const renderNodeById = new Map(renderNodes.map((node) => [node.id, node]));
   const viewportGroup = createSvgElement("g", {
     class: "graph-viewport",
     transform: graphTransformAttribute(),
@@ -757,25 +881,28 @@ function renderGraph() {
   svg.append(viewportGroup);
 
   for (const edge of edges) {
+    const source = renderNodeById.get(edge.source.id) || edge.source;
+    const target = renderNodeById.get(edge.target.id) || edge.target;
     const selectedNeighborhood = selectedName
       && (edge.source.repo?.name === selectedName || edge.target.repo?.name === selectedName);
     if (edge.type === "secondary" && !showSecondaryEdges && !selectedNeighborhood) continue;
     const line = createSvgElement("line", {
       class: `edge ${edge.type} ${selectedNeighborhood ? "selected-neighborhood" : ""}`,
-      x1: edge.source.x,
-      y1: edge.source.y,
-      x2: edge.target.x,
-      y2: edge.target.y,
+      x1: source.x,
+      y1: source.y,
+      x2: target.x,
+      y2: target.y,
     });
     edgeGroup.append(line);
     graphEdgeElements.push({
       element: line,
       sourceId: edge.source.id,
       targetId: edge.target.id,
+      type: edge.type,
     });
   }
 
-  for (const node of nodes) {
+  for (const node of renderNodes) {
     const group = createSvgElement("g", {
       class: `node ${node.type} ${selectedRepo?.name === node.repo?.name ? "selected" : ""}`,
       transform: `translate(${node.x} ${node.y})`,
@@ -808,7 +935,11 @@ function renderGraph() {
     }
 
     group.addEventListener("pointerdown", (event) => startDrag(event, node, group));
-    group.addEventListener("click", () => {
+    group.addEventListener("click", (event) => {
+      if (performance.now() < suppressNodeClickUntil) {
+        event.preventDefault();
+        return;
+      }
       if (node.type === "repo") selectRepo(node.repo);
       if (node.type === "cluster") {
         activeCluster = node.cluster;
@@ -847,20 +978,19 @@ function scheduleGraphRender() {
 function paintGraphMotion() {
   if (!graphNodeElements.size) return;
 
-  const visibleRepos = getVisibleRepos();
-  const clusterOverview = isClusterOverview(visibleRepos);
-  const { nodes } = layoutNodes(visibleRepos, { clusterOverview });
-  applyMotionToLayout(nodes);
-  const nodeById = new Map(nodes.map((node) => [node.id, node]));
-
   for (const [id, element] of graphNodeElements) {
-    const node = nodeById.get(id);
+    const node = physicsNodes.get(id);
     if (node) element.setAttribute("transform", `translate(${node.x} ${node.y})`);
   }
 
+  const skipSecondaryDuringDenseTouch = isCompactViewport()
+    && graphMode === "all"
+    && graphInteractionActive();
+
   for (const edgeRef of graphEdgeElements) {
-    const source = nodeById.get(edgeRef.sourceId);
-    const target = nodeById.get(edgeRef.targetId);
+    if (skipSecondaryDuringDenseTouch && edgeRef.type === "secondary") continue;
+    const source = physicsNodes.get(edgeRef.sourceId);
+    const target = physicsNodes.get(edgeRef.targetId);
     if (!source || !target) continue;
     edgeRef.element.setAttribute("x1", source.x);
     edgeRef.element.setAttribute("y1", source.y);
@@ -895,91 +1025,48 @@ function prefersReducedMotion() {
 }
 
 function stopMomentum() {
-  if (momentumFrame) {
-    window.cancelAnimationFrame(momentumFrame);
-    momentumFrame = null;
-  }
-}
-
-function shiftNodePosition(id, dx, dy, margin) {
-  const width = svg.clientWidth || 900;
-  const height = svg.clientHeight || 560;
-  const current = nodePositions.get(id);
-  if (!current) return;
-  nodePositions.set(id, {
-    x: clamp(current.x + dx, margin, width - margin),
-    y: clamp(current.y + dy, margin, height - margin),
-  });
-}
-
-function startMomentum(items, velocity) {
-  if (prefersReducedMotion()) return;
-  let vx = clamp(velocity.x, -20, 20);
-  let vy = clamp(velocity.y, -20, 20);
-  if (Math.hypot(vx, vy) < 1) return;
-
-  const step = () => {
-    vx *= 0.87;
-    vy *= 0.87;
-
-    for (const item of items) {
-      shiftNodePosition(item.id, vx * item.influence, vy * item.influence, item.margin);
-    }
-
-    scheduleMotionPaint();
-
-    if (Math.hypot(vx, vy) > 0.26) {
-      momentumFrame = window.requestAnimationFrame(step);
-    } else {
-      momentumFrame = null;
-    }
-  };
-
-  momentumFrame = window.requestAnimationFrame(step);
+  if (!dragTarget) return;
+  const node = physicsNodes.get(dragTarget.nodeId);
+  if (node) node.dragging = false;
+  dragTarget.group?.classList.remove("dragging");
+  svg.classList.remove("is-dragging");
+  dragTarget = null;
+  window.removeEventListener("pointermove", dragMove);
 }
 
 function startDrag(event, node, group) {
   event.preventDefault();
   event.stopPropagation();
   stopMomentum();
+  clearGraphGesture();
   try {
     group.setPointerCapture(event.pointerId);
   } catch {
     // Synthetic QA events do not always create an active pointer capture target.
   }
-  const start = { x: event.clientX, y: event.clientY, nodeX: node.x, nodeY: node.y };
-  const visibleRepos = getVisibleRepos();
-  const layout = layoutNodes(visibleRepos, { clusterOverview: isClusterOverview(visibleRepos) });
-  const related = [];
-
-  if (node.type === "cluster") {
-    for (const relatedNode of layout.nodes) {
-      if (relatedNode.type === "repo" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.78, margin: 24 });
-      }
-    }
-  }
-
-  if (node.type === "repo") {
-    for (const relatedNode of layout.nodes) {
-      if (relatedNode.type === "cluster" && relatedNode.cluster === node.cluster) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.2, margin: 64 });
-      }
-      if (relatedNode.type === "cluster" && (node.repo.secondary_clusters || []).includes(relatedNode.cluster)) {
-        related.push({ id: relatedNode.id, x: relatedNode.x, y: relatedNode.y, influence: 0.12, margin: 64 });
-      }
-    }
-  }
+  const physicsNode = physicsNodes.get(node.id);
+  if (!physicsNode) return;
+  const point = graphWorldPointFromEvent(event);
+  physicsNode.dragging = true;
+  physicsNode.vx = 0;
+  physicsNode.vy = 0;
 
   dragTarget = {
-    node,
+    nodeId: node.id,
+    nodeType: node.type,
     group,
-    start,
-    related,
-    last: { x: event.clientX, y: event.clientY, t: performance.now() },
+    pointerOffset: {
+      x: physicsNode.x - point.x,
+      y: physicsNode.y - point.y,
+    },
+    lastPoint: point,
+    lastPosition: { x: physicsNode.x, y: physicsNode.y },
+    lastTime: performance.now(),
     velocity: { x: 0, y: 0 },
+    moved: false,
   };
   group.classList.add("dragging");
+  svg.classList.add("is-dragging");
 
   window.addEventListener("pointermove", dragMove);
   window.addEventListener("pointerup", endDrag, { once: true });
@@ -988,69 +1075,47 @@ function startDrag(event, node, group) {
 
 function dragMove(event) {
   if (!dragTarget) return;
-  const { node, start, related } = dragTarget;
+  event.preventDefault();
+  const node = physicsNodes.get(dragTarget.nodeId);
+  if (!node) return;
   const now = performance.now();
-  const elapsed = Math.max(16, now - dragTarget.last.t);
-  const scale = graphTransform.scale || 1;
-  dragTarget.velocity = {
-    x: (((event.clientX - dragTarget.last.x) / scale) / elapsed) * 18,
-    y: (((event.clientY - dragTarget.last.y) / scale) / elapsed) * 18,
-  };
-  dragTarget.last = { x: event.clientX, y: event.clientY, t: now };
-
-  const dx = (event.clientX - start.x) / scale;
-  const dy = (event.clientY - start.y) / scale;
-  const width = svg.clientWidth || 900;
-  const height = svg.clientHeight || 560;
-  const margin = node.type === "cluster" ? 64 : 24;
-
-  nodePositions.set(node.id, {
-    x: clamp(start.nodeX + dx, margin, width - margin),
-    y: clamp(start.nodeY + dy, margin, height - margin),
+  const elapsed = Math.max(8, now - dragTarget.lastTime);
+  const point = graphWorldPointFromEvent(event);
+  const next = clampNodePoint(node, {
+    x: point.x + dragTarget.pointerOffset.x,
+    y: point.y + dragTarget.pointerOffset.y,
   });
+  const movement = Math.hypot(next.x - dragTarget.lastPosition.x, next.y - dragTarget.lastPosition.y);
 
-  for (const item of related) {
-    const relatedMargin = item.id.startsWith("cluster:") ? 64 : 24;
-    nodePositions.set(item.id, {
-      x: clamp(item.x + dx * item.influence, relatedMargin, width - relatedMargin),
-      y: clamp(item.y + dy * item.influence, relatedMargin, height - relatedMargin),
-    });
+  if (movement > 0.5) {
+    dragTarget.moved = true;
+    suppressNodeClickUntil = now + 320;
   }
 
+  node.vx = clamp(((next.x - dragTarget.lastPosition.x) / elapsed) * FRAME_MS, -16, 16);
+  node.vy = clamp(((next.y - dragTarget.lastPosition.y) / elapsed) * FRAME_MS, -16, 16);
+  node.x = next.x;
+  node.y = next.y;
+  dragTarget.velocity = { x: node.vx, y: node.vy };
+  dragTarget.lastPoint = point;
+  dragTarget.lastPosition = next;
+  dragTarget.lastTime = now;
   scheduleMotionPaint();
 }
 
 function endDrag() {
   if (!dragTarget) return;
-  dragTarget.group.classList.remove("dragging");
-  const currentPosition = nodePositions.get(dragTarget.node.id);
-  const fallbackVelocity = currentPosition
-    ? {
-        x: (currentPosition.x - dragTarget.start.nodeX) * 0.13,
-        y: (currentPosition.y - dragTarget.start.nodeY) * 0.13,
-      }
-    : { x: 0, y: 0 };
-  const momentumItems = [
-    {
-      id: dragTarget.node.id,
-      influence: 1,
-      margin: dragTarget.node.type === "cluster" ? 64 : 24,
-    },
-    ...dragTarget.related.map((item) => ({
-      id: item.id,
-      influence: item.influence,
-      margin: item.margin || (item.id.startsWith("cluster:") ? 64 : 24),
-    })),
-  ];
-  const velocity = Math.hypot(dragTarget.velocity.x, dragTarget.velocity.y) > 1.2
-    ? dragTarget.velocity
-    : fallbackVelocity;
-  for (const item of momentumItems) {
-    addNodeImpulse(item.id, { x: velocity.x * 0.12, y: velocity.y * 0.12 }, item.influence);
+  const node = physicsNodes.get(dragTarget.nodeId);
+  if (node) {
+    node.dragging = false;
+    node.vx = clamp(dragTarget.velocity.x, -14, 14);
+    node.vy = clamp(dragTarget.velocity.y, -14, 14);
   }
+  if (dragTarget.moved) suppressNodeClickUntil = performance.now() + 360;
+  dragTarget.group.classList.remove("dragging");
+  svg.classList.remove("is-dragging");
   dragTarget = null;
   window.removeEventListener("pointermove", dragMove);
-  startMomentum(momentumItems, velocity);
   startAmbientMotionLoop();
 }
 

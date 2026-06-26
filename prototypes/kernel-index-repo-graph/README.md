@@ -22,9 +22,9 @@ It does not replace the live root site or define the future homepage.
 - On mobile, tapping empty graph space from a focused cluster returns to the cluster overview without using the full reset.
 - Mobile supports dependency-free pinch zoom and lightweight background panning when zoomed.
 - The all-repository view keeps labels restrained; labels become more available in focused, filtered, or selected states.
-- Dragging uses lightweight elastic influence plus tuned post-release momentum without adding dependencies.
-- The graph uses visible but bounded ambient motion so nodes feel alive while staying near stable layout positions; reduced-motion users receive heavily damped behavior.
-- Dense mobile graph interactions update existing SVG elements in place to avoid flashing or heavy re-render latency.
+- Dragging uses a small dependency-free physics loop with direct drag ownership, spring-back, and linked-node response.
+- The graph uses visible but bounded ambient motion so nodes feel alive while staying near stable anchor positions; reduced-motion users receive no ambient drift.
+- Dense mobile graph interactions update existing SVG elements in place, avoid full graph rebuilds, and damp secondary-edge painting during touch drags.
 - The Games cluster is explicitly used for `brrrdle` and `brrrdle-dev`.
 - The repository index is collapsed by default and opens to the most recently updated 25 repositories, with a show-all option for deeper review.
 - Mobile uses a compact explorer layout with graph, filters, selected detail, and card-style list rows instead of a desktop dashboard stack.
