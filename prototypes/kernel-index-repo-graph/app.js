@@ -5,10 +5,22 @@ const RECENT_TABLE_LIMIT = 25;
 const MOBILE_BREAKPOINT = 620;
 const MIN_GRAPH_SCALE = 0.72;
 const MAX_GRAPH_SCALE = 2.4;
-const AMBIENT_FRAME_INTERVAL = 66;
+const AMBIENT_FRAME_INTERVAL = 50;
 const PRIMARY_CLUSTER_OVERRIDES = new Map([
   ["brrrdle", "games"],
   ["brrrdle-dev", "games"],
+]);
+const CLUSTER_OVERVIEW_ANCHORS = new Map([
+  ["s26-airp", { x: 0.52, y: 0.36 }],
+  ["ai-ml", { x: 0.78, y: 0.42 }],
+  ["research-software", { x: 0.79, y: 0.67 }],
+  ["computational-biology", { x: 0.72, y: 0.22 }],
+  ["data-tooling", { x: 0.58, y: 0.76 }],
+  ["web-portfolio", { x: 0.34, y: 0.74 }],
+  ["games", { x: 0.17, y: 0.57 }],
+  ["interactive", { x: 0.21, y: 0.36 }],
+  ["writing-docs", { x: 0.31, y: 0.22 }],
+  ["other", { x: 0.49, y: 0.18 }],
 ]);
 
 const clusterDefinitions = [
@@ -72,6 +84,8 @@ let listExpanded = false;
 let showAllRows = false;
 let graphRenderRequest = null;
 let motionPaintRequest = null;
+let transformPaintRequest = null;
+let graphViewportElement = null;
 let graphNodeElements = new Map();
 let graphEdgeElements = [];
 let graphMode = "clusters";
@@ -341,7 +355,7 @@ function resetGraphMotion() {
   nodeImpulses = new Map();
   lastMotionTick = 0;
   motionClock = performance.now();
-  scheduleGraphRender();
+  scheduleMotionPaint();
 }
 
 function boundedVector(vector, limit) {
@@ -361,11 +375,11 @@ function ambientOffsetForNode(node) {
   const interactionDamp = graphInteractionActive() ? 0.2 : 1;
   const modeDamp = allNodeDense ? 0.55 : focused ? 0.78 : 0.92;
   const baseAmplitude = node.type === "cluster"
-    ? compact ? 1.7 : 2.35
-    : compact ? 0.75 : 1.35;
+    ? compact ? 3.7 : 4.5
+    : compact ? 1.6 : 2.4;
   const amplitude = baseAmplitude * modeDamp * interactionDamp;
   const phase = (seed % 6283) / 1000;
-  const drift = motionClock * (0.00016 + (seed % 5) * 0.000012);
+  const drift = motionClock * (0.00042 + (seed % 5) * 0.000024);
 
   return {
     x: Math.sin(drift + phase) * amplitude
@@ -386,7 +400,7 @@ function applyMotionToLayout(nodes) {
     node.stableY = node.y;
     const ambient = ambientOffsetForNode(node);
     const impulse = impulseOffsetForNode(node.id);
-    const limit = node.type === "cluster" ? 6.5 : 4.8;
+    const limit = node.type === "cluster" ? 8 : 6;
     const offset = boundedVector({
       x: ambient.x + impulse.x,
       y: ambient.y + impulse.y,
@@ -508,7 +522,7 @@ function returnToMobileClusterOverview() {
   return true;
 }
 
-function buildAggregateClusterEdges(clusterNodes, grouped) {
+function buildAggregateClusterEdges(clusterNodes, grouped, limit = 14) {
   const hubs = new Map(clusterNodes.map((node) => [node.cluster, node]));
   const edgeWeights = new Map();
 
@@ -524,7 +538,7 @@ function buildAggregateClusterEdges(clusterNodes, grouped) {
 
   return [...edgeWeights.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 14)
+    .slice(0, limit)
     .map(([key, weight]) => {
       const [sourceId, targetId] = key.split("::");
       return {
@@ -576,6 +590,52 @@ function buildRepositoryAffinityEdges(repoNodes, limit) {
   return edges;
 }
 
+function clusterOverviewPosition(cluster, index, total, width, height, margin) {
+  const anchor = CLUSTER_OVERVIEW_ANCHORS.get(cluster.id);
+  if (anchor) {
+    return {
+      x: clamp(width * anchor.x, margin, width - margin),
+      y: clamp(height * anchor.y, margin, height - margin),
+    };
+  }
+
+  const seed = hashString(cluster.id);
+  const xBand = 0.18 + ((seed % 53) / 53) * 0.64;
+  const yBand = 0.2 + (((seed >> 5) % 47) / 47) * 0.58;
+  const stagger = total > 1 ? (index / (total - 1) - 0.5) * 0.16 : 0;
+
+  return {
+    x: clamp(width * (xBand + stagger), margin, width - margin),
+    y: clamp(height * yBand, margin, height - margin),
+  };
+}
+
+function relaxClusterNodes(nodes, width, height, margin) {
+  if (nodes.length < 2) return;
+  const minDistance = Math.max(78, Math.min(width, height) * 0.19);
+
+  for (let pass = 0; pass < 12; pass += 1) {
+    for (let first = 0; first < nodes.length; first += 1) {
+      for (let second = first + 1; second < nodes.length; second += 1) {
+        const a = nodes[first];
+        const b = nodes[second];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const distance = Math.max(0.001, Math.hypot(dx, dy));
+        if (distance >= minDistance) continue;
+
+        const push = ((minDistance - distance) / distance) * 0.42;
+        const x = dx * push;
+        const y = dy * push;
+        a.x = clamp(a.x - x, margin, width - margin);
+        a.y = clamp(a.y - y, margin, height - margin);
+        b.x = clamp(b.x + x, margin, width - margin);
+        b.y = clamp(b.y + y, margin, height - margin);
+      }
+    }
+  }
+}
+
 function layoutNodes(visibleRepos, options = {}) {
   const width = svg.clientWidth || 900;
   const height = svg.clientHeight || 560;
@@ -594,8 +654,11 @@ function layoutNodes(visibleRepos, options = {}) {
 
   grouped.forEach((cluster, index) => {
     const angle = grouped.length === 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / grouped.length - Math.PI / 2;
-    const defaultX = centerX + Math.cos(angle) * clusterRadius;
-    const defaultY = centerY + Math.sin(angle) * clusterRadius * (clusterOverview ? 0.92 : 0.78);
+    const organicPosition = clusterOverview
+      ? clusterOverviewPosition(cluster, index, grouped.length, width, height, clusterMargin)
+      : null;
+    const defaultX = organicPosition?.x ?? centerX + Math.cos(angle) * clusterRadius;
+    const defaultY = organicPosition?.y ?? centerY + Math.sin(angle) * clusterRadius * 0.78;
     const key = `cluster:${cluster.id}`;
     const saved = nodePositions.get(key);
     const clusterNode = {
@@ -646,7 +709,8 @@ function layoutNodes(visibleRepos, options = {}) {
   });
 
   if (clusterOverview) {
-    edgeList.push(...buildAggregateClusterEdges(clusterNodes, grouped));
+    relaxClusterNodes(clusterNodes, width, height, clusterMargin);
+    edgeList.push(...buildAggregateClusterEdges(clusterNodes, grouped, compact ? 5 : 8));
     return { nodes: clusterNodes, edges: edgeList };
   }
 
@@ -664,8 +728,11 @@ function renderGraph() {
   const selectedName = selectedRepo?.name;
   emptyGraph.hidden = visibleRepos.length > 0;
   svg.innerHTML = "";
+  graphViewportElement = null;
   graphNodeElements = new Map();
   graphEdgeElements = [];
+  svg.dataset.graphMode = clusterOverview ? "clusters" : graphMode;
+  svg.dataset.compact = String(compactViewport);
 
   clusterViewButton.setAttribute("aria-pressed", String(clusterOverview));
   allNodesButton.setAttribute("aria-pressed", String(!clusterOverview));
@@ -683,6 +750,7 @@ function renderGraph() {
     class: "graph-viewport",
     transform: graphTransformAttribute(),
   });
+  graphViewportElement = viewportGroup;
   const edgeGroup = createSvgElement("g", { class: "edges" });
   const nodeGroup = createSvgElement("g", { class: "nodes" });
   viewportGroup.append(edgeGroup, nodeGroup);
@@ -766,6 +834,10 @@ function scheduleGraphRender() {
     window.cancelAnimationFrame(motionPaintRequest);
     motionPaintRequest = null;
   }
+  if (transformPaintRequest) {
+    window.cancelAnimationFrame(transformPaintRequest);
+    transformPaintRequest = null;
+  }
   graphRenderRequest = window.requestAnimationFrame(() => {
     graphRenderRequest = null;
     renderGraph();
@@ -805,6 +877,19 @@ function scheduleMotionPaint() {
   });
 }
 
+function paintGraphTransform() {
+  if (!graphViewportElement) return;
+  graphViewportElement.setAttribute("transform", graphTransformAttribute());
+}
+
+function scheduleTransformPaint() {
+  if (transformPaintRequest || graphRenderRequest) return;
+  transformPaintRequest = window.requestAnimationFrame(() => {
+    transformPaintRequest = null;
+    paintGraphTransform();
+  });
+}
+
 function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
@@ -841,7 +926,7 @@ function startMomentum(items, velocity) {
       shiftNodePosition(item.id, vx * item.influence, vy * item.influence, item.margin);
     }
 
-    scheduleGraphRender();
+    scheduleMotionPaint();
 
     if (Math.hypot(vx, vy) > 0.26) {
       momentumFrame = window.requestAnimationFrame(step);
@@ -932,7 +1017,7 @@ function dragMove(event) {
     });
   }
 
-  scheduleGraphRender();
+  scheduleMotionPaint();
 }
 
 function endDrag() {
@@ -1043,7 +1128,7 @@ function graphPointerMove(event) {
       y: midpoint.y - worldY * nextScale,
     });
     graphGesture.moved = true;
-    scheduleGraphRender();
+    scheduleTransformPaint();
     return;
   }
 
@@ -1064,7 +1149,7 @@ function graphPointerMove(event) {
       x: graphGesture.startTransform.x + dx,
       y: graphGesture.startTransform.y + dy,
     });
-    scheduleGraphRender();
+    scheduleTransformPaint();
   }
 }
 

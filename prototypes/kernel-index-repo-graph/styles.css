@@ -516,7 +516,6 @@ dd {
 .node {
   cursor: grab;
   transition: opacity 160ms ease;
-  will-change: transform;
 }
 
 .node.dragging {
@@ -552,6 +551,18 @@ dd {
 .node.cluster text {
   font-size: 13px;
   font-weight: 700;
+}
+
+#repo-graph[data-compact="true"][data-graph-mode="all"] .node.repo circle {
+  filter: none;
+}
+
+#repo-graph[data-compact="true"][data-graph-mode="all"] .edge {
+  stroke-width: 0.95;
+}
+
+#repo-graph[data-compact="true"][data-graph-mode="all"] .edge.secondary {
+  stroke-opacity: 0.76;
 }
 
 .graph-empty {
