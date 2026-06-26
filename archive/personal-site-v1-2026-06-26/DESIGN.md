@@ -63,14 +63,6 @@ Before replacing the current live design, build and review multiple directions:
 
 Ryan should choose a preferred direction, or combine elements, before a final implementation pass.
 
-## V2 Restart Note
-
-As of June 26, 2026, the approved V1 static site is preserved as a reference
-snapshot under `archive/personal-site-v1-2026-06-26/`. V2 work should begin as
-isolated concepts and prototypes, should preserve claim-safety boundaries, and
-should not replace the live root until Ryan chooses a direction and explicitly
-authorizes a production rebuild.
-
 ## Technical Direction
 
 Preferred next prototype stack:
