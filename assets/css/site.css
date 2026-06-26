@@ -287,6 +287,39 @@ h3 {
   background: var(--bg-warm);
 }
 
+.repository-section {
+  background: linear-gradient(180deg, var(--bg-warm), var(--surface-soft));
+}
+
+.repository-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  border: 1px solid rgba(174, 190, 196, 0.52);
+  border-radius: 8px;
+  padding: 32px;
+  background:
+    linear-gradient(135deg, rgba(15, 135, 144, 0.08), transparent 36%),
+    rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 54px rgba(23, 32, 39, 0.08);
+}
+
+.repository-callout p {
+  max-width: 720px;
+  color: var(--muted);
+}
+
+.dark-button {
+  background: var(--dark);
+  color: #ffffff;
+}
+
+.dark-button:hover {
+  background: var(--cyan-dark);
+  color: #ffffff;
+}
+
 .split,
 .s26-grid,
 .footer-grid {
@@ -568,6 +601,7 @@ h3 {
 @media (max-width: 920px) {
   .header-inner,
   .section-heading.with-action,
+  .repository-callout,
   .writing-panel,
   .cv-panel {
     align-items: flex-start;
