@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Silent Source Constellation Prototype - Ryan Kamp</title>
+    <meta
+      name="description"
+      content="Isolated V2 personal website prototype exploring a minimal constellation-style public repository graph."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23090a0b'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23ece6d6'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#constellation">Skip to repository constellation</a>
+    <div class="site" data-theme-choice="system">
+      <header class="site-nav" aria-label="Prototype navigation">
+        <a class="wordmark" href="#home" aria-label="Silent Source Constellation home">
+          Ryan Kamp
+        </a>
+        <nav class="nav-links" aria-label="Prototype sections">
+          <a href="#home">Home</a>
+          <a href="#constellation">Repositories</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+        </nav>
+        <fieldset class="theme-switcher" aria-label="Theme">
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="system" checked /> system</label>
+          <label><input type="radio" name="theme" value="dark" /> dark</label>
+          <label><input type="radio" name="theme" value="light" /> light</label>
+        </fieldset>
+      </header>
+
+      <main>
+        <section class="hero" id="home" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="quiet-mark">Silent Source Constellation / V2 prototype</p>
+            <h1 id="hero-title">A quieter map of public work.</h1>
+            <p>
+              A minimalist personal-site direction for projects, writing, portfolio material,
+              and a live-feeling GitHub repository graph.
+            </p>
+            <div class="hero-links" aria-label="Primary prototype links">
+              <a href="#constellation">Open repository constellation</a>
+              <a href="#selected-work">Selected work</a>
+              <a href="#s26-note">S26 AIRP note</a>
+            </div>
+          </div>
+          <div class="hero-aside" aria-label="Prototype principles">
+            <p>low labels by default</p>
+            <p>details on focus</p>
+            <p>public metadata only</p>
+            <p>dark / light / system</p>
+          </div>
+        </section>
+
+        <section class="selected-work" id="selected-work" aria-labelledby="selected-title">
+          <div>
+            <p class="quiet-mark">Selected work</p>
+            <h2 id="selected-title">Compact, not exhaustive.</h2>
+          </div>
+          <div class="work-list">
+            <article>
+              <h3>S26 AIRP</h3>
+              <p>
+                AI-assisted research software prototypes, presented with provisional scientific
+                and domain-specific framing.
+              </p>
+            </article>
+            <article>
+              <h3>Repository constellation</h3>
+              <p>
+                A public GitHub map that favors quiet exploration over a dense technical dashboard.
+              </p>
+            </article>
+            <article>
+              <h3>Writing and profile links</h3>
+              <p>
+                Blog, CV, GitHub, and external profile paths remain available without taking over
+                the homepage.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="constellation-section" id="constellation" aria-labelledby="constellation-title">
+          <div class="constellation-head">
+            <div>
+              <p class="quiet-mark">Repository constellation</p>
+              <h2 id="constellation-title">Public GitHub repositories as a star map.</h2>
+            </div>
+            <p>
+              Search or select a star to inspect public repository metadata. Labels stay quiet until
+              the graph has a reason to speak.
+            </p>
+          </div>
+
+          <div class="constellation-layout">
+            <section class="map-panel" aria-label="Repository graph">
+              <div class="map-controls">
+                <label class="search-field" for="repo-search">
+                  <span>search</span>
+                  <input
+                    id="repo-search"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="repository, language, topic, cluster"
+                  />
+                </label>
+                <button class="text-button" id="reset-view" type="button">reset view</button>
+              </div>
+              <div class="canvas-wrap" id="canvas-wrap">
+                <canvas id="repo-canvas" aria-hidden="true"></canvas>
+                <p class="graph-hint" id="graph-hint">Select a star to reveal details.</p>
+              </div>
+              <div class="cluster-row" id="cluster-row" aria-label="Repository clusters"></div>
+              <p class="micro-note">
+                Canvas graph with accessible repository list below. Drag the map, scroll to zoom, or
+                click a star.
+              </p>
+            </section>
+
+            <aside class="inspector" aria-label="Selected repository details">
+              <div class="inspector-inner" id="repo-inspector" tabindex="-1">
+                <p class="quiet-mark">Inspector</p>
+                <h3>Select a repository</h3>
+                <p>
+                  Repository details appear here on focus. This carries forward the useful V1
+                  inspector pattern with a quieter presentation.
+                </p>
+              </div>
+              <section class="activity" aria-labelledby="activity-title">
+                <div>
+                  <p class="quiet-mark">Public repo activity</p>
+                  <h3 id="activity-title">Recent update rhythm</h3>
+                </div>
+                <div class="activity-bars" id="activity-bars" aria-label="Recent public repository update activity"></div>
+                <p class="micro-note">
+                  Public repository metadata approximation, not the official GitHub contribution
+                  calendar.
+                </p>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="repo-index" aria-labelledby="repo-index-title">
+          <div>
+            <p class="quiet-mark">Accessible list</p>
+            <h2 id="repo-index-title">Repository index</h2>
+            <p>
+              The graph is visual; this list keeps the same public repository content available as
+              text.
+            </p>
+          </div>
+          <div class="repo-list" id="repo-list"></div>
+        </section>
+
+        <section class="s26-note" id="s26-note" aria-labelledby="s26-title">
+          <p class="quiet-mark">S26 AIRP framing</p>
+          <h2 id="s26-title">Careful by default.</h2>
+          <p>
+            S26 AIRP entries are AI-assisted research software prototypes. Scientific and
+            domain-specific content is provisional and is not presented as independently validated
+            scientific output.
+          </p>
+        </section>
+      </main>
+    </div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
