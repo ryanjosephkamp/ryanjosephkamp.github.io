@@ -33,6 +33,7 @@ const els = {
   list: document.querySelector("#repo-list"),
   activity: document.querySelector("#activity-bars"),
   hint: document.querySelector("#graph-hint"),
+  filterSummary: document.querySelector("#filter-summary"),
   themeInputs: [...document.querySelectorAll("input[name='theme']")],
 };
 
@@ -198,11 +199,26 @@ function updateVisibility() {
   }
   if (state.selected && !state.selected.visible) {
     state.selected = null;
-    renderInspector(null);
+    renderPassiveInspector();
   }
   renderList();
+  updateFilterSummary();
   updateHint();
   requestDraw();
+}
+
+function getActiveCluster() {
+  return state.clusters.find((cluster) => cluster.id === state.cluster) || null;
+}
+
+function updateFilterSummary() {
+  if (!els.filterSummary) return;
+  const count = state.nodes.filter((node) => node.visible).length;
+  const cluster = getActiveCluster();
+  const noun = count === 1 ? "repository" : "repositories";
+  const clusterPart = cluster ? ` in ${cluster.label}` : "";
+  const queryPart = state.query ? ` matching "${state.query}"` : "";
+  els.filterSummary.textContent = `Showing ${count} public ${noun}${clusterPart}${queryPart}.`;
 }
 
 function updateHint() {
@@ -423,6 +439,14 @@ function renderClusterInspector(clusterId) {
   `;
 }
 
+function renderPassiveInspector() {
+  if (state.cluster === "all") {
+    renderInspector(null);
+    return;
+  }
+  renderClusterInspector(state.cluster);
+}
+
 function renderClusters() {
   els.clusters.innerHTML = "";
   const all = document.createElement("button");
@@ -553,7 +577,7 @@ function bindEvents() {
   els.search.addEventListener("input", () => {
     state.query = els.search.value.trim();
     state.selected = null;
-    renderInspector(null);
+    renderPassiveInspector();
     updateVisibility();
   });
   els.reset.addEventListener("click", resetView);
