@@ -23,4 +23,4 @@ systemDark.addEventListener("change", () => {
   }
 });
 
-setTheme(localStorage.getItem(THEME_KEY) || "light");
+setTheme(localStorage.getItem(THEME_KEY) || "system");

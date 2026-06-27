@@ -285,6 +285,7 @@ main,
 
 .focus-list article {
   display: block;
+  border-bottom: 1px solid var(--line);
 }
 
 .repo-layout {

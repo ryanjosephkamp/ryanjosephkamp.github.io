@@ -29,6 +29,7 @@ test.describe("V2 production candidate QA", () => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
+      await expect(page.getByLabel("system")).toBeChecked();
       await expect(page.locator("header").getByRole("link", { name: "Focus" })).toHaveCount(0);
       await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
       await expect(page.locator("footer").getByRole("link", { name: "CV" })).toBeVisible();
@@ -51,6 +52,14 @@ test.describe("V2 production candidate QA", () => {
       await expect(page.getByRole("link", { name: "Repositories" }).first()).toBeVisible();
       await expect(page.getByRole("heading", { name: "Current focus" })).toBeVisible();
       await expect(page.locator("#work")).toContainText("agentic AI systems");
+      await expect(page.locator(".intro strong", { hasText: "Ryan Kamp" })).toBeVisible();
+      await expect(page.locator("#work strong")).toHaveText([
+        "agentic AI systems",
+        "explainable AI",
+        "generative models",
+        "LLMs",
+        "benchmarking/evaluation",
+      ]);
       await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
@@ -66,6 +75,7 @@ test.describe("V2 production candidate QA", () => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/repositories/");
       await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
+      await expect(page.getByLabel("system")).toBeChecked();
       await expect(page.locator("header").getByRole("link", { name: "Projects" })).toHaveCount(0);
       await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
       await expect(page.locator("footer").getByRole("link", { name: "CV" })).toBeVisible();
