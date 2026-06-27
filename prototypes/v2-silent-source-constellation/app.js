@@ -390,6 +390,39 @@ function renderInspector(repo) {
   `;
 }
 
+function renderClusterInspector(clusterId) {
+  const cluster = state.clusters.find((item) => item.id === clusterId);
+  if (!cluster) {
+    renderInspector(null);
+    return;
+  }
+
+  const repos = state.repos.filter((repo) => repo.cluster === clusterId);
+  const languages = [...new Set(repos.map((repo) => repo.language).filter(Boolean))].slice(0, 5);
+  const recent = repos
+    .map((repo) => repo.pushed_at || repo.updated_at || repo.created_at)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b) - new Date(a))[0];
+  const recentLabel = recent
+    ? new Date(recent).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+    : "Unknown";
+  const s26 =
+    cluster.id === "s26-airp"
+      ? `<p class="small-note">S26 AIRP cluster: AI-assisted research software prototypes. Scientific and domain-specific content is provisional and not presented as validated scientific claims.</p>`
+      : "";
+
+  els.inspector.innerHTML = `
+    <h3>${escapeHtml(cluster.label)}</h3>
+    <p>${repos.length} public repositories in this cluster.</p>
+    ${s26}
+    <dl>
+      <div><dt>Repositories</dt><dd>${repos.length}</dd></div>
+      <div><dt>Languages</dt><dd>${languages.length ? languages.map(escapeHtml).join(", ") : "Unspecified"}</dd></div>
+      <div><dt>Recent update</dt><dd>${recentLabel}</dd></div>
+    </dl>
+  `;
+}
+
 function renderClusters() {
   els.clusters.innerHTML = "";
   const all = document.createElement("button");
@@ -414,7 +447,11 @@ function renderClusters() {
     button.addEventListener("click", () => {
       state.cluster = state.cluster === cluster.id ? "all" : cluster.id;
       state.selected = null;
-      renderInspector(null);
+      if (state.cluster === "all") {
+        renderInspector(null);
+      } else {
+        renderClusterInspector(state.cluster);
+      }
       renderClusters();
       updateVisibility();
     });

@@ -343,6 +343,7 @@ main,
   color: var(--ink);
   font-weight: 650;
   text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
 }
 
 .canvas-wrap {

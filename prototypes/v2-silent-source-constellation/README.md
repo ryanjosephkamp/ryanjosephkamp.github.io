@@ -19,6 +19,7 @@ The prototype combines:
 - Low labels by default; repository names appear on hover/focus/selection.
 - Click a repository point to reveal details in a compact inspector.
 - Minimal repository search and cluster filters.
+- Cluster filters show a compact cluster summary in the same inspector.
 - Site-wide theme control: system, dark, and light.
 - Compact public repository activity strip based on public repository metadata.
 - Accessible repository list fallback.
