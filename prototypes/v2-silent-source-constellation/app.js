@@ -216,7 +216,7 @@ function updateHint() {
 
 function worldToScreen(node) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.74 * state.scale;
+  const base = Math.min(rect.width, rect.height) * 0.68 * state.scale;
   return {
     x: rect.width / 2 + state.panX + node.x * base,
     y: rect.height / 2 + state.panY + node.y * base,
@@ -225,7 +225,7 @@ function worldToScreen(node) {
 
 function screenToWorld(point) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.74 * state.scale;
+  const base = Math.min(rect.width, rect.height) * 0.68 * state.scale;
   return {
     x: (point.x - rect.width / 2 - state.panX) / base,
     y: (point.y - rect.height / 2 - state.panY) / base,
@@ -253,23 +253,22 @@ function draw() {
   const paper = themeColor("--paper");
   const ink = themeColor("--ink");
   const line = themeColor("--line");
-  const muted = themeColor("--muted");
   ctx.fillStyle = paper;
   ctx.fillRect(0, 0, rect.width, rect.height);
 
   const visible = state.nodes.filter((node) => node.visible);
   ctx.save();
-  ctx.lineWidth = 0.7;
+  ctx.lineWidth = 0.6;
   for (let i = 0; i < visible.length; i += 1) {
     const a = visible[i];
     for (let j = i + 1; j < visible.length; j += 1) {
       const b = visible[j];
       if (a.repo.cluster !== b.repo.cluster) continue;
       const distance = Math.hypot(a.x - b.x, a.y - b.y);
-      if (distance > 0.12) continue;
+      if (distance > 0.1) continue;
       const aa = worldToScreen(a);
       const bb = worldToScreen(b);
-      ctx.globalAlpha = Math.max(0.04, 0.16 - distance * 0.7);
+      ctx.globalAlpha = Math.max(0.03, 0.12 - distance * 0.65);
       ctx.strokeStyle = line;
       ctx.beginPath();
       ctx.moveTo(aa.x, aa.y);
@@ -284,10 +283,10 @@ function draw() {
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
     const dim = state.selected && !isSelected && node.repo.cluster !== state.selected.repo.cluster;
-    ctx.globalAlpha = dim ? 0.24 : 0.88;
+    ctx.globalAlpha = dim ? 0.22 : 0.84;
     ctx.fillStyle = nodeColor(node);
     ctx.beginPath();
-    ctx.arc(screen.x, screen.y, node.radius * (isSelected || isHovered ? 1.35 : 1), 0, Math.PI * 2);
+    ctx.arc(screen.x, screen.y, node.radius * (isSelected || isHovered ? 1.28 : 0.92), 0, Math.PI * 2);
     ctx.fill();
 
     if (isSelected || isHovered) {
@@ -295,12 +294,12 @@ function draw() {
       ctx.strokeStyle = ink;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, node.radius * 3.1, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, node.radius * 2.8, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
 
-  const shouldLabel = state.selected || state.hovered || (state.query && visible.length <= 18);
+  const shouldLabel = state.selected || state.hovered || (state.query && visible.length <= 10);
   if (shouldLabel) {
     ctx.globalAlpha = 0.95;
     ctx.fillStyle = ink;
@@ -309,20 +308,14 @@ function draw() {
       ? [state.selected]
       : state.hovered
         ? [state.hovered]
-        : visible.slice(0, 18);
+        : visible.slice(0, 10);
     for (const node of labels) {
       if (!node.visible) continue;
       const screen = worldToScreen(node);
       ctx.fillText(node.repo.name, screen.x + 9, screen.y - 8);
     }
   }
-
   ctx.globalAlpha = 1;
-  ctx.fillStyle = muted;
-  ctx.font = "12px ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-  if (!state.selected && !state.query && visible.length) {
-    ctx.fillText("public repository graph", 14, 22);
-  }
 }
 
 function pickNode(point) {

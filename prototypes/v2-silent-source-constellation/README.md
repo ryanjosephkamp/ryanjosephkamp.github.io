@@ -4,13 +4,13 @@ This is an isolated coded prototype for Ryan's Personal Website V2 direction. It
 
 ## Concept
 
-Working direction: **paper-minimal personal website with an embedded public repository graph**
+Working direction: **paper-minimal personal website with an embedded public repository explorer**
 
 The prototype combines:
 
-- Plaintext Index: sparse homepage and direct navigation.
-- Paper Graph: public repository data shown as a quiet plotted diagram.
-- Source Ledger: compact repository inspector and accessible list fallback.
+- a sparse homepage with direct navigation,
+- public repository data shown as a quiet plotted diagram,
+- a compact repository inspector and accessible list fallback.
 
 ## Features
 

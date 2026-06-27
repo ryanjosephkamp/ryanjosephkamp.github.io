@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Paper Minimal V2 Prototype - Ryan Kamp</title>
+    <title>Ryan Kamp - V2 Paper Minimal Prototype</title>
     <meta
       name="description"
-      content="Isolated V2 personal website prototype with a paper-minimal homepage and public repository graph."
+      content="Isolated V2 personal website prototype with a plain homepage and public repository explorer."
     />
     <link
       rel="icon"
@@ -21,7 +21,7 @@
         <a class="wordmark" href="#home" aria-label="Ryan Kamp home">Ryan Kamp</a>
         <nav class="nav-links" aria-label="Prototype sections">
           <a href="#home">Home</a>
-          <a href="#work">Work</a>
+          <a href="#work">Projects</a>
           <a href="#repositories">Repositories</a>
           <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
           <a href="https://github.com/ryanjosephkamp">GitHub</a>
@@ -36,16 +36,13 @@
 
       <main id="home">
         <section class="intro" aria-labelledby="intro-title">
-          <p class="prototype-note">V2 prototype</p>
+          <p class="prototype-note">Personal website V2</p>
           <h1 id="intro-title">Ryan Kamp</h1>
           <p>
             Computer science graduate student working on research software, evaluation workflows,
             and public project notes.
           </p>
-          <p>
-            This prototype keeps the homepage simple and puts the public GitHub repository graph in
-            a dedicated section.
-          </p>
+          <p>Projects, writing, portfolio materials, and a public repository explorer.</p>
           <ul class="link-list" aria-label="Primary links">
             <li><a href="#repositories">Repositories</a></li>
             <li><a href="#work">Selected work</a></li>
@@ -61,7 +58,7 @@
         <section class="section" id="work" aria-labelledby="work-title">
           <div class="section-head">
             <h2 id="work-title">Selected work</h2>
-            <p>A short overview. The repository list has the broader public GitHub portfolio.</p>
+            <p>A small curated set. See the repository explorer for the broader public GitHub view.</p>
           </div>
           <div class="plain-list">
             <article>
@@ -72,7 +69,7 @@
               </p>
             </article>
             <article>
-              <h3>Repository graph</h3>
+              <h3>Repository explorer</h3>
               <p>
                 Search and filter public GitHub repositories by cluster, language, topic, and update
                 date.
@@ -94,7 +91,7 @@
                 last update, tags, and links.
               </p>
             </div>
-            <p class="small-note">Public snapshot. No token required.</p>
+            <p class="small-note">Public metadata snapshot. No token required.</p>
           </div>
 
           <div class="repo-layout">
@@ -106,7 +103,7 @@
                     id="repo-search"
                     type="search"
                     autocomplete="off"
-                    placeholder="repository, language, topic, cluster"
+                    placeholder="name, language, topic, cluster"
                   />
                 </label>
                 <button class="text-button" id="reset-view" type="button">Reset</button>
@@ -128,7 +125,7 @@
                 </p>
               </section>
               <section class="activity" aria-labelledby="activity-title">
-                <h3 id="activity-title">Recent public updates</h3>
+                <h3 id="activity-title">Public repo activity</h3>
                 <div class="activity-bars" id="activity-bars" aria-label="Recent public repository update activity"></div>
                 <p class="small-note">
                   Approximate view based on public repository timestamps, not GitHub's contribution
