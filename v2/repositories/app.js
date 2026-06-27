@@ -9,7 +9,8 @@ const SORT_OPTIONS = [
   { id: "cluster", label: "cluster" },
 ];
 const finePointer = window.matchMedia("(pointer: fine)");
-const MAX_PASSIVE_LINKS = 260;
+const MAX_PASSIVE_LINKS = 180;
+const MAX_FOCUS_LINKS = 18;
 const SEMANTIC_STOPWORDS = new Set([
   "and",
   "are",
@@ -304,6 +305,32 @@ function isRelatedNode(node, focusedNode) {
   );
 }
 
+function focusLinkCandidates(focusedNode, visible) {
+  return visible
+    .filter((node) => node !== focusedNode)
+    .map((node) => {
+      const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
+      const affinity = semanticAffinity(focusedNode, node);
+      const sameCluster = node.repo.cluster === focusedNode.repo.cluster;
+      const distanceWeight = Math.max(0, 1 - distance / 0.46);
+      return {
+        node,
+        distance,
+        affinity,
+        sameCluster,
+        score: affinity * 1.15 + distanceWeight + (sameCluster ? 0.35 : 0),
+      };
+    })
+    .filter(({ affinity, distance, sameCluster }) => {
+      if (!sameCluster && affinity < 1.65) return false;
+      if (sameCluster && affinity < 1.45 && distance > 0.28) return false;
+      if (distance > 0.46 && affinity < 2.35) return false;
+      return true;
+    })
+    .sort((a, b) => b.score - a.score || a.distance - b.distance)
+    .slice(0, MAX_FOCUS_LINKS);
+}
+
 function clusterAnchor(cluster, index) {
   const known = {
     "s26-airp": { x: -0.04, y: -0.08 },
@@ -515,9 +542,9 @@ function draw() {
       const bb = worldToScreen(b);
       const strength = Math.min(1, Math.max(0, (affinity - 0.8) / 2.4));
       const distanceWeight = Math.max(0, 1 - distance / 0.34);
-      ctx.globalAlpha = Math.min(0.18, 0.035 + strength * 0.075 + distanceWeight * 0.05);
+      ctx.globalAlpha = Math.min(0.105, 0.028 + strength * 0.04 + distanceWeight * 0.035);
       ctx.strokeStyle = strength > 0.72 ? lineStrong : line;
-      ctx.lineWidth = 0.45 + strength * 0.35;
+      ctx.lineWidth = 0.35 + strength * 0.22;
       ctx.beginPath();
       ctx.moveTo(aa.x, aa.y);
       ctx.lineTo(bb.x, bb.y);
@@ -533,18 +560,12 @@ function draw() {
     ctx.save();
     ctx.lineCap = "round";
     ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 1);
-    for (const node of visible) {
-      if (node === focusedNode) continue;
-      const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
-      const affinity = semanticAffinity(focusedNode, node);
-      const sameCluster = node.repo.cluster === focusedNode.repo.cluster;
-      if (!sameCluster && affinity < 1.25) continue;
-      if (distance > 0.5 && affinity < 2.15) continue;
-      const screen = worldToScreen(node);
-      const strength = Math.min(1, Math.max(0.18, affinity / 3.2));
-      const distanceWeight = Math.max(0, 1 - distance / 0.5);
-      ctx.globalAlpha = Math.min(0.88, 0.32 + strength * 0.24 + distanceWeight * 0.34);
-      ctx.lineWidth = 0.82 + strength * 0.85;
+    for (const candidate of focusLinkCandidates(focusedNode, visible)) {
+      const screen = worldToScreen(candidate.node);
+      const strength = Math.min(1, Math.max(0.12, candidate.affinity / 3.4));
+      const distanceWeight = Math.max(0, 1 - candidate.distance / 0.46);
+      ctx.globalAlpha = Math.min(0.42, 0.12 + strength * 0.12 + distanceWeight * 0.13);
+      ctx.lineWidth = 0.48 + strength * 0.45;
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
