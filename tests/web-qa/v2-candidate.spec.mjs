@@ -29,6 +29,7 @@ test.describe("V2 production candidate QA", () => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
+      await expect(page.locator("header").getByRole("link", { name: "Focus" })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Repositories" }).first()).toBeVisible();
       await expect(page.getByRole("heading", { name: "Current focus" })).toBeVisible();
       await expect(page.locator("#s26-note")).toHaveCount(0);
@@ -46,6 +47,7 @@ test.describe("V2 production candidate QA", () => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/repositories/");
       await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
+      await expect(page.locator("header").getByRole("link", { name: "Projects" })).toHaveCount(0);
       await expect(page.locator("#repo-canvas")).toBeVisible();
       await expect(page.locator("#repo-list article").first()).toBeVisible();
       await expectNoPageOverflow(page);
@@ -83,10 +85,36 @@ test.describe("V2 production candidate QA", () => {
     await expect(page.locator("#repo-list-note")).toContainText("Showing 50 of");
     await expect(page.locator("#repo-list article")).toHaveCount(50);
 
-    await page.locator("#repo-list button").first().click();
-    await expect(page.locator("#repo-inspector h2")).toBeVisible();
+    const repoLink = page.locator("#repo-list .repo-row a.repo-name").first();
+    await expect(repoLink).toHaveAttribute("href", /^https:\/\/github\.com\/ryanjosephkamp\//);
+    await expect(repoLink).toHaveAttribute("target", "_blank");
     await expect(page.locator("#s26-note")).toContainText("provisional");
     await expectNoForbiddenVisibleCopy(page);
+  });
+
+  test("repository list links and long names remain readable", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/v2/repositories/");
+    await page.locator("#list-limit-controls").getByRole("button", { name: "all" }).click();
+    await expect(page.locator("#repo-list")).toContainText(
+      "facial-recognition-under-occlusion-project",
+    );
+    await expect(page.locator("#repo-list")).toContainText("perceptual-decision-making-capstone");
+    await expect(page.locator("#repo-list")).not.toContainText(
+      "UC_Graduate_Deep_Learning_Final_Project",
+    );
+    await expect(page.locator("#repo-list")).not.toContainText(
+      "UC_Undergraduate_Research_Capstone",
+    );
+    const rowOverlap = await page.locator("#repo-list .repo-row").evaluateAll((rows) =>
+      rows.some((row) => {
+        const [name, description] = row.children;
+        const nameRect = name.getBoundingClientRect();
+        const descriptionRect = description.getBoundingClientRect();
+        return nameRect.right > descriptionRect.left + 1 && nameRect.top === descriptionRect.top;
+      }),
+    );
+    expect(rowOverlap).toBe(false);
   });
 
   test("candidate pages pass axe without unbaselined violations", async ({ page }) => {

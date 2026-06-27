@@ -1,4 +1,5 @@
 const DATA_URL = "./data/repos.snapshot.json";
+const GITHUB_REPOS_API = "https://api.github.com/users/ryanjosephkamp/repos";
 const EXCLUDED_PATTERN = /\b(grok|grokedex|grokédex|xai|x\.ai)\b/i;
 const DEFAULT_LIST_LIMIT = 25;
 const LIST_LIMITS = [25, 50, 100, "all"];
@@ -37,6 +38,8 @@ const els = {
   activityDetail: document.querySelector("#activity-detail"),
   hint: document.querySelector("#graph-hint"),
   filterSummary: document.querySelector("#filter-summary"),
+  refresh: document.querySelector("#refresh-repos"),
+  refreshStatus: document.querySelector("#refresh-status"),
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: false });
@@ -51,6 +54,82 @@ function normalizeCluster(repo) {
     label: repo.cluster_label || "Other",
     color: repo.cluster_color || "#555555",
   };
+}
+
+function fallbackCluster(repo) {
+  const text = [
+    repo.name,
+    repo.full_name,
+    repo.description,
+    repo.homepage,
+    repo.language,
+    ...(repo.topics || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (text.includes("s26 airp") || repo.name?.startsWith("the-")) {
+    return { cluster: "s26-airp", cluster_label: "S26 AIRP", cluster_color: "#12b886" };
+  }
+  if (/\b(ai|ml|model|neural|transformer|diffusion|llm)\b/.test(text)) {
+    return { cluster: "ai-ml", cluster_label: "AI and ML", cluster_color: "#7c5cff" };
+  }
+  if (/blog|github\.io|portfolio|site|website|web/.test(text)) {
+    return {
+      cluster: "web-portfolio",
+      cluster_label: "Web and Portfolio",
+      cluster_color: "#ffd43b",
+    };
+  }
+  if (/data|dataset|api|automation|parser|cli|tooling/.test(text)) {
+    return { cluster: "data-tooling", cluster_label: "Data and Tooling", cluster_color: "#4dabf7" };
+  }
+  if (/research|experiment|simulation|analysis|pipeline|visualization/.test(text)) {
+    return {
+      cluster: "research-software",
+      cluster_label: "Research Software",
+      cluster_color: "#18c3d7",
+    };
+  }
+  if (/docs|notes|paper|writing|latex|article|capstone/.test(text)) {
+    return { cluster: "writing-docs", cluster_label: "Writing and Docs", cluster_color: "#f783ac" };
+  }
+  return { cluster: "other", cluster_label: "Other / Review", cluster_color: "#adb5bd" };
+}
+
+function mergePublicRepo(repo, previous) {
+  const normalized = {
+    id: repo.id,
+    name: repo.name,
+    full_name: repo.full_name,
+    html_url: repo.html_url,
+    description: repo.description || "",
+    homepage: repo.homepage || "",
+    topics: Array.isArray(repo.topics) ? repo.topics : [],
+    language: repo.language || "Unspecified",
+    created_at: repo.created_at,
+    updated_at: repo.updated_at,
+    pushed_at: repo.pushed_at,
+    fork: Boolean(repo.fork),
+    archived: Boolean(repo.archived),
+    disabled: Boolean(repo.disabled),
+    stargazers_count: repo.stargazers_count || 0,
+    forks_count: repo.forks_count || 0,
+    watchers_count: repo.watchers_count || 0,
+    open_issues_count: repo.open_issues_count || 0,
+    default_branch: repo.default_branch || "",
+    size: repo.size || 0,
+  };
+  const cluster = previous
+    ? {
+        cluster: previous.cluster,
+        cluster_label: previous.cluster_label,
+        cluster_color: previous.cluster_color,
+        secondary_clusters: previous.secondary_clusters || [],
+      }
+    : fallbackCluster(normalized);
+  const tags = [...new Set([...(previous?.tags || []), normalized.language].filter(Boolean))];
+  return { ...normalized, ...cluster, tags };
 }
 
 function cleanRepos(repos) {
@@ -78,6 +157,24 @@ function cleanRepos(repos) {
         cluster_color: cluster.color,
       };
     });
+}
+
+function applyRepositoryData(repos) {
+  const selectedId = state.selected?.repo?.id;
+  state.repos = cleanRepos(repos);
+  state.clusters = buildClusters(state.repos);
+  state.nodes = makeNodes(state.repos, state.clusters);
+  if (state.cluster !== "all" && !state.clusters.some((cluster) => cluster.id === state.cluster)) {
+    state.cluster = "all";
+  }
+  state.selected = state.nodes.find((node) => node.repo.id === selectedId) || null;
+  state.hovered = null;
+  renderClusters();
+  renderActivity();
+  renderListControls();
+  renderInspector(state.selected?.repo || null);
+  resizeCanvas();
+  updateVisibility();
 }
 
 function buildClusters(repos) {
@@ -306,14 +403,14 @@ function draw() {
   if (focusedNode) {
     const focusedScreen = worldToScreen(focusedNode);
     ctx.save();
-    ctx.lineWidth = 0.8;
-    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.24);
+    ctx.lineWidth = 1.05;
+    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.36);
     for (const node of visible) {
       if (node === focusedNode || node.repo.cluster !== focusedNode.repo.cluster) continue;
       const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
       if (distance > 0.34) continue;
       const screen = worldToScreen(node);
-      ctx.globalAlpha = Math.max(0.08, 0.25 - distance * 0.35);
+      ctx.globalAlpha = Math.max(0.12, 0.38 - distance * 0.42);
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
@@ -622,18 +719,16 @@ function renderList() {
     const row = document.createElement("article");
     row.className = "repo-row";
     const label = `${repo.cluster_label || "Repository"}${isS26Repo(repo) ? " - provisional" : ""}`;
+    const repoUrl = safeUrl(repo.html_url);
     row.innerHTML = `
-      <button type="button">${escapeHtml(repo.name)}</button>
+      ${
+        repoUrl
+          ? `<a class="repo-name" href="${repoUrl}" target="_blank" rel="noreferrer">${escapeHtml(repo.name)}</a>`
+          : `<span class="repo-name">${escapeHtml(repo.name)}</span>`
+      }
       <p>${escapeHtml(repo.description || "No public description provided.")}</p>
       <small>${escapeHtml(label)}</small>
     `;
-    row.querySelector("button").addEventListener("click", () => {
-      const node = state.nodes.find((item) => item.repo.id === repo.id);
-      selectNode(node, true);
-      document
-        .querySelector("#repositories")
-        .scrollIntoView({ behavior: "smooth", block: "start" });
-    });
     els.list.append(row);
   }
 }
@@ -670,6 +765,49 @@ function resetView() {
   updateVisibility();
 }
 
+async function fetchGithubRepos() {
+  const repos = [];
+  for (let page = 1; ; page += 1) {
+    const response = await fetch(
+      `${GITHUB_REPOS_API}?sort=updated&direction=desc&per_page=100&page=${page}`,
+      { headers: { Accept: "application/vnd.github+json" } },
+    );
+    if (!response.ok) {
+      throw new Error(`GitHub public API returned ${response.status}`);
+    }
+    const batch = await response.json();
+    repos.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return repos;
+}
+
+async function refreshFromGithub() {
+  if (!els.refresh) return;
+  const previousById = new Map(state.repos.map((repo) => [repo.id, repo]));
+  els.refresh.disabled = true;
+  if (els.refreshStatus) els.refreshStatus.textContent = "Refreshing public metadata...";
+  try {
+    const repos = await fetchGithubRepos();
+    const merged = repos
+      .map((repo) => mergePublicRepo(repo, previousById.get(repo.id)))
+      .sort(
+        (a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at),
+      );
+    applyRepositoryData(merged);
+    if (els.refreshStatus) {
+      els.refreshStatus.textContent = `Loaded ${state.repos.length} public repositories from GitHub.`;
+    }
+  } catch (error) {
+    if (els.refreshStatus) {
+      els.refreshStatus.textContent = "GitHub refresh unavailable; keeping the static snapshot.";
+    }
+    console.warn(error);
+  } finally {
+    els.refresh.disabled = false;
+  }
+}
+
 function bindEvents() {
   document.addEventListener("paper-theme-change", requestDraw);
   els.search.addEventListener("input", () => {
@@ -679,6 +817,7 @@ function bindEvents() {
     updateVisibility();
   });
   els.reset.addEventListener("click", resetView);
+  els.refresh?.addEventListener("click", refreshFromGithub);
   els.canvas.addEventListener("pointerdown", (event) => {
     els.canvas.setPointerCapture(event.pointerId);
     const point = onPointerPoint(event);
@@ -764,17 +903,8 @@ function bindEvents() {
 async function init() {
   const response = await fetch(DATA_URL);
   const data = await response.json();
-  state.repos = cleanRepos(data.repos || []);
-  state.clusters = buildClusters(state.repos);
-  state.nodes = makeNodes(state.repos, state.clusters);
-  renderClusters();
-  renderActivity();
-  renderListControls();
-  renderList();
-  renderInspector(null);
+  applyRepositoryData(data.repos || []);
   bindEvents();
-  resizeCanvas();
-  updateVisibility();
 }
 
 init().catch((error) => {

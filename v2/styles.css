@@ -179,7 +179,8 @@ main,
 .link-list a,
 .text-button,
 .cluster-chip,
-.repo-actions a {
+.repo-actions a,
+.repo-row a {
   color: var(--accent);
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -283,7 +284,8 @@ main,
 .repo-side,
 .canvas-wrap,
 .repo-list,
-.repo-row {
+.repo-row,
+.repo-row > * {
   min-width: 0;
 }
 
@@ -332,6 +334,12 @@ main,
   background: transparent;
   cursor: pointer;
   padding: 0.1rem 0;
+}
+
+.inline-button {
+  display: inline;
+  margin-left: 0.35rem;
+  font-size: inherit;
 }
 
 .cluster-row {
@@ -509,18 +517,17 @@ main,
 }
 
 .repo-row {
-  grid-template-columns: minmax(130px, 220px) minmax(0, 1fr) minmax(80px, 120px);
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) minmax(80px, 120px);
 }
 
-.repo-row button {
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
+.repo-row a {
   text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 0.22em;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.repo-row p {
+  overflow-wrap: anywhere;
 }
 
 .repo-row small {

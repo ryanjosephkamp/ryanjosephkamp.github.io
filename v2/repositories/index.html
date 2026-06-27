@@ -21,7 +21,6 @@
         <a class="wordmark" href="../" aria-label="Ryan Kamp home">Ryan Kamp</a>
         <nav class="nav-links" aria-label="Primary navigation">
           <a href="../">Home</a>
-          <a href="../#work">Projects</a>
           <a href="./">Repositories</a>
           <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
           <a href="https://github.com/ryanjosephkamp">GitHub</a>
@@ -42,7 +41,13 @@
             Search or select a repository to view public GitHub metadata: description, language,
             last update, tags, and links.
           </p>
-          <p class="small-note">Public metadata snapshot. No token required.</p>
+          <p class="small-note">
+            Public metadata snapshot. No token required.
+            <button class="text-button inline-button" id="refresh-repos" type="button">
+              Refresh from GitHub
+            </button>
+            <span id="refresh-status" aria-live="polite">Static snapshot loaded.</span>
+          </p>
         </section>
 
         <section class="section repositories" aria-label="Repository explorer">

@@ -6,6 +6,7 @@
   "scripts": {
     "serve": "python3 -m http.server 4179 --bind 127.0.0.1",
     "qa": "playwright test",
+    "refresh:v2-repos": "node v2/repositories/scripts/fetch-public-repos.mjs",
     "format:check": "prettier --check package.json playwright.config.mjs stylelint.config.mjs tests/web-qa/*.mjs docs/design/v2-paper-minimal-qa-checklist.md .prettierrc.json v2/**/*.html v2/**/*.css v2/**/*.js",
     "lint:css": "stylelint \"{prototypes/v2-silent-source-constellation,v2}/**/*.css\"",
     "impeccable:detect": "node .agents/skills/impeccable/scripts/detect.mjs --json prototypes/v2-silent-source-constellation/index.html prototypes/v2-silent-source-constellation/styles.css prototypes/v2-silent-source-constellation/app.js v2/index.html v2/styles.css v2/theme.js v2/repositories/index.html v2/repositories/app.js"
