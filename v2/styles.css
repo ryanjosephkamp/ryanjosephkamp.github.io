@@ -221,7 +221,6 @@ main,
   padding: clamp(3.4rem, 9vw, 6.5rem) 0 clamp(3rem, 8vw, 4.6rem);
 }
 
-.prototype-note,
 .small-note {
   color: var(--faint);
   font-size: 0.92rem;

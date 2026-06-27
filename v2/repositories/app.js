@@ -9,6 +9,26 @@ const SORT_OPTIONS = [
   { id: "cluster", label: "cluster" },
 ];
 const finePointer = window.matchMedia("(pointer: fine)");
+const MAX_PASSIVE_LINKS = 260;
+const SEMANTIC_STOPWORDS = new Set([
+  "and",
+  "are",
+  "for",
+  "from",
+  "github",
+  "implementation",
+  "into",
+  "not",
+  "project",
+  "public",
+  "repo",
+  "repository",
+  "software",
+  "that",
+  "the",
+  "this",
+  "with",
+]);
 
 const state = {
   repos: [],
@@ -209,6 +229,81 @@ function hashValue(value) {
   return hash / 4294967295;
 }
 
+function tokenize(value) {
+  return String(value || "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 2 && !/^\d+$/.test(token) && !SEMANTIC_STOPWORDS.has(token));
+}
+
+function repoSemanticTokens(repo) {
+  const values = [
+    repo.name,
+    repo.description,
+    repo.language,
+    ...(repo.topics || []),
+    ...(repo.tags || []),
+  ];
+  return new Set(values.flatMap(tokenize).slice(0, 28));
+}
+
+function repoTermSet(values) {
+  return new Set(
+    (values || []).flatMap(tokenize).filter((token) => token && !SEMANTIC_STOPWORDS.has(token)),
+  );
+}
+
+function sharedCount(first, second, limit = 6) {
+  let count = 0;
+  for (const value of first) {
+    if (second.has(value)) {
+      count += 1;
+      if (count >= limit) break;
+    }
+  }
+  return count;
+}
+
+function primaryAffinityKey(repo, tokens) {
+  const topics = repoTermSet(repo.topics || []);
+  const tags = repoTermSet(repo.tags || []);
+  const language =
+    repo.language && repo.language !== "Unspecified" ? tokenize(repo.language)[0] : "";
+  return (
+    [...topics][0] ||
+    [...tags][0] ||
+    language ||
+    [...tokens][0] ||
+    String(repo.name || "repository").toLowerCase()
+  );
+}
+
+function semanticAffinity(first, second) {
+  if (!first || !second || first === second) return 0;
+  let score = 0;
+  if (first.repo.cluster === second.repo.cluster) score += 1.25;
+  if (
+    first.repo.language &&
+    second.repo.language &&
+    first.repo.language !== "Unspecified" &&
+    first.repo.language === second.repo.language
+  ) {
+    score += 0.55;
+  }
+  if (first.affinityKey === second.affinityKey) score += 0.5;
+  score += Math.min(1.2, sharedCount(first.topicSet, second.topicSet, 4) * 0.45);
+  score += Math.min(0.8, sharedCount(first.tagSet, second.tagSet, 4) * 0.25);
+  score += Math.min(1.25, sharedCount(first.semanticTokens, second.semanticTokens, 6) * 0.22);
+  return score;
+}
+
+function isRelatedNode(node, focusedNode) {
+  if (!focusedNode) return false;
+  return (
+    node.repo.cluster === focusedNode.repo.cluster || semanticAffinity(node, focusedNode) >= 1.65
+  );
+}
+
 function clusterAnchor(cluster, index) {
   const known = {
     "s26-airp": { x: -0.04, y: -0.08 },
@@ -240,10 +335,20 @@ function makeNodes(repos, clusters) {
     const count = clusterCounts.get(repo.cluster) || 1;
     const rank = clusterSeen.get(repo.cluster) || 0;
     clusterSeen.set(repo.cluster, rank + 1);
+    const semanticTokens = repoSemanticTokens(repo);
+    const topicSet = repoTermSet(repo.topics || []);
+    const tagSet = repoTermSet(repo.tags || []);
+    const affinityKey = primaryAffinityKey(repo, semanticTokens);
     const local = hashValue(`${repo.name}:${repo.created_at}`);
-    const angle = rank * 2.399963 + local * 0.7;
-    const spread = repo.cluster === "s26-airp" ? 0.29 : 0.14;
-    const radius = Math.sqrt((rank + 0.5) / count) * spread;
+    const depth = hashValue(`${repo.id}:${repo.name}:depth`);
+    const keyAngle = hashValue(`${repo.cluster}:${affinityKey}`) * Math.PI * 2;
+    const rankAngle = rank * 2.399963 + local * 0.35;
+    const angle = rankAngle * 0.72 + keyAngle * 0.28;
+    const spread = repo.cluster === "s26-airp" ? 0.31 : 0.16;
+    const radius =
+      Math.sqrt((rank + 0.5) / count) *
+      spread *
+      (0.9 + hashValue(`${repo.cluster}:${affinityKey}:radius`) * 0.18);
     const x = anchor.x + Math.cos(angle) * radius;
     const y = anchor.y + Math.sin(angle) * radius * 0.76;
     return {
@@ -253,7 +358,12 @@ function makeNodes(repos, clusters) {
       anchorY: y,
       x,
       y,
-      radius: 2.4 + (repo.stargazers_count > 0 ? 0.7 : 0),
+      radius: 2.05 + depth * 1.05 + (repo.stargazers_count > 0 ? 0.65 : 0),
+      depth,
+      semanticTokens,
+      topicSet,
+      tagSet,
+      affinityKey,
       visible: true,
     };
   });
@@ -382,27 +492,37 @@ function draw() {
   const paper = themeColor("--paper");
   const ink = themeColor("--ink");
   const line = themeColor("--line");
+  const lineStrong = themeColor("--line-strong");
   ctx.fillStyle = paper;
   ctx.fillRect(0, 0, rect.width, rect.height);
 
   const visible = state.nodes.filter((node) => node.visible);
   ctx.save();
-  ctx.lineWidth = 0.6;
-  for (let i = 0; i < visible.length; i += 1) {
+  ctx.lineCap = "round";
+  let passiveLinks = 0;
+  linkLoop: for (let i = 0; i < visible.length; i += 1) {
     const a = visible[i];
     for (let j = i + 1; j < visible.length; j += 1) {
       const b = visible[j];
-      if (a.repo.cluster !== b.repo.cluster) continue;
+      if (passiveLinks >= MAX_PASSIVE_LINKS) break linkLoop;
       const distance = Math.hypot(a.x - b.x, a.y - b.y);
-      if (distance > 0.1) continue;
+      const affinity = semanticAffinity(a, b);
+      const sameCluster = a.repo.cluster === b.repo.cluster;
+      if (!sameCluster && affinity < 2.05) continue;
+      if (distance > 0.34 && affinity < 2.4) continue;
+      if (distance > (sameCluster ? 0.2 : 0.16) && affinity < 1.45) continue;
       const aa = worldToScreen(a);
       const bb = worldToScreen(b);
-      ctx.globalAlpha = Math.max(0.03, 0.12 - distance * 0.65);
-      ctx.strokeStyle = line;
+      const strength = Math.min(1, Math.max(0, (affinity - 0.8) / 2.4));
+      const distanceWeight = Math.max(0, 1 - distance / 0.34);
+      ctx.globalAlpha = Math.min(0.18, 0.035 + strength * 0.075 + distanceWeight * 0.05);
+      ctx.strokeStyle = strength > 0.72 ? lineStrong : line;
+      ctx.lineWidth = 0.45 + strength * 0.35;
       ctx.beginPath();
       ctx.moveTo(aa.x, aa.y);
       ctx.lineTo(bb.x, bb.y);
       ctx.stroke();
+      passiveLinks += 1;
     }
   }
   ctx.restore();
@@ -411,14 +531,20 @@ function draw() {
   if (focusedNode) {
     const focusedScreen = worldToScreen(focusedNode);
     ctx.save();
-    ctx.lineWidth = 1.35;
-    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.62);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 1);
     for (const node of visible) {
-      if (node === focusedNode || node.repo.cluster !== focusedNode.repo.cluster) continue;
+      if (node === focusedNode) continue;
       const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
-      if (distance > 0.34) continue;
+      const affinity = semanticAffinity(focusedNode, node);
+      const sameCluster = node.repo.cluster === focusedNode.repo.cluster;
+      if (!sameCluster && affinity < 1.25) continue;
+      if (distance > 0.5 && affinity < 2.15) continue;
       const screen = worldToScreen(node);
-      ctx.globalAlpha = Math.max(0.2, 0.58 - distance * 0.55);
+      const strength = Math.min(1, Math.max(0.18, affinity / 3.2));
+      const distanceWeight = Math.max(0, 1 - distance / 0.5);
+      ctx.globalAlpha = Math.min(0.88, 0.32 + strength * 0.24 + distanceWeight * 0.34);
+      ctx.lineWidth = 0.82 + strength * 0.85;
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
@@ -427,29 +553,33 @@ function draw() {
     ctx.restore();
   }
 
-  for (const node of visible) {
+  const nodesForDraw = [...visible].sort((a, b) => a.depth - b.depth);
+  for (const node of nodesForDraw) {
     const screen = worldToScreen(node);
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
-    const dim = state.selected && !isSelected && node.repo.cluster !== state.selected.repo.cluster;
+    const related = isRelatedNode(node, focusedNode);
+    const dim = state.selected && !isSelected && !related;
+    const depthAlpha = 0.52 + node.depth * 0.28;
+    const nodeAlpha = Math.min(0.96, isSelected || isHovered ? 0.96 : depthAlpha);
+    const radiusScale = isSelected ? 1.48 : isHovered ? 1.34 : focusedNode && related ? 1.04 : 0.92;
     ctx.globalAlpha = dim ? 0.28 : 1;
-    ctx.fillStyle = colorWithAlpha(nodeColor(node), isSelected || isHovered ? 0.94 : 0.74);
+    ctx.fillStyle = colorWithAlpha(nodeColor(node), nodeAlpha);
     ctx.beginPath();
-    ctx.arc(
-      screen.x,
-      screen.y,
-      node.radius * (isSelected || isHovered ? 1.28 : 0.92),
-      0,
-      Math.PI * 2,
-    );
+    ctx.arc(screen.x, screen.y, node.radius * radiusScale, 0, Math.PI * 2);
     ctx.fill();
 
     if (isSelected || isHovered) {
       ctx.globalAlpha = 1;
-      ctx.strokeStyle = ink;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = colorWithAlpha(nodeColor(node), 0.82);
+      ctx.lineWidth = 1.35;
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, node.radius * 2.8, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, node.radius * 2.38, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.arc(screen.x, screen.y, node.radius * 3.05, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
@@ -467,6 +597,10 @@ function draw() {
     for (const node of labels) {
       if (!node.visible) continue;
       const screen = worldToScreen(node);
+      ctx.strokeStyle = paper;
+      ctx.lineWidth = 3;
+      ctx.strokeText(node.repo.name, screen.x + 9, screen.y - 8);
+      ctx.fillStyle = ink;
       ctx.fillText(node.repo.name, screen.x + 9, screen.y - 8);
     }
   }
