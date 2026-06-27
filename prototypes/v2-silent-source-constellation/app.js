@@ -1,8 +1,8 @@
 const DATA_URL = "./data/repos.snapshot.json";
 const EXCLUDED_PATTERN = /\b(grok|grokedex|grokédex|xai|x\.ai)\b/i;
-const THEME_KEY = "silent-source-theme";
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const THEME_KEY = "paper-minimal-theme";
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+const finePointer = window.matchMedia("(pointer: fine)");
 
 const state = {
   repos: [],
@@ -16,9 +16,10 @@ const state = {
   panX: 0,
   panY: 0,
   dragging: false,
+  pointerStart: null,
   lastPointer: null,
-  lastFrame: 0,
-  motion: !prefersReducedMotion.matches,
+  moved: false,
+  frame: 0,
 };
 
 const els = {
@@ -35,23 +36,36 @@ const els = {
   themeInputs: [...document.querySelectorAll("input[name='theme']")],
 };
 
-const ctx = els.canvas.getContext("2d", { alpha: true });
+const ctx = els.canvas.getContext("2d", { alpha: false });
 
 function normalizeCluster(repo) {
   const name = repo.name.toLowerCase();
   if (name === "brrrdle" || name === "brrrdle-dev") {
-    return { id: "games", label: "Games", color: "#d9a15f" };
+    return { id: "games", label: "Games", color: "#555555" };
   }
   return {
     id: repo.cluster || "other",
     label: repo.cluster_label || "Other",
-    color: repo.cluster_color || "#8d98a7",
+    color: repo.cluster_color || "#555555",
   };
 }
 
 function cleanRepos(repos) {
   return repos
-    .filter((repo) => !EXCLUDED_PATTERN.test([repo.name, repo.description, repo.html_url].join(" ")))
+    .filter((repo) => {
+      const visibleFields = [
+        repo.name,
+        repo.full_name,
+        repo.description,
+        repo.html_url,
+        repo.homepage,
+        repo.language,
+        repo.cluster_label,
+        ...(repo.topics || []),
+        ...(repo.tags || []),
+      ];
+      return !EXCLUDED_PATTERN.test(visibleFields.filter(Boolean).join(" "));
+    })
     .map((repo) => {
       const cluster = normalizeCluster(repo);
       return {
@@ -87,27 +101,43 @@ function hashValue(value) {
   return hash / 4294967295;
 }
 
+function clusterAnchor(cluster, index) {
+  const known = {
+    "s26-airp": { x: -0.04, y: -0.08 },
+    "ai-ml": { x: 0.36, y: -0.16 },
+    games: { x: -0.42, y: 0.18 },
+    "data-tooling": { x: 0.24, y: 0.3 },
+    "web-portfolio": { x: -0.35, y: 0.34 },
+    "research-software": { x: 0.44, y: 0.32 },
+    docs: { x: -0.34, y: -0.3 },
+  };
+  if (known[cluster.id]) return known[cluster.id];
+  const angle = index * 2.399963;
+  return {
+    x: Math.cos(angle) * 0.36,
+    y: Math.sin(angle) * 0.28,
+  };
+}
+
 function makeNodes(repos, clusters) {
   const clusterIndex = new Map(clusters.map((cluster, index) => [cluster.id, index]));
-  const total = Math.max(clusters.length, 1);
-  const anchors = new Map();
-  clusters.forEach((cluster, index) => {
-    const angle = -Math.PI / 2 + (index / total) * Math.PI * 2;
-    const spread = 0.34 + (index % 3) * 0.045;
-    anchors.set(cluster.id, {
-      x: Math.cos(angle) * spread,
-      y: Math.sin(angle) * spread * 0.78,
-    });
-  });
-
-  return repos.map((repo, index) => {
+  const clusterCounts = new Map();
+  for (const repo of repos) {
+    clusterCounts.set(repo.cluster, (clusterCounts.get(repo.cluster) || 0) + 1);
+  }
+  const clusterSeen = new Map();
+  return repos.map((repo) => {
     const cluster = clusterIndex.get(repo.cluster) ?? 0;
-    const anchor = anchors.get(repo.cluster) || { x: 0, y: 0 };
+    const anchor = clusterAnchor(clusters[cluster] || { id: "other" }, cluster);
+    const count = clusterCounts.get(repo.cluster) || 1;
+    const rank = clusterSeen.get(repo.cluster) || 0;
+    clusterSeen.set(repo.cluster, rank + 1);
     const local = hashValue(`${repo.name}:${repo.created_at}`);
-    const angle = local * Math.PI * 2 + index * 0.19;
-    const radius = 0.035 + ((index % 9) / 9) * 0.11 + hashValue(repo.name) * 0.06;
+    const angle = rank * 2.399963 + local * 0.7;
+    const spread = repo.cluster === "s26-airp" ? 0.29 : 0.14;
+    const radius = Math.sqrt((rank + 0.5) / count) * spread;
     const x = anchor.x + Math.cos(angle) * radius;
-    const y = anchor.y + Math.sin(angle) * radius * 0.8;
+    const y = anchor.y + Math.sin(angle) * radius * 0.76;
     return {
       repo,
       cluster,
@@ -115,10 +145,7 @@ function makeNodes(repos, clusters) {
       anchorY: y,
       x,
       y,
-      vx: 0,
-      vy: 0,
-      phase: hashValue(repo.full_name || repo.name) * Math.PI * 2,
-      radius: 2.3 + (repo.stargazers_count > 0 ? 1.2 : 0) + Math.min(1.5, (repo.forks_count || 0) * 0.12),
+      radius: 2.4 + (repo.stargazers_count > 0 ? 0.7 : 0),
       visible: true,
     };
   });
@@ -128,10 +155,13 @@ function setTheme(choice) {
   const resolved = choice === "system" ? (systemDark.matches ? "dark" : "light") : choice;
   els.site.dataset.themeChoice = choice;
   els.site.dataset.resolvedTheme = resolved;
+  document.documentElement.dataset.themeChoice = choice;
+  document.documentElement.dataset.resolvedTheme = resolved;
   localStorage.setItem(THEME_KEY, choice);
   for (const input of els.themeInputs) {
     input.checked = input.value === choice;
   }
+  requestDraw();
 }
 
 function resizeCanvas() {
@@ -142,6 +172,7 @@ function resizeCanvas() {
   els.canvas.style.width = `${rect.width}px`;
   els.canvas.style.height = `${rect.height}px`;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  requestDraw();
 }
 
 function matchesQuery(repo) {
@@ -165,8 +196,13 @@ function updateVisibility() {
       (state.cluster === "all" || node.repo.cluster === state.cluster) &&
       (!state.query || matchesQuery(node.repo));
   }
+  if (state.selected && !state.selected.visible) {
+    state.selected = null;
+    renderInspector(null);
+  }
   renderList();
   updateHint();
+  requestDraw();
 }
 
 function updateHint() {
@@ -174,13 +210,13 @@ function updateHint() {
   els.hint.textContent = state.selected
     ? state.selected.repo.name
     : count
-      ? `${count} visible stars. Select one to inspect.`
+      ? `${count} repositories visible. Select one to view details.`
       : "No repositories match the current search.";
 }
 
 function worldToScreen(node) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.82 * state.scale;
+  const base = Math.min(rect.width, rect.height) * 0.74 * state.scale;
   return {
     x: rect.width / 2 + state.panX + node.x * base,
     y: rect.height / 2 + state.panY + node.y * base,
@@ -189,7 +225,7 @@ function worldToScreen(node) {
 
 function screenToWorld(point) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.82 * state.scale;
+  const base = Math.min(rect.width, rect.height) * 0.74 * state.scale;
   return {
     x: (point.x - rect.width / 2 - state.panX) / base,
     y: (point.y - rect.height / 2 - state.panY) / base,
@@ -200,49 +236,40 @@ function themeColor(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-function draw(now = 0) {
+function nodeColor(node) {
+  return themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
+}
+
+function requestDraw() {
+  if (state.frame) return;
+  state.frame = requestAnimationFrame(() => {
+    state.frame = 0;
+    draw();
+  });
+}
+
+function draw() {
   const rect = els.wrap.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  const paper = themeColor("--paper");
   const ink = themeColor("--ink");
-  const line = themeColor("--line-strong");
+  const line = themeColor("--line");
   const muted = themeColor("--muted");
-  const accent = themeColor("--accent");
-  const elapsed = Math.min(0.035, Math.max(0.001, (now - state.lastFrame) / 1000 || 0.016));
-  state.lastFrame = now;
+  ctx.fillStyle = paper;
+  ctx.fillRect(0, 0, rect.width, rect.height);
 
   const visible = state.nodes.filter((node) => node.visible);
-  if (state.motion && !state.dragging) {
-    for (const node of visible) {
-      const drift = 0.00045;
-      const t = now * 0.00018 + node.phase;
-      node.vx += Math.cos(t * 1.7) * drift;
-      node.vy += Math.sin(t * 1.3) * drift;
-    }
-  }
-
-  for (const node of visible) {
-    const dx = node.anchorX - node.x;
-    const dy = node.anchorY - node.y;
-    node.vx += dx * 0.018;
-    node.vy += dy * 0.018;
-    node.vx *= 0.88;
-    node.vy *= 0.88;
-    node.x += node.vx * elapsed * 60;
-    node.y += node.vy * elapsed * 60;
-  }
-
   ctx.save();
-  ctx.lineWidth = 0.65;
+  ctx.lineWidth = 0.7;
   for (let i = 0; i < visible.length; i += 1) {
     const a = visible[i];
     for (let j = i + 1; j < visible.length; j += 1) {
       const b = visible[j];
       if (a.repo.cluster !== b.repo.cluster) continue;
       const distance = Math.hypot(a.x - b.x, a.y - b.y);
-      if (distance > 0.115) continue;
+      if (distance > 0.12) continue;
       const aa = worldToScreen(a);
       const bb = worldToScreen(b);
-      ctx.globalAlpha = Math.max(0.02, 0.11 - distance * 0.55);
+      ctx.globalAlpha = Math.max(0.04, 0.16 - distance * 0.7);
       ctx.strokeStyle = line;
       ctx.beginPath();
       ctx.moveTo(aa.x, aa.y);
@@ -257,40 +284,45 @@ function draw(now = 0) {
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
     const dim = state.selected && !isSelected && node.repo.cluster !== state.selected.repo.cluster;
-    ctx.globalAlpha = dim ? 0.28 : 0.92;
-    ctx.fillStyle = node.repo.cluster_color || accent;
+    ctx.globalAlpha = dim ? 0.24 : 0.88;
+    ctx.fillStyle = nodeColor(node);
     ctx.beginPath();
-    ctx.arc(screen.x, screen.y, node.radius * (isSelected ? 1.75 : isHovered ? 1.35 : 1), 0, Math.PI * 2);
+    ctx.arc(screen.x, screen.y, node.radius * (isSelected || isHovered ? 1.35 : 1), 0, Math.PI * 2);
     ctx.fill();
+
     if (isSelected || isHovered) {
-      ctx.globalAlpha = 0.42;
+      ctx.globalAlpha = 1;
       ctx.strokeStyle = ink;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, node.radius * 4.2, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, node.radius * 3.1, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.globalAlpha = 0.96;
-      ctx.fillStyle = ink;
-      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
-      ctx.fillText(node.repo.name, screen.x + 12, screen.y - 12);
     }
   }
 
-  if (!state.selected && !state.query && state.scale >= 0.92) {
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = muted;
-    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
-    for (const cluster of state.clusters) {
-      const nodes = visible.filter((node) => node.repo.cluster === cluster.id);
-      if (!nodes.length) continue;
-      const x = nodes.reduce((sum, node) => sum + worldToScreen(node).x, 0) / nodes.length;
-      const y = nodes.reduce((sum, node) => sum + worldToScreen(node).y, 0) / nodes.length;
-      ctx.fillText(`${cluster.label} (${cluster.count})`, x + 10, y);
+  const shouldLabel = state.selected || state.hovered || (state.query && visible.length <= 18);
+  if (shouldLabel) {
+    ctx.globalAlpha = 0.95;
+    ctx.fillStyle = ink;
+    ctx.font = "12px ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    const labels = state.selected
+      ? [state.selected]
+      : state.hovered
+        ? [state.hovered]
+        : visible.slice(0, 18);
+    for (const node of labels) {
+      if (!node.visible) continue;
+      const screen = worldToScreen(node);
+      ctx.fillText(node.repo.name, screen.x + 9, screen.y - 8);
     }
   }
 
   ctx.globalAlpha = 1;
-  requestAnimationFrame(draw);
+  ctx.fillStyle = muted;
+  ctx.font = "12px ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  if (!state.selected && !state.query && visible.length) {
+    ctx.fillText("public repository graph", 14, 22);
+  }
 }
 
 function pickNode(point) {
@@ -300,7 +332,7 @@ function pickNode(point) {
     if (!node.visible) continue;
     const screen = worldToScreen(node);
     const distance = Math.hypot(point.x - screen.x, point.y - screen.y);
-    if (distance < Math.max(13, node.radius * 4) && distance < best) {
+    if (distance < Math.max(12, node.radius * 4) && distance < best) {
       best = distance;
       picked = node;
     }
@@ -310,24 +342,32 @@ function pickNode(point) {
 
 function selectNode(node, focus = false) {
   state.selected = node;
-  if (!node) {
-    renderInspector(null);
-    updateHint();
-    return;
-  }
-  renderInspector(node.repo);
+  renderInspector(node?.repo || null);
   updateHint();
-  if (focus) {
+  requestDraw();
+  if (node && focus) {
     els.inspector.focus({ preventScroll: false });
+  }
+}
+
+function isS26Repo(repo) {
+  return repo.cluster === "s26-airp" || /S26 AIRP/i.test([repo.cluster_label, repo.description].filter(Boolean).join(" "));
+}
+
+function safeUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
   }
 }
 
 function renderInspector(repo) {
   if (!repo) {
     els.inspector.innerHTML = `
-      <p class="quiet-mark">Inspector</p>
       <h3>Select a repository</h3>
-      <p>Repository details appear here on focus. This carries forward the useful V1 inspector pattern with a quieter presentation.</p>
+      <p>Choose a repository to see its public description, language, update date, tags, and links.</p>
     `;
     return;
   }
@@ -335,22 +375,24 @@ function renderInspector(repo) {
   const pushed = date ? new Date(date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "Unknown";
   const description = repo.description || "No public description provided.";
   const tags = [...new Set([repo.language, ...(repo.topics || []), ...(repo.tags || [])].filter(Boolean))].slice(0, 6);
-  const s26 = repo.cluster === "s26-airp"
-    ? `<p class="micro-note">S26 AIRP repository: AI-assisted research software prototype. Scientific and domain-specific content is provisional and not presented as validated scientific claims.</p>`
+  const repoUrl = safeUrl(repo.html_url);
+  const homepageUrl = safeUrl(repo.homepage);
+  const s26 = isS26Repo(repo)
+    ? `<p class="small-note">S26 AIRP repository: AI-assisted research software prototype. Scientific and domain-specific content is provisional and not presented as validated scientific claims.</p>`
     : "";
   els.inspector.innerHTML = `
-    <p class="quiet-mark">${repo.cluster_label || "Repository"}</p>
     <h3>${escapeHtml(repo.name)}</h3>
     <p>${escapeHtml(description)}</p>
     ${s26}
     <dl>
+      <div><dt>Cluster</dt><dd>${escapeHtml(repo.cluster_label || "Repository")}</dd></div>
       <div><dt>Language</dt><dd>${escapeHtml(repo.language || "Unspecified")}</dd></div>
       <div><dt>Updated</dt><dd>${pushed}</dd></div>
       <div><dt>Tags</dt><dd>${tags.length ? tags.map(escapeHtml).join(", ") : "None listed"}</dd></div>
     </dl>
     <div class="repo-actions">
-      <a href="${repo.html_url}" target="_blank" rel="noreferrer">Open repository</a>
-      ${repo.homepage ? `<a href="${repo.homepage}" target="_blank" rel="noreferrer">Open project</a>` : ""}
+      ${repoUrl ? `<a href="${repoUrl}" target="_blank" rel="noreferrer">Open repository</a>` : ""}
+      ${homepageUrl ? `<a href="${homepageUrl}" target="_blank" rel="noreferrer">Open project</a>` : ""}
     </div>
   `;
 }
@@ -360,10 +402,12 @@ function renderClusters() {
   const all = document.createElement("button");
   all.className = "cluster-chip";
   all.type = "button";
-  all.textContent = `all ${state.repos.length}`;
+  all.textContent = `All (${state.repos.length})`;
   all.setAttribute("aria-pressed", String(state.cluster === "all"));
   all.addEventListener("click", () => {
     state.cluster = "all";
+    state.selected = null;
+    renderInspector(null);
     renderClusters();
     updateVisibility();
   });
@@ -372,11 +416,12 @@ function renderClusters() {
     const button = document.createElement("button");
     button.className = "cluster-chip";
     button.type = "button";
-    button.style.setProperty("--cluster-color", cluster.color);
-    button.textContent = `${cluster.label} ${cluster.count}`;
+    button.textContent = `${cluster.label} (${cluster.count})`;
     button.setAttribute("aria-pressed", String(state.cluster === cluster.id));
     button.addEventListener("click", () => {
       state.cluster = state.cluster === cluster.id ? "all" : cluster.id;
+      state.selected = null;
+      renderInspector(null);
       renderClusters();
       updateVisibility();
     });
@@ -405,7 +450,7 @@ function renderActivity() {
   for (const week of weeks) {
     const bar = document.createElement("span");
     bar.className = "activity-bar";
-    bar.style.height = `${8 + (week.count / max) * 88}px`;
+    bar.style.height = `${4 + (week.count / max) * 68}px`;
     bar.title = `${week.count} repositories updated near ${week.end.toLocaleDateString()}`;
     els.activity.append(bar);
   }
@@ -421,15 +466,16 @@ function renderList() {
   for (const repo of visible) {
     const row = document.createElement("article");
     row.className = "repo-row";
+    const label = `${repo.cluster_label || "Repository"}${isS26Repo(repo) ? " - provisional" : ""}`;
     row.innerHTML = `
       <button type="button">${escapeHtml(repo.name)}</button>
       <p>${escapeHtml(repo.description || "No public description provided.")}</p>
-      <small>${escapeHtml(repo.cluster_label || "Repository")}</small>
+      <small>${escapeHtml(label)}</small>
     `;
     row.querySelector("button").addEventListener("click", () => {
       const node = state.nodes.find((item) => item.repo.id === repo.id);
       selectNode(node, true);
-      document.querySelector("#constellation").scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelector("#repositories").scrollIntoView({ behavior: "smooth", block: "start" });
     });
     els.list.append(row);
   }
@@ -449,6 +495,24 @@ function onPointerPoint(event) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
+function resetView() {
+  state.query = "";
+  state.cluster = "all";
+  state.scale = 1;
+  state.panX = 0;
+  state.panY = 0;
+  state.selected = null;
+  state.hovered = null;
+  els.search.value = "";
+  for (const node of state.nodes) {
+    node.x = node.anchorX;
+    node.y = node.anchorY;
+  }
+  renderInspector(null);
+  renderClusters();
+  updateVisibility();
+}
+
 function bindEvents() {
   els.themeInputs.forEach((input) => input.addEventListener("change", () => setTheme(input.value)));
   systemDark.addEventListener("change", () => {
@@ -456,81 +520,71 @@ function bindEvents() {
       setTheme("system");
     }
   });
-  prefersReducedMotion.addEventListener("change", () => {
-    state.motion = !prefersReducedMotion.matches;
-  });
   els.search.addEventListener("input", () => {
     state.query = els.search.value.trim();
     state.selected = null;
     renderInspector(null);
     updateVisibility();
   });
-  els.reset.addEventListener("click", () => {
-    state.query = "";
-    state.cluster = "all";
-    state.scale = 1;
-    state.panX = 0;
-    state.panY = 0;
-    els.search.value = "";
-    for (const node of state.nodes) {
-      node.x = node.anchorX;
-      node.y = node.anchorY;
-      node.vx = 0;
-      node.vy = 0;
-    }
-    selectNode(null);
-    renderClusters();
-    updateVisibility();
-  });
+  els.reset.addEventListener("click", resetView);
   els.canvas.addEventListener("pointerdown", (event) => {
     els.canvas.setPointerCapture(event.pointerId);
     const point = onPointerPoint(event);
-    const node = pickNode(point);
     state.dragging = true;
+    state.pointerStart = point;
     state.lastPointer = point;
+    state.moved = false;
     els.canvas.classList.add("is-dragging");
-    if (node) {
-      selectNode(node);
-    }
   });
   els.canvas.addEventListener("pointermove", (event) => {
     const point = onPointerPoint(event);
-    state.hovered = pickNode(point);
-    if (!state.dragging || !state.lastPointer) return;
+    const hover = pickNode(point);
+    if (hover !== state.hovered) {
+      state.hovered = hover;
+      requestDraw();
+    }
+    if (!state.dragging || !state.lastPointer || !finePointer.matches || event.pointerType === "touch") return;
     const dx = point.x - state.lastPointer.x;
     const dy = point.y - state.lastPointer.y;
+    if (Math.hypot(point.x - state.pointerStart.x, point.y - state.pointerStart.y) > 3) {
+      state.moved = true;
+    }
     state.panX += dx;
     state.panY += dy;
     state.lastPointer = point;
+    requestDraw();
   });
   els.canvas.addEventListener("pointerup", (event) => {
+    const point = onPointerPoint(event);
+    const node = pickNode(point);
     els.canvas.releasePointerCapture(event.pointerId);
-    state.dragging = false;
-    state.lastPointer = null;
     els.canvas.classList.remove("is-dragging");
+    if (!state.moved) {
+      selectNode(node || null);
+    }
+    state.dragging = false;
+    state.pointerStart = null;
+    state.lastPointer = null;
+    state.moved = false;
   });
   els.canvas.addEventListener("pointercancel", () => {
     state.dragging = false;
+    state.pointerStart = null;
     state.lastPointer = null;
+    state.moved = false;
     els.canvas.classList.remove("is-dragging");
   });
-  els.canvas.addEventListener("click", (event) => {
-    const node = pickNode(onPointerPoint(event));
-    if (node) {
-      selectNode(node);
-    } else {
-      selectNode(null);
-    }
-  });
   els.canvas.addEventListener("wheel", (event) => {
+    if (!finePointer.matches) return;
     event.preventDefault();
-    const before = screenToWorld(onPointerPoint(event));
-    const factor = event.deltaY < 0 ? 1.08 : 0.92;
-    state.scale = Math.min(2.2, Math.max(0.56, state.scale * factor));
-    const after = worldToScreen({ ...before, x: before.x, y: before.y });
     const point = onPointerPoint(event);
+    const before = screenToWorld(point);
+    const factor = event.deltaY < 0 ? 1.08 : 0.92;
+    state.scale = Math.min(2.4, Math.max(0.55, state.scale * factor));
+    const after = worldToScreen(before);
     state.panX += point.x - after.x;
     state.panY += point.y - after.y;
+    requestDraw();
   }, { passive: false });
   window.addEventListener("resize", resizeCanvas);
   window.addEventListener("keydown", (event) => {
@@ -539,13 +593,13 @@ function bindEvents() {
       els.search.focus();
     }
     if (event.key === "Escape") {
-      els.reset.click();
+      resetView();
     }
   });
 }
 
 async function init() {
-  const storedTheme = localStorage.getItem(THEME_KEY) || "system";
+  const storedTheme = localStorage.getItem(THEME_KEY) || "light";
   setTheme(storedTheme);
   const response = await fetch(DATA_URL);
   const data = await response.json();
@@ -559,7 +613,6 @@ async function init() {
   bindEvents();
   resizeCanvas();
   updateVisibility();
-  requestAnimationFrame(draw);
 }
 
 init().catch((error) => {

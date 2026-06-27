@@ -1,24 +1,23 @@
-# Silent Source Constellation V2 Prototype
+# Paper Minimal V2 Prototype
 
 This is an isolated coded prototype for Ryan's Personal Website V2 direction. It does not replace the live website root or the current repositories page.
 
 ## Concept
 
-Working direction: **Silent Source Constellation**
+Working direction: **paper-minimal personal website with an embedded public repository graph**
 
 The prototype combines:
 
-- Silent Constellation: quiet dark star-map repository graph.
 - Plaintext Index: sparse homepage and direct navigation.
-- Paper Graph: hairline/pen-plotter restraint.
+- Paper Graph: public repository data shown as a quiet plotted diagram.
 - Source Ledger: compact repository inspector and accessible list fallback.
 
 ## Features
 
 - Lightweight static HTML/CSS/JS.
-- Canvas-based public repository constellation using the existing public repository snapshot.
+- Canvas-based public repository graph using the existing public repository snapshot.
 - Low labels by default; repository names appear on hover/focus/selection.
-- Click a star to reveal repository details in a compact inspector.
+- Click a repository point to reveal details in a compact inspector.
 - Minimal repository search and cluster filters.
 - Site-wide theme control: system, dark, and light.
 - Compact public repository activity strip based on public repository metadata.
