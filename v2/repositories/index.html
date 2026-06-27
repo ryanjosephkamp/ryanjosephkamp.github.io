@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Repositories - Ryan Kamp V2 Candidate</title>
+    <meta
+      name="description"
+      content="V2 production candidate for exploring Ryan Kamp's public GitHub repositories."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffffff'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%23111111' font-family='Arial,sans-serif' font-size='18'%3ERK%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#repo-list">Skip to repository list</a>
+    <div class="site" data-theme-choice="light">
+      <header class="site-header" aria-label="V2 candidate navigation">
+        <a class="wordmark" href="../" aria-label="Ryan Kamp home">Ryan Kamp</a>
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="../">Home</a>
+          <a href="../#work">Projects</a>
+          <a href="./">Repositories</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+        </nav>
+        <fieldset class="theme-switcher" aria-label="Theme">
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="light" checked /> light</label>
+          <label><input type="radio" name="theme" value="dark" /> dark</label>
+          <label><input type="radio" name="theme" value="system" /> system</label>
+        </fieldset>
+      </header>
+
+      <main id="repositories">
+        <section class="intro repo-intro" aria-labelledby="repositories-title">
+          <p class="prototype-note">V2 candidate</p>
+          <h1 id="repositories-title">Public GitHub repositories</h1>
+          <p>
+            Search or select a repository to view public GitHub metadata: description, language,
+            last update, tags, and links.
+          </p>
+          <p class="small-note">Public metadata snapshot. No token required.</p>
+        </section>
+
+        <section class="section repositories" aria-label="Repository explorer">
+          <div class="repo-layout">
+            <section class="graph-panel" aria-label="Repository graph">
+              <div class="graph-controls">
+                <label class="search-field" for="repo-search">
+                  <span>Search</span>
+                  <input
+                    id="repo-search"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="name, language, topic, cluster"
+                  />
+                </label>
+                <button class="text-button" id="reset-view" type="button">Reset</button>
+              </div>
+              <div class="cluster-row" id="cluster-row" aria-label="Repository filters"></div>
+              <p class="filter-summary" id="filter-summary" aria-live="polite">
+                Showing public repositories.
+              </p>
+              <div class="canvas-wrap" id="canvas-wrap">
+                <canvas id="repo-canvas" aria-hidden="true"></canvas>
+                <p class="graph-hint" id="graph-hint">Select a repository to view details.</p>
+              </div>
+              <p class="small-note">Drag to pan, scroll to zoom, or select a repository.</p>
+            </section>
+
+            <aside class="repo-side" aria-label="Repository details and activity">
+              <section class="inspector" id="repo-inspector" tabindex="-1" aria-live="polite">
+                <h2>Select a repository</h2>
+                <p>
+                  Choose a repository to see its public description, language, update date, tags,
+                  and links.
+                </p>
+              </section>
+              <section class="activity" aria-labelledby="activity-title">
+                <h2 id="activity-title">Public repo activity</h2>
+                <div
+                  class="activity-bars"
+                  id="activity-bars"
+                  aria-label="Recent public repository update activity"
+                ></div>
+                <p class="small-note">
+                  Approximate view based on public repository timestamps, not GitHub's contribution
+                  calendar.
+                </p>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section repo-index" aria-labelledby="repo-index-title">
+          <div class="section-head split-head">
+            <div>
+              <h2 id="repo-index-title">Repository list</h2>
+              <p>
+                The graph is visual. This list keeps the same public repository content available as
+                text.
+              </p>
+            </div>
+            <p class="small-note">Showing the current filtered set, capped for readability.</p>
+          </div>
+          <div class="repo-list" id="repo-list"></div>
+        </section>
+
+        <section class="section s26-note" id="s26-note" aria-labelledby="s26-title">
+          <h2 id="s26-title">S26 AIRP disclosure</h2>
+          <p>
+            S26 AIRP entries are AI-assisted research software prototypes. Scientific and
+            domain-specific content is provisional and is not presented as independently validated
+            scientific output.
+          </p>
+          <p>
+            The prototypes are primarily software, workflow, interface, and AI-methodology
+            explorations rather than validations of scientific or domain-specific conclusions.
+          </p>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Ryan Kamp</p>
+        <nav aria-label="Footer links">
+          <a href="../">Home</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+        </nav>
+      </footer>
+    </div>
+    <script src="../theme.js" defer></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
