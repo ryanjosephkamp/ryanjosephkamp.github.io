@@ -30,6 +30,8 @@ test.describe("V2 production candidate QA", () => {
       await page.goto("/v2/");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Repositories" }).first()).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Current focus" })).toBeVisible();
+      await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
       await page.screenshot({
@@ -74,6 +76,12 @@ test.describe("V2 production candidate QA", () => {
     await expect(page.locator("#repo-inspector")).toContainText("S26 AIRP");
     await page.getByRole("button", { name: "Reset" }).click();
     await expect(page.locator("#filter-summary")).toHaveText(/^Showing \d+ public repositories\.$/);
+
+    await page.locator("#activity-bars .activity-bar").first().focus();
+    await expect(page.locator("#activity-detail")).toContainText(/public repositories? updated/);
+    await page.getByRole("button", { name: "50" }).click();
+    await expect(page.locator("#repo-list-note")).toContainText("Showing 50 of");
+    await expect(page.locator("#repo-list article")).toHaveCount(50);
 
     await page.locator("#repo-list button").first().click();
     await expect(page.locator("#repo-inspector h2")).toBeVisible();

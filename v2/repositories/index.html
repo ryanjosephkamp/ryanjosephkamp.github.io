@@ -86,6 +86,9 @@
                   id="activity-bars"
                   aria-label="Recent public repository update activity"
                 ></div>
+                <p class="activity-detail small-note" id="activity-detail" aria-live="polite">
+                  Focus a bar to read the week count.
+                </p>
                 <p class="small-note">
                   Approximate view based on public repository timestamps, not GitHub's contribution
                   calendar.
@@ -104,7 +107,10 @@
                 text.
               </p>
             </div>
-            <p class="small-note">Showing the current filtered set, capped for readability.</p>
+            <div class="list-tools" aria-label="Repository list length">
+              <span class="small-note" id="repo-list-note">Showing the current filtered set.</span>
+              <div class="limit-controls" id="list-limit-controls" aria-label="Rows to show"></div>
+            </div>
           </div>
           <div class="repo-list" id="repo-list"></div>
         </section>

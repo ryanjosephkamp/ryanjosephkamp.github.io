@@ -1,5 +1,7 @@
 const DATA_URL = "./data/repos.snapshot.json";
 const EXCLUDED_PATTERN = /\b(grok|grokedex|grokédex|xai|x\.ai)\b/i;
+const DEFAULT_LIST_LIMIT = 25;
+const LIST_LIMITS = [25, 50, 100, "all"];
 const finePointer = window.matchMedia("(pointer: fine)");
 
 const state = {
@@ -17,6 +19,7 @@ const state = {
   pointerStart: null,
   lastPointer: null,
   moved: false,
+  listLimit: DEFAULT_LIST_LIMIT,
   frame: 0,
 };
 
@@ -28,7 +31,10 @@ const els = {
   inspector: document.querySelector("#repo-inspector"),
   clusters: document.querySelector("#cluster-row"),
   list: document.querySelector("#repo-list"),
+  listNote: document.querySelector("#repo-list-note"),
+  listLimitControls: document.querySelector("#list-limit-controls"),
   activity: document.querySelector("#activity-bars"),
+  activityDetail: document.querySelector("#activity-detail"),
   hint: document.querySelector("#graph-hint"),
   filterSummary: document.querySelector("#filter-summary"),
 };
@@ -184,6 +190,9 @@ function updateVisibility() {
     state.selected = null;
     renderPassiveInspector();
   }
+  if (state.hovered && !state.hovered.visible) {
+    state.hovered = null;
+  }
   renderList();
   updateFilterSummary();
   updateHint();
@@ -206,11 +215,17 @@ function updateFilterSummary() {
 
 function updateHint() {
   const count = state.nodes.filter((node) => node.visible).length;
-  els.hint.textContent = state.selected
-    ? state.selected.repo.name
-    : count
-      ? `${count} repositories visible. Select one to view details.`
-      : "No repositories match the current search.";
+  if (state.selected) {
+    els.hint.textContent = state.selected.repo.name;
+    return;
+  }
+  if (state.hovered) {
+    els.hint.textContent = `${state.hovered.repo.name} - ${state.hovered.repo.cluster_label || "Repository"}`;
+    return;
+  }
+  els.hint.textContent = count
+    ? `${count} repositories visible. Select one to view details.`
+    : "No repositories match the current search.";
 }
 
 function worldToScreen(node) {
@@ -235,8 +250,18 @@ function themeColor(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+function colorWithAlpha(color, alpha) {
+  const hex = color?.trim().match(/^#([0-9a-f]{6})$/i);
+  if (!hex) return color || themeColor("--ink");
+  const value = hex[1];
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 function nodeColor(node) {
-  return themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
+  return node.repo.cluster_color || themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
 }
 
 function requestDraw() {
@@ -277,13 +302,33 @@ function draw() {
   }
   ctx.restore();
 
+  const focusedNode = state.selected || state.hovered;
+  if (focusedNode) {
+    const focusedScreen = worldToScreen(focusedNode);
+    ctx.save();
+    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.24);
+    for (const node of visible) {
+      if (node === focusedNode || node.repo.cluster !== focusedNode.repo.cluster) continue;
+      const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
+      if (distance > 0.34) continue;
+      const screen = worldToScreen(node);
+      ctx.globalAlpha = Math.max(0.08, 0.25 - distance * 0.35);
+      ctx.beginPath();
+      ctx.moveTo(focusedScreen.x, focusedScreen.y);
+      ctx.lineTo(screen.x, screen.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   for (const node of visible) {
     const screen = worldToScreen(node);
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
     const dim = state.selected && !isSelected && node.repo.cluster !== state.selected.repo.cluster;
-    ctx.globalAlpha = dim ? 0.22 : 0.84;
-    ctx.fillStyle = nodeColor(node);
+    ctx.globalAlpha = dim ? 0.28 : 1;
+    ctx.fillStyle = colorWithAlpha(nodeColor(node), isSelected || isHovered ? 0.94 : 0.74);
     ctx.beginPath();
     ctx.arc(
       screen.x,
@@ -470,7 +515,11 @@ function renderClusters() {
     const button = document.createElement("button");
     button.className = "cluster-chip";
     button.type = "button";
-    button.textContent = `${cluster.label} (${cluster.count})`;
+    button.style.setProperty("--cluster-color", cluster.color);
+    const swatch = document.createElement("span");
+    swatch.className = "cluster-swatch";
+    swatch.setAttribute("aria-hidden", "true");
+    button.append(swatch, document.createTextNode(`${cluster.label} (${cluster.count})`));
     button.setAttribute("aria-pressed", String(state.cluster === cluster.id));
     button.addEventListener("click", () => {
       state.cluster = state.cluster === cluster.id ? "all" : cluster.id;
@@ -485,6 +534,14 @@ function renderClusters() {
     });
     els.clusters.append(button);
   }
+}
+
+function formatDate(value) {
+  return value.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function renderActivity() {
@@ -505,22 +562,62 @@ function renderActivity() {
   }
   const max = Math.max(1, ...weeks.map((week) => week.count));
   els.activity.innerHTML = "";
+  const describeWeek = (week) => {
+    const start = new Date(week.end);
+    start.setDate(week.end.getDate() - 6);
+    const noun = week.count === 1 ? "repository" : "repositories";
+    return `${week.count} public ${noun} updated from ${formatDate(start)} to ${formatDate(week.end)}.`;
+  };
+  const updateDetail = (week) => {
+    if (els.activityDetail) els.activityDetail.textContent = describeWeek(week);
+  };
   for (const week of weeks) {
-    const bar = document.createElement("span");
+    const bar = document.createElement("button");
+    bar.type = "button";
     bar.className = "activity-bar";
     bar.style.height = `${4 + (week.count / max) * 68}px`;
-    bar.title = `${week.count} repositories updated near ${week.end.toLocaleDateString()}`;
+    bar.title = describeWeek(week);
+    bar.setAttribute("aria-label", describeWeek(week));
+    bar.addEventListener("focus", () => updateDetail(week));
+    bar.addEventListener("mouseenter", () => updateDetail(week));
+    bar.addEventListener("click", () => updateDetail(week));
     els.activity.append(bar);
+  }
+  updateDetail(weeks.at(-1));
+}
+
+function renderListControls() {
+  if (!els.listLimitControls) return;
+  els.listLimitControls.innerHTML = "";
+  for (const limit of LIST_LIMITS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "limit-button";
+    button.textContent = limit === "all" ? "all" : String(limit);
+    button.setAttribute("aria-pressed", String(state.listLimit === limit));
+    button.addEventListener("click", () => {
+      state.listLimit = limit;
+      renderListControls();
+      renderList();
+    });
+    els.listLimitControls.append(button);
   }
 }
 
 function renderList() {
-  const visible = state.nodes
+  const filtered = state.nodes
     .filter((node) => node.visible)
     .map((node) => node.repo)
-    .sort((a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at))
-    .slice(0, 24);
+    .sort((a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at));
+  const limit = state.listLimit === "all" ? filtered.length : state.listLimit;
+  const visible = filtered.slice(0, limit);
   els.list.innerHTML = "";
+  if (els.listNote) {
+    els.listNote.textContent =
+      visible.length === filtered.length
+        ? `Showing all ${filtered.length} matching repositories.`
+        : `Showing ${visible.length} of ${filtered.length} matching repositories.`;
+  }
   for (const repo of visible) {
     const row = document.createElement("article");
     row.className = "repo-row";
@@ -596,6 +693,7 @@ function bindEvents() {
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
+      updateHint();
       requestDraw();
     }
     if (
@@ -671,6 +769,7 @@ async function init() {
   state.nodes = makeNodes(state.repos, state.clusters);
   renderClusters();
   renderActivity();
+  renderListControls();
   renderList();
   renderInspector(null);
   bindEvents();
