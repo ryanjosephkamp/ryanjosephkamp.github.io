@@ -15,22 +15,25 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <a class="skip-link" href="#work">Skip to selected work</a>
-    <div class="site" data-theme-choice="light">
+    <a class="skip-link" href="#work">Skip to current focus</a>
+    <div class="site" data-theme-choice="system">
       <header class="site-header" aria-label="V2 candidate navigation">
         <a class="wordmark" href="./" aria-label="Ryan Kamp home">Ryan Kamp</a>
         <nav class="nav-links" aria-label="Primary navigation">
           <a href="./">Home</a>
-          <a href="#work">Projects</a>
           <a href="./repositories/">Repositories</a>
           <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
           <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
         </nav>
         <fieldset class="theme-switcher" aria-label="Theme">
           <legend>Theme</legend>
-          <label><input type="radio" name="theme" value="light" checked /> light</label>
+          <label><input type="radio" name="theme" value="light" /> light</label>
           <label><input type="radio" name="theme" value="dark" /> dark</label>
-          <label><input type="radio" name="theme" value="system" /> system</label>
+          <label><input type="radio" name="theme" value="system" checked /> system</label>
         </fieldset>
       </header>
 
@@ -38,67 +41,57 @@
         <section class="intro" aria-labelledby="intro-title">
           <p class="prototype-note">V2 candidate</p>
           <h1 id="intro-title">Ryan Kamp</h1>
+          <p class="intro-kicker">🚀 MS CS @ <a href="https://www.uc.edu/">UC</a></p>
           <p>
-            Computer science graduate student working on research software, evaluation workflows,
-            and public project notes.
+            My name is <strong>Ryan Kamp</strong>, and I am a graduate student at the University of
+            Cincinnati in Cincinnati, OH.
           </p>
-          <p>Projects, writing, portfolio materials, and a public repository explorer.</p>
-          <ul class="link-list" aria-label="Primary links">
-            <li><a href="./repositories/">Repositories</a></li>
-            <li><a href="#work">Selected work</a></li>
-            <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
-            <li>
-              <a
-                href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
-              >
-                CV
-              </a>
-            </li>
+          <p>
+            In the fall of 2025, I started the MS program in computer science at UC, where my thesis
+            advisor is
+            <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.
+          </p>
+          <ul class="link-list" aria-label="Profile links">
+            <li><a href="https://www.linkedin.com/in/rjk1999">LinkedIn</a></li>
+            <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+            <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+            <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
           </ul>
         </section>
 
         <section class="section" id="work" aria-labelledby="work-title">
           <div class="section-head">
-            <h2 id="work-title">Selected work</h2>
+            <h2 id="work-title">Current focus</h2>
             <p>
-              A small curated set. See the repository explorer for the broader public GitHub view.
+              My current research interests include <strong>agentic AI systems</strong>,
+              <strong>explainable AI</strong>, <strong>generative models</strong>,
+              <strong>LLMs</strong>, and <strong>benchmarking/evaluation</strong>. I also have
+              experience in computational biology, linguistics, and app/game development.
             </p>
           </div>
-          <div class="plain-list">
+          <div class="plain-list focus-list">
             <article>
-              <h3>S26 AIRP</h3>
+              <h3>Research software prototypes</h3>
               <p>
-                A 67-repository set of AI-assisted research software prototypes. The work is
-                presented as software, workflow, interface, documentation, and AI-methodology work.
+                Small, public prototypes for testing software ideas, interface patterns, and
+                research-adjacent workflows.
               </p>
             </article>
             <article>
-              <h3>Repository explorer</h3>
+              <h3>Evaluation workflows</h3>
               <p>
-                Search and filter public GitHub repositories by cluster, language, topic, and update
-                date. <a href="./repositories/">Open the V2 repositories page</a>.
+                Notes and tools for comparing behavior, documenting decisions, and keeping project
+                work inspectable.
               </p>
             </article>
             <article>
-              <h3>Writing and profile links</h3>
+              <h3>Public project notes</h3>
               <p>
-                Blog, CV, GitHub, and external profile links remain available from the homepage.
+                Portfolio materials, repository metadata, and writing links collected in one place.
+                <a href="./repositories/">Open the repository explorer</a>.
               </p>
             </article>
           </div>
-        </section>
-
-        <section class="section s26-note" id="s26-note" aria-labelledby="s26-title">
-          <h2 id="s26-title">S26 AIRP disclosure</h2>
-          <p>
-            S26 AIRP entries are AI-assisted research software prototypes. Scientific and
-            domain-specific content is provisional and is not presented as independently validated
-            scientific output.
-          </p>
-          <p>
-            The prototypes are primarily software, workflow, interface, and AI-methodology
-            explorations rather than validations of scientific or domain-specific conclusions.
-          </p>
         </section>
       </main>
 
@@ -108,6 +101,10 @@
           <a href="./repositories/">Repositories</a>
           <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
           <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
         </nav>
       </footer>
     </div>

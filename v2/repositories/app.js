@@ -1,5 +1,13 @@
 const DATA_URL = "./data/repos.snapshot.json";
+const GITHUB_REPOS_API = "https://api.github.com/users/ryanjosephkamp/repos";
 const EXCLUDED_PATTERN = /\b(grok|grokedex|grokédex|xai|x\.ai)\b/i;
+const DEFAULT_LIST_LIMIT = 25;
+const LIST_LIMITS = [25, 50, 100, "all"];
+const SORT_OPTIONS = [
+  { id: "updated", label: "updated" },
+  { id: "name", label: "name" },
+  { id: "cluster", label: "cluster" },
+];
 const finePointer = window.matchMedia("(pointer: fine)");
 
 const state = {
@@ -17,6 +25,8 @@ const state = {
   pointerStart: null,
   lastPointer: null,
   moved: false,
+  listLimit: DEFAULT_LIST_LIMIT,
+  listSort: "updated",
   frame: 0,
 };
 
@@ -28,9 +38,15 @@ const els = {
   inspector: document.querySelector("#repo-inspector"),
   clusters: document.querySelector("#cluster-row"),
   list: document.querySelector("#repo-list"),
+  listNote: document.querySelector("#repo-list-note"),
+  listSortControls: document.querySelector("#repo-sort-controls"),
+  listLimitControls: document.querySelector("#list-limit-controls"),
   activity: document.querySelector("#activity-bars"),
+  activityDetail: document.querySelector("#activity-detail"),
   hint: document.querySelector("#graph-hint"),
   filterSummary: document.querySelector("#filter-summary"),
+  refresh: document.querySelector("#refresh-repos"),
+  refreshStatus: document.querySelector("#refresh-status"),
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: false });
@@ -45,6 +61,82 @@ function normalizeCluster(repo) {
     label: repo.cluster_label || "Other",
     color: repo.cluster_color || "#555555",
   };
+}
+
+function fallbackCluster(repo) {
+  const text = [
+    repo.name,
+    repo.full_name,
+    repo.description,
+    repo.homepage,
+    repo.language,
+    ...(repo.topics || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  if (text.includes("s26 airp") || repo.name?.startsWith("the-")) {
+    return { cluster: "s26-airp", cluster_label: "S26 AIRP", cluster_color: "#12b886" };
+  }
+  if (/\b(ai|ml|model|neural|transformer|diffusion|llm)\b/.test(text)) {
+    return { cluster: "ai-ml", cluster_label: "AI and ML", cluster_color: "#7c5cff" };
+  }
+  if (/blog|github\.io|portfolio|site|website|web/.test(text)) {
+    return {
+      cluster: "web-portfolio",
+      cluster_label: "Web and Portfolio",
+      cluster_color: "#ffd43b",
+    };
+  }
+  if (/data|dataset|api|automation|parser|cli|tooling/.test(text)) {
+    return { cluster: "data-tooling", cluster_label: "Data and Tooling", cluster_color: "#4dabf7" };
+  }
+  if (/research|experiment|simulation|analysis|pipeline|visualization/.test(text)) {
+    return {
+      cluster: "research-software",
+      cluster_label: "Research Software",
+      cluster_color: "#18c3d7",
+    };
+  }
+  if (/docs|notes|paper|writing|latex|article|capstone/.test(text)) {
+    return { cluster: "writing-docs", cluster_label: "Writing and Docs", cluster_color: "#f783ac" };
+  }
+  return { cluster: "other", cluster_label: "Other / Review", cluster_color: "#adb5bd" };
+}
+
+function mergePublicRepo(repo, previous) {
+  const normalized = {
+    id: repo.id,
+    name: repo.name,
+    full_name: repo.full_name,
+    html_url: repo.html_url,
+    description: repo.description || "",
+    homepage: repo.homepage || "",
+    topics: Array.isArray(repo.topics) ? repo.topics : [],
+    language: repo.language || "Unspecified",
+    created_at: repo.created_at,
+    updated_at: repo.updated_at,
+    pushed_at: repo.pushed_at,
+    fork: Boolean(repo.fork),
+    archived: Boolean(repo.archived),
+    disabled: Boolean(repo.disabled),
+    stargazers_count: repo.stargazers_count || 0,
+    forks_count: repo.forks_count || 0,
+    watchers_count: repo.watchers_count || 0,
+    open_issues_count: repo.open_issues_count || 0,
+    default_branch: repo.default_branch || "",
+    size: repo.size || 0,
+  };
+  const cluster = previous
+    ? {
+        cluster: previous.cluster,
+        cluster_label: previous.cluster_label,
+        cluster_color: previous.cluster_color,
+        secondary_clusters: previous.secondary_clusters || [],
+      }
+    : fallbackCluster(normalized);
+  const tags = [...new Set([...(previous?.tags || []), normalized.language].filter(Boolean))];
+  return { ...normalized, ...cluster, tags };
 }
 
 function cleanRepos(repos) {
@@ -72,6 +164,25 @@ function cleanRepos(repos) {
         cluster_color: cluster.color,
       };
     });
+}
+
+function applyRepositoryData(repos) {
+  const selectedId = state.selected?.repo?.id;
+  state.repos = cleanRepos(repos);
+  state.clusters = buildClusters(state.repos);
+  state.nodes = makeNodes(state.repos, state.clusters);
+  if (state.cluster !== "all" && !state.clusters.some((cluster) => cluster.id === state.cluster)) {
+    state.cluster = "all";
+  }
+  state.selected = state.nodes.find((node) => node.repo.id === selectedId) || null;
+  state.hovered = null;
+  renderClusters();
+  renderActivity();
+  renderSortControls();
+  renderListControls();
+  renderInspector(state.selected?.repo || null);
+  resizeCanvas();
+  updateVisibility();
 }
 
 function buildClusters(repos) {
@@ -184,6 +295,9 @@ function updateVisibility() {
     state.selected = null;
     renderPassiveInspector();
   }
+  if (state.hovered && !state.hovered.visible) {
+    state.hovered = null;
+  }
   renderList();
   updateFilterSummary();
   updateHint();
@@ -206,11 +320,17 @@ function updateFilterSummary() {
 
 function updateHint() {
   const count = state.nodes.filter((node) => node.visible).length;
-  els.hint.textContent = state.selected
-    ? state.selected.repo.name
-    : count
-      ? `${count} repositories visible. Select one to view details.`
-      : "No repositories match the current search.";
+  if (state.selected) {
+    els.hint.textContent = state.selected.repo.name;
+    return;
+  }
+  if (state.hovered) {
+    els.hint.textContent = `${state.hovered.repo.name} - ${state.hovered.repo.cluster_label || "Repository"}`;
+    return;
+  }
+  els.hint.textContent = count
+    ? `${count} repositories visible. Select one to view details.`
+    : "No repositories match the current search.";
 }
 
 function worldToScreen(node) {
@@ -235,8 +355,18 @@ function themeColor(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+function colorWithAlpha(color, alpha) {
+  const hex = color?.trim().match(/^#([0-9a-f]{6})$/i);
+  if (!hex) return color || themeColor("--ink");
+  const value = hex[1];
+  const red = parseInt(value.slice(0, 2), 16);
+  const green = parseInt(value.slice(2, 4), 16);
+  const blue = parseInt(value.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
 function nodeColor(node) {
-  return themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
+  return node.repo.cluster_color || themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
 }
 
 function requestDraw() {
@@ -277,13 +407,33 @@ function draw() {
   }
   ctx.restore();
 
+  const focusedNode = state.selected || state.hovered;
+  if (focusedNode) {
+    const focusedScreen = worldToScreen(focusedNode);
+    ctx.save();
+    ctx.lineWidth = 1.35;
+    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.62);
+    for (const node of visible) {
+      if (node === focusedNode || node.repo.cluster !== focusedNode.repo.cluster) continue;
+      const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
+      if (distance > 0.34) continue;
+      const screen = worldToScreen(node);
+      ctx.globalAlpha = Math.max(0.2, 0.58 - distance * 0.55);
+      ctx.beginPath();
+      ctx.moveTo(focusedScreen.x, focusedScreen.y);
+      ctx.lineTo(screen.x, screen.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   for (const node of visible) {
     const screen = worldToScreen(node);
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
     const dim = state.selected && !isSelected && node.repo.cluster !== state.selected.repo.cluster;
-    ctx.globalAlpha = dim ? 0.22 : 0.84;
-    ctx.fillStyle = nodeColor(node);
+    ctx.globalAlpha = dim ? 0.28 : 1;
+    ctx.fillStyle = colorWithAlpha(nodeColor(node), isSelected || isHovered ? 0.94 : 0.74);
     ctx.beginPath();
     ctx.arc(
       screen.x,
@@ -470,7 +620,11 @@ function renderClusters() {
     const button = document.createElement("button");
     button.className = "cluster-chip";
     button.type = "button";
-    button.textContent = `${cluster.label} (${cluster.count})`;
+    button.style.setProperty("--cluster-color", cluster.color);
+    const swatch = document.createElement("span");
+    swatch.className = "cluster-swatch";
+    swatch.setAttribute("aria-hidden", "true");
+    button.append(swatch, document.createTextNode(`${cluster.label} (${cluster.count})`));
     button.setAttribute("aria-pressed", String(state.cluster === cluster.id));
     button.addEventListener("click", () => {
       state.cluster = state.cluster === cluster.id ? "all" : cluster.id;
@@ -485,6 +639,46 @@ function renderClusters() {
     });
     els.clusters.append(button);
   }
+}
+
+function formatDate(value) {
+  return value.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function repoDate(repo) {
+  const date = new Date(repo.pushed_at || repo.updated_at || repo.created_at);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatRepoDate(repo) {
+  const date = repoDate(repo);
+  return date ? formatDate(date) : "Unknown";
+}
+
+function sortRepositories(repos) {
+  const sorted = [...repos];
+  if (state.listSort === "name") {
+    sorted.sort((a, b) => a.name.localeCompare(b.name));
+    return sorted;
+  }
+  if (state.listSort === "cluster") {
+    sorted.sort(
+      (a, b) =>
+        (a.cluster_label || "").localeCompare(b.cluster_label || "") ||
+        a.name.localeCompare(b.name),
+    );
+    return sorted;
+  }
+  sorted.sort((a, b) => {
+    const dateA = repoDate(a)?.getTime() || 0;
+    const dateB = repoDate(b)?.getTime() || 0;
+    return dateB - dateA || a.name.localeCompare(b.name);
+  });
+  return sorted;
 }
 
 function renderActivity() {
@@ -505,38 +699,96 @@ function renderActivity() {
   }
   const max = Math.max(1, ...weeks.map((week) => week.count));
   els.activity.innerHTML = "";
+  const describeWeek = (week) => {
+    const start = new Date(week.end);
+    start.setDate(week.end.getDate() - 6);
+    const noun = week.count === 1 ? "repository" : "repositories";
+    return `${week.count} public ${noun} updated from ${formatDate(start)} to ${formatDate(week.end)}.`;
+  };
+  const updateDetail = (week) => {
+    if (els.activityDetail) els.activityDetail.textContent = describeWeek(week);
+  };
   for (const week of weeks) {
-    const bar = document.createElement("span");
+    const bar = document.createElement("button");
+    bar.type = "button";
     bar.className = "activity-bar";
     bar.style.height = `${4 + (week.count / max) * 68}px`;
-    bar.title = `${week.count} repositories updated near ${week.end.toLocaleDateString()}`;
+    bar.title = describeWeek(week);
+    bar.setAttribute("aria-label", describeWeek(week));
+    bar.addEventListener("focus", () => updateDetail(week));
+    bar.addEventListener("mouseenter", () => updateDetail(week));
+    bar.addEventListener("click", () => updateDetail(week));
     els.activity.append(bar);
+  }
+  updateDetail(weeks.at(-1));
+}
+
+function renderListControls() {
+  if (!els.listLimitControls) return;
+  els.listLimitControls.innerHTML = "";
+  for (const limit of LIST_LIMITS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "limit-button";
+    button.textContent = limit === "all" ? "all" : String(limit);
+    button.setAttribute("aria-pressed", String(state.listLimit === limit));
+    button.addEventListener("click", () => {
+      state.listLimit = limit;
+      renderListControls();
+      renderList();
+    });
+    els.listLimitControls.append(button);
+  }
+}
+
+function renderSortControls() {
+  if (!els.listSortControls) return;
+  els.listSortControls.innerHTML = "";
+  for (const option of SORT_OPTIONS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "sort-button";
+    button.textContent = option.label;
+    button.setAttribute("aria-pressed", String(state.listSort === option.id));
+    button.addEventListener("click", () => {
+      state.listSort = option.id;
+      renderSortControls();
+      renderList();
+    });
+    els.listSortControls.append(button);
   }
 }
 
 function renderList() {
-  const visible = state.nodes
-    .filter((node) => node.visible)
-    .map((node) => node.repo)
-    .sort((a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at))
-    .slice(0, 24);
+  const filtered = sortRepositories(
+    state.nodes.filter((node) => node.visible).map((node) => node.repo),
+  );
+  const limit = state.listLimit === "all" ? filtered.length : state.listLimit;
+  const visible = filtered.slice(0, limit);
   els.list.innerHTML = "";
+  if (els.listNote) {
+    els.listNote.textContent =
+      visible.length === filtered.length
+        ? `Showing all ${filtered.length} matching repositories.`
+        : `Showing ${visible.length} of ${filtered.length} matching repositories.`;
+  }
   for (const repo of visible) {
     const row = document.createElement("article");
     row.className = "repo-row";
     const label = `${repo.cluster_label || "Repository"}${isS26Repo(repo) ? " - provisional" : ""}`;
+    const repoUrl = safeUrl(repo.html_url);
+    const date = repoDate(repo);
+    const updated = formatRepoDate(repo);
     row.innerHTML = `
-      <button type="button">${escapeHtml(repo.name)}</button>
+      ${
+        repoUrl
+          ? `<a class="repo-name" href="${repoUrl}" target="_blank" rel="noreferrer">${escapeHtml(repo.name)}</a>`
+          : `<span class="repo-name">${escapeHtml(repo.name)}</span>`
+      }
       <p>${escapeHtml(repo.description || "No public description provided.")}</p>
       <small>${escapeHtml(label)}</small>
+      <time class="repo-updated" ${date ? `datetime="${date.toISOString()}"` : ""}>${escapeHtml(updated)}</time>
     `;
-    row.querySelector("button").addEventListener("click", () => {
-      const node = state.nodes.find((item) => item.repo.id === repo.id);
-      selectNode(node, true);
-      document
-        .querySelector("#repositories")
-        .scrollIntoView({ behavior: "smooth", block: "start" });
-    });
     els.list.append(row);
   }
 }
@@ -573,6 +825,49 @@ function resetView() {
   updateVisibility();
 }
 
+async function fetchGithubRepos() {
+  const repos = [];
+  for (let page = 1; ; page += 1) {
+    const response = await fetch(
+      `${GITHUB_REPOS_API}?sort=updated&direction=desc&per_page=100&page=${page}`,
+      { headers: { Accept: "application/vnd.github+json" } },
+    );
+    if (!response.ok) {
+      throw new Error(`GitHub public API returned ${response.status}`);
+    }
+    const batch = await response.json();
+    repos.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return repos;
+}
+
+async function refreshFromGithub() {
+  if (!els.refresh) return;
+  const previousById = new Map(state.repos.map((repo) => [repo.id, repo]));
+  els.refresh.disabled = true;
+  if (els.refreshStatus) els.refreshStatus.textContent = "Refreshing public metadata...";
+  try {
+    const repos = await fetchGithubRepos();
+    const merged = repos
+      .map((repo) => mergePublicRepo(repo, previousById.get(repo.id)))
+      .sort(
+        (a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at),
+      );
+    applyRepositoryData(merged);
+    if (els.refreshStatus) {
+      els.refreshStatus.textContent = `Loaded ${state.repos.length} public repositories from GitHub.`;
+    }
+  } catch (error) {
+    if (els.refreshStatus) {
+      els.refreshStatus.textContent = "GitHub refresh unavailable; keeping the static snapshot.";
+    }
+    console.warn(error);
+  } finally {
+    els.refresh.disabled = false;
+  }
+}
+
 function bindEvents() {
   document.addEventListener("paper-theme-change", requestDraw);
   els.search.addEventListener("input", () => {
@@ -582,6 +877,7 @@ function bindEvents() {
     updateVisibility();
   });
   els.reset.addEventListener("click", resetView);
+  els.refresh?.addEventListener("click", refreshFromGithub);
   els.canvas.addEventListener("pointerdown", (event) => {
     els.canvas.setPointerCapture(event.pointerId);
     const point = onPointerPoint(event);
@@ -596,6 +892,7 @@ function bindEvents() {
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
+      updateHint();
       requestDraw();
     }
     if (
@@ -666,16 +963,8 @@ function bindEvents() {
 async function init() {
   const response = await fetch(DATA_URL);
   const data = await response.json();
-  state.repos = cleanRepos(data.repos || []);
-  state.clusters = buildClusters(state.repos);
-  state.nodes = makeNodes(state.repos, state.clusters);
-  renderClusters();
-  renderActivity();
-  renderList();
-  renderInspector(null);
+  applyRepositoryData(data.repos || []);
   bindEvents();
-  resizeCanvas();
-  updateVisibility();
 }
 
 init().catch((error) => {
