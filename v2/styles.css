@@ -227,6 +227,11 @@ main,
   font-size: 0.92rem;
 }
 
+.intro-kicker {
+  color: var(--ink);
+  font-weight: 650;
+}
+
 .link-list {
   list-style: none;
   margin: 1.75rem 0 0;
@@ -271,6 +276,15 @@ main,
 .plain-list p,
 .repo-row p {
   margin-bottom: 0;
+}
+
+.focus-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.focus-list article {
+  display: block;
 }
 
 .repo-layout {
@@ -340,6 +354,10 @@ main,
   display: inline;
   margin-left: 0.35rem;
   font-size: inherit;
+}
+
+.refresh-status:empty {
+  display: none;
 }
 
 .cluster-row {
@@ -500,7 +518,14 @@ main,
   gap: 0.45rem;
 }
 
-.limit-button {
+.sort-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.6rem;
+}
+
+.limit-button,
+.sort-button {
   border: 0;
   background: transparent;
   color: var(--accent);
@@ -510,14 +535,15 @@ main,
   text-underline-offset: 0.22em;
 }
 
-.limit-button[aria-pressed="true"] {
+.limit-button[aria-pressed="true"],
+.sort-button[aria-pressed="true"] {
   color: var(--ink);
   font-weight: 650;
   text-decoration-thickness: 2px;
 }
 
 .repo-row {
-  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) minmax(80px, 120px);
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr) minmax(84px, 120px) minmax(92px, 128px);
 }
 
 .repo-row a {
@@ -532,6 +558,11 @@ main,
 
 .repo-row small {
   color: var(--faint);
+}
+
+.repo-updated {
+  color: var(--faint);
+  font-size: 0.92rem;
 }
 
 .site-footer {
@@ -557,6 +588,7 @@ main,
 @media (max-width: 860px) {
   .split-head,
   .repo-layout,
+  .focus-list,
   .plain-list article,
   .repo-row,
   .site-footer {

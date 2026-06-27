@@ -3,6 +3,11 @@ const GITHUB_REPOS_API = "https://api.github.com/users/ryanjosephkamp/repos";
 const EXCLUDED_PATTERN = /\b(grok|grokedex|grokédex|xai|x\.ai)\b/i;
 const DEFAULT_LIST_LIMIT = 25;
 const LIST_LIMITS = [25, 50, 100, "all"];
+const SORT_OPTIONS = [
+  { id: "updated", label: "updated" },
+  { id: "name", label: "name" },
+  { id: "cluster", label: "cluster" },
+];
 const finePointer = window.matchMedia("(pointer: fine)");
 
 const state = {
@@ -21,6 +26,7 @@ const state = {
   lastPointer: null,
   moved: false,
   listLimit: DEFAULT_LIST_LIMIT,
+  listSort: "updated",
   frame: 0,
 };
 
@@ -33,6 +39,7 @@ const els = {
   clusters: document.querySelector("#cluster-row"),
   list: document.querySelector("#repo-list"),
   listNote: document.querySelector("#repo-list-note"),
+  listSortControls: document.querySelector("#repo-sort-controls"),
   listLimitControls: document.querySelector("#list-limit-controls"),
   activity: document.querySelector("#activity-bars"),
   activityDetail: document.querySelector("#activity-detail"),
@@ -171,6 +178,7 @@ function applyRepositoryData(repos) {
   state.hovered = null;
   renderClusters();
   renderActivity();
+  renderSortControls();
   renderListControls();
   renderInspector(state.selected?.repo || null);
   resizeCanvas();
@@ -403,14 +411,14 @@ function draw() {
   if (focusedNode) {
     const focusedScreen = worldToScreen(focusedNode);
     ctx.save();
-    ctx.lineWidth = 1.05;
-    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.36);
+    ctx.lineWidth = 1.35;
+    ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 0.62);
     for (const node of visible) {
       if (node === focusedNode || node.repo.cluster !== focusedNode.repo.cluster) continue;
       const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
       if (distance > 0.34) continue;
       const screen = worldToScreen(node);
-      ctx.globalAlpha = Math.max(0.12, 0.38 - distance * 0.42);
+      ctx.globalAlpha = Math.max(0.2, 0.58 - distance * 0.55);
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
@@ -641,6 +649,38 @@ function formatDate(value) {
   });
 }
 
+function repoDate(repo) {
+  const date = new Date(repo.pushed_at || repo.updated_at || repo.created_at);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatRepoDate(repo) {
+  const date = repoDate(repo);
+  return date ? formatDate(date) : "Unknown";
+}
+
+function sortRepositories(repos) {
+  const sorted = [...repos];
+  if (state.listSort === "name") {
+    sorted.sort((a, b) => a.name.localeCompare(b.name));
+    return sorted;
+  }
+  if (state.listSort === "cluster") {
+    sorted.sort(
+      (a, b) =>
+        (a.cluster_label || "").localeCompare(b.cluster_label || "") ||
+        a.name.localeCompare(b.name),
+    );
+    return sorted;
+  }
+  sorted.sort((a, b) => {
+    const dateA = repoDate(a)?.getTime() || 0;
+    const dateB = repoDate(b)?.getTime() || 0;
+    return dateB - dateA || a.name.localeCompare(b.name);
+  });
+  return sorted;
+}
+
 function renderActivity() {
   const now = new Date();
   const weeks = Array.from({ length: 12 }, (_, index) => {
@@ -701,11 +741,28 @@ function renderListControls() {
   }
 }
 
+function renderSortControls() {
+  if (!els.listSortControls) return;
+  els.listSortControls.innerHTML = "";
+  for (const option of SORT_OPTIONS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "sort-button";
+    button.textContent = option.label;
+    button.setAttribute("aria-pressed", String(state.listSort === option.id));
+    button.addEventListener("click", () => {
+      state.listSort = option.id;
+      renderSortControls();
+      renderList();
+    });
+    els.listSortControls.append(button);
+  }
+}
+
 function renderList() {
-  const filtered = state.nodes
-    .filter((node) => node.visible)
-    .map((node) => node.repo)
-    .sort((a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at));
+  const filtered = sortRepositories(
+    state.nodes.filter((node) => node.visible).map((node) => node.repo),
+  );
   const limit = state.listLimit === "all" ? filtered.length : state.listLimit;
   const visible = filtered.slice(0, limit);
   els.list.innerHTML = "";
@@ -720,6 +777,8 @@ function renderList() {
     row.className = "repo-row";
     const label = `${repo.cluster_label || "Repository"}${isS26Repo(repo) ? " - provisional" : ""}`;
     const repoUrl = safeUrl(repo.html_url);
+    const date = repoDate(repo);
+    const updated = formatRepoDate(repo);
     row.innerHTML = `
       ${
         repoUrl
@@ -728,6 +787,7 @@ function renderList() {
       }
       <p>${escapeHtml(repo.description || "No public description provided.")}</p>
       <small>${escapeHtml(label)}</small>
+      <time class="repo-updated" ${date ? `datetime="${date.toISOString()}"` : ""}>${escapeHtml(updated)}</time>
     `;
     els.list.append(row);
   }

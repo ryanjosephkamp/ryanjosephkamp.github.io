@@ -30,8 +30,27 @@ test.describe("V2 production candidate QA", () => {
       await page.goto("/v2/");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
       await expect(page.locator("header").getByRole("link", { name: "Focus" })).toHaveCount(0);
+      await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
+      await expect(page.locator("footer").getByRole("link", { name: "CV" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "UC" })).toHaveAttribute(
+        "href",
+        "https://www.uc.edu/",
+      );
+      await expect(page.getByRole("link", { name: "Dr. Yizong Cheng" })).toHaveAttribute(
+        "href",
+        "https://researchdirectory.uc.edu/p/chengy",
+      );
+      await expect(page.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+        "href",
+        "https://www.linkedin.com/in/rjk1999",
+      );
+      await expect(page.getByRole("link", { name: "Hugging Face" })).toHaveAttribute(
+        "href",
+        "https://huggingface.co/ryanjosephkamp",
+      );
       await expect(page.getByRole("link", { name: "Repositories" }).first()).toBeVisible();
       await expect(page.getByRole("heading", { name: "Current focus" })).toBeVisible();
+      await expect(page.locator("#work")).toContainText("agentic AI systems");
       await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
@@ -48,8 +67,15 @@ test.describe("V2 production candidate QA", () => {
       await page.goto("/v2/repositories/");
       await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
       await expect(page.locator("header").getByRole("link", { name: "Projects" })).toHaveCount(0);
+      await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
+      await expect(page.locator("footer").getByRole("link", { name: "CV" })).toBeVisible();
+      await expect(page.locator("#refresh-status")).toHaveText("");
+      await expect(page.getByText("Static snapshot loaded.")).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: "Repositories", exact: true })).toBeVisible();
+      await expect(page.getByText("The graph is visual.")).toHaveCount(0);
       await expect(page.locator("#repo-canvas")).toBeVisible();
       await expect(page.locator("#repo-list article").first()).toBeVisible();
+      await expect(page.locator("#repo-list .repo-updated").first()).toBeVisible();
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
       await page.screenshot({
@@ -81,6 +107,11 @@ test.describe("V2 production candidate QA", () => {
 
     await page.locator("#activity-bars .activity-bar").first().focus();
     await expect(page.locator("#activity-detail")).toContainText(/public repositories? updated/);
+    await page.locator("#repo-sort-controls").getByRole("button", { name: "name" }).click();
+    await expect(
+      page.locator("#repo-sort-controls").getByRole("button", { name: "name" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.locator("#repo-sort-controls").getByRole("button", { name: "updated" }).click();
     await page.getByRole("button", { name: "50" }).click();
     await expect(page.locator("#repo-list-note")).toContainText("Showing 50 of");
     await expect(page.locator("#repo-list article")).toHaveCount(50);
