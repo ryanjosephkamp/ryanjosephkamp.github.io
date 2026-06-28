@@ -17,6 +17,7 @@ const MAX_ECHO_NODES = 7;
 const MAX_CURRENT_LINKS = 6;
 const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
+const MAX_NEIGHBOR_LABELS = 4;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -27,6 +28,8 @@ const NEIGHBOR_ECHO_STAGGER = 0.045;
 const LINK_CURRENT_MS = 1050;
 const LINK_CURRENT_STAGGER = 0.048;
 const CLUSTER_FIELD_MS = 920;
+const NEIGHBOR_LABEL_MS = 1350;
+const NEIGHBOR_LABEL_STAGGER = 0.055;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -92,6 +95,7 @@ const state = {
   neighborhoodEcho: null,
   linkCurrent: null,
   clusterField: null,
+  neighborLabels: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -839,6 +843,10 @@ function clearClusterField() {
   state.clusterField = null;
 }
 
+function clearNeighborLabels() {
+  state.neighborLabels = null;
+}
+
 function startFocusEffect(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearFocusEffect();
@@ -944,6 +952,24 @@ function startClusterField(node, options = {}) {
   };
 }
 
+function startNeighborLabels(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearNeighborLabels();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.neighborLabels
+    ? performance.now() - state.neighborLabels.startedAt
+    : Infinity;
+  if (state.neighborLabels?.nodeId === nodeId && elapsed < 220) return;
+  state.neighborLabels = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: NEIGHBOR_LABEL_MS,
+  };
+}
+
 function currentLinkCurrent(focusedNode) {
   if (!focusedNode || !state.linkCurrent || state.reducedMotion) {
     if (!focusedNode) clearLinkCurrent();
@@ -1029,6 +1055,28 @@ function currentClusterField(focusedNode) {
   };
 }
 
+function currentNeighborLabels(focusedNode) {
+  if (!focusedNode || !state.neighborLabels || state.reducedMotion) {
+    if (!focusedNode) clearNeighborLabels();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.neighborLabels.nodeId !== focusedNode.repo.id) {
+    clearNeighborLabels();
+    return null;
+  }
+  const elapsed = performance.now() - state.neighborLabels.startedAt;
+  const raw = clamp(elapsed / state.neighborLabels.duration, 0, 1);
+  if (raw >= 1) {
+    clearNeighborLabels();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(Math.max(0, raw - 0.62) / 0.38),
+  };
+}
+
 function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
@@ -1045,6 +1093,12 @@ function linkCurrentProgress(current, index) {
   if (!current) return 0;
   const delay = index * LINK_CURRENT_STAGGER;
   return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
+function neighborLabelProgress(labels, index) {
+  if (!labels) return 0;
+  const delay = index * NEIGHBOR_LABEL_STAGGER;
+  return easeOutQuart(clamp((labels.raw - delay) / Math.max(0.1, 1 - delay), 0, 1));
 }
 
 function focusLineWindow(effect, index) {
@@ -1133,6 +1187,47 @@ function drawNeighborhoodEchoes(candidates, echo) {
     ctx.beginPath();
     ctx.arc(screen.x, screen.y, ringRadius, 0, Math.PI * 2);
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawNeighborLabels(candidates, labels, focusedNode, ink, paper, rect) {
+  if (!labels) return;
+  const visibleLabels = candidates.slice(0, MAX_NEIGHBOR_LABELS);
+  if (!visibleLabels.length) return;
+  const focusScreen = focusedNode ? nodeToScreen(focusedNode) : null;
+  ctx.save();
+  ctx.font = "11.5px ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+  ctx.textBaseline = "alphabetic";
+  for (const [index, candidate] of visibleLabels.entries()) {
+    const progress = neighborLabelProgress(labels, index);
+    if (progress <= 0.02) continue;
+    const node = candidate.node;
+    const screen = nodeToScreen(node);
+    const fadeIn = clamp(progress / 0.34, 0, 1);
+    const alpha = Math.min(0.82, fadeIn * labels.fade * (0.5 + candidate.score * 0.08));
+    if (alpha <= 0.01) continue;
+    const name = String(node.repo.name || "repository");
+    const metrics = ctx.measureText(name);
+    const dx = focusScreen ? screen.x - focusScreen.x : screen.x - rect.width / 2;
+    const dy = focusScreen ? screen.y - focusScreen.y : screen.y - rect.height / 2;
+    const distance = Math.hypot(dx, dy);
+    const fallbackAngle = -Math.PI / 2 + index * 0.72;
+    const angle = distance > 8 ? Math.atan2(dy, dx) : fallbackAngle;
+    const directionX = Math.cos(angle);
+    const directionY = Math.sin(angle);
+    const offset = 10 + index * 2;
+    const rawLabelX = screen.x + directionX * offset + (directionX < -0.1 ? -metrics.width - 4 : 4);
+    const labelX = clamp(rawLabelX, 6, Math.max(6, rect.width - metrics.width - 6));
+    const rawLabelY =
+      screen.y + directionY * (offset + 2) - 4 + (index - (visibleLabels.length - 1) / 2) * 3;
+    const labelY = clamp(rawLabelY, 16, rect.height - 8);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = paper;
+    ctx.lineWidth = 3;
+    ctx.strokeText(name, labelX, labelY);
+    ctx.fillStyle = ink;
+    ctx.fillText(name, labelX, labelY);
   }
   ctx.restore();
 }
@@ -1297,11 +1392,13 @@ function draw() {
   let focusCandidates = [];
   let fieldCandidates = [];
   let neighborhoodEcho = null;
+  let neighborLabels = null;
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
     const trace = currentLinkTrace(focusedNode);
     const linkCurrent = currentLinkCurrent(focusedNode);
     const clusterField = currentClusterField(focusedNode);
+    neighborLabels = currentNeighborLabels(focusedNode);
     const candidates = focusLinkCandidates(focusedNode, visible);
     focusCandidates = candidates;
     fieldCandidates = clusterFieldCandidates(focusedNode, visible);
@@ -1387,6 +1484,7 @@ function draw() {
     }
   }
   drawNeighborhoodEchoes(focusCandidates, neighborhoodEcho);
+  drawNeighborLabels(focusCandidates, neighborLabels, focusedNode, ink, paper, rect);
 
   const shouldLabel = state.selected || state.hovered || (state.query && visible.length <= 10);
   if (shouldLabel) {
@@ -1415,7 +1513,8 @@ function draw() {
     state.focusEffect ||
     state.neighborhoodEcho ||
     state.linkCurrent ||
-    state.clusterField
+    state.clusterField ||
+    state.neighborLabels
   ) {
     requestDraw();
   }
@@ -1447,6 +1546,7 @@ function selectNode(node, focus = false) {
   startNeighborhoodEcho(node, { allowWhileDragging: true });
   startLinkCurrent(node, { allowWhileDragging: true });
   startClusterField(node, { allowWhileDragging: true });
+  startNeighborLabels(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1799,6 +1899,7 @@ function startPinchGesture(pair = activePointerPair()) {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNeighborLabels();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1891,6 +1992,7 @@ function startTouchPinch(event) {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNeighborLabels();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1927,6 +2029,7 @@ function resetView() {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNeighborLabels();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -2056,6 +2159,7 @@ function bindEvents() {
       clearNeighborhoodEcho();
       clearLinkCurrent();
       clearClusterField();
+      clearNeighborLabels();
     }
     requestDraw();
   };
@@ -2067,6 +2171,7 @@ function bindEvents() {
   els.search.addEventListener("input", () => {
     state.query = els.search.value.trim();
     state.selected = null;
+    clearNeighborLabels();
     renderPassiveInspector();
     updateVisibility();
   });
@@ -2206,6 +2311,7 @@ function bindEvents() {
         clearNeighborhoodEcho();
         clearLinkCurrent();
         clearClusterField();
+        clearNeighborLabels();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
@@ -2216,6 +2322,7 @@ function bindEvents() {
       clearNeighborhoodEcho();
       clearLinkCurrent();
       clearClusterField();
+      clearNeighborLabels();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
