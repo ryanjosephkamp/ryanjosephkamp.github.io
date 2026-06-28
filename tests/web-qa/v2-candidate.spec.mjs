@@ -24,30 +24,74 @@ async function graphCanvasData(page) {
   return page.locator("#repo-canvas").evaluate((canvas) => canvas.toDataURL());
 }
 
+async function graphVisualBounds(page) {
+  return page.locator("#repo-canvas").evaluate((canvas) => {
+    const context = canvas.getContext("2d");
+    const { width, height } = canvas;
+    const pixels = context.getImageData(0, 0, width, height).data;
+    const background = [pixels[0], pixels[1], pixels[2]];
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    let count = 0;
+    const colorDistance = (offset) =>
+      Math.abs(pixels[offset] - background[0]) +
+      Math.abs(pixels[offset + 1] - background[1]) +
+      Math.abs(pixels[offset + 2] - background[2]);
+    for (let y = 0; y < height; y += 2) {
+      for (let x = 0; x < width; x += 2) {
+        const offset = (y * width + x) * 4;
+        if (colorDistance(offset) < 36) continue;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        count += 1;
+      }
+    }
+    return {
+      width: Math.max(0, maxX - minX),
+      height: Math.max(0, maxY - minY),
+      count,
+    };
+  });
+}
+
 async function dispatchTouchPinch(page, startGap, endGap) {
   await page.locator("#repo-canvas").evaluate(
     async (canvas, { startGap, endGap }) => {
       const rect = canvas.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      const fire = (type, pointerId, x, y) =>
+      const makeTouch = (identifier, x, y) =>
+        new Touch({
+          identifier,
+          target: canvas,
+          clientX: x,
+          clientY: y,
+        });
+      const fire = (type, touches, changedTouches = touches) =>
         canvas.dispatchEvent(
-          new PointerEvent(type, {
+          new TouchEvent(type, {
             bubbles: true,
             cancelable: true,
-            pointerId,
-            pointerType: "touch",
-            clientX: x,
-            clientY: y,
-            isPrimary: pointerId === 1,
+            touches,
+            targetTouches: touches,
+            changedTouches,
           }),
         );
-      fire("pointerdown", 1, centerX - startGap / 2, centerY);
-      fire("pointerdown", 2, centerX + startGap / 2, centerY);
-      fire("pointermove", 1, centerX - endGap / 2, centerY);
-      fire("pointermove", 2, centerX + endGap / 2, centerY);
-      fire("pointerup", 1, centerX - endGap / 2, centerY);
-      fire("pointerup", 2, centerX + endGap / 2, centerY);
+      const startTouches = [
+        makeTouch(1, centerX - startGap / 2, centerY),
+        makeTouch(2, centerX + startGap / 2, centerY),
+      ];
+      const endTouches = [
+        makeTouch(1, centerX - endGap / 2, centerY),
+        makeTouch(2, centerX + endGap / 2, centerY),
+      ];
+      fire("touchstart", startTouches);
+      fire("touchmove", endTouches);
+      fire("touchend", [], endTouches);
       await new Promise((resolve) => requestAnimationFrame(resolve));
     },
     { startGap, endGap },
@@ -239,13 +283,29 @@ test.describe("V2 site QA", () => {
     await dispatchTouchPinch(page, 72, 150);
     await expect.poll(() => graphCanvasData(page)).not.toBe(before2d);
 
+    await page.getByRole("button", { name: "Reset" }).click();
+    await expect(page.locator("#repo-canvas")).toHaveAttribute("data-graph-mode", "2d");
+
     await page.locator("#graph-mode").getByRole("button", { name: "3D" }).click();
     await expect(page.locator("#repo-canvas")).toHaveAttribute("data-graph-mode", "3d");
     await page.waitForTimeout(450);
 
-    const before3dPinch = await graphCanvasData(page);
-    await dispatchTouchPinch(page, 150, 72);
-    await expect.poll(() => graphCanvasData(page)).not.toBe(before3dPinch);
+    const before3dPinch = await graphVisualBounds(page);
+    await dispatchTouchPinch(page, 72, 170);
+    await expect
+      .poll(() => graphVisualBounds(page))
+      .toMatchObject({
+        width: expect.any(Number),
+        height: expect.any(Number),
+        count: expect.any(Number),
+      });
+    const after3dPinchOut = await graphVisualBounds(page);
+    expect(after3dPinchOut.width).toBeGreaterThan(before3dPinch.width * 1.25);
+    expect(after3dPinchOut.height).toBeGreaterThan(before3dPinch.height * 1.18);
+
+    await dispatchTouchPinch(page, 170, 72);
+    const after3dPinchIn = await graphVisualBounds(page);
+    expect(after3dPinchIn.width).toBeLessThan(after3dPinchOut.width * 0.9);
 
     const before3dDrag = await graphCanvasData(page);
     await dispatchTouchDrag(page);

@@ -21,6 +21,7 @@ const CAMERA3D_DEFAULT = {
   yaw: -0.35,
   pitch: 0.18,
   distance: 2.25,
+  zoom: 1,
 };
 const VECTOR_FIELD_WEIGHTS = {
   name: 3,
@@ -66,6 +67,7 @@ const state = {
   lastPointer: null,
   activePointers: new Map(),
   pinch: null,
+  touchPinch: null,
   moved: false,
   listLimit: DEFAULT_LIST_LIMIT,
   listSort: "updated",
@@ -719,8 +721,8 @@ function screenToWorld(point) {
 
 function project3dNode(node) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.66 * state.scale;
-  const { yaw, pitch, distance } = state.camera3d;
+  const { yaw, pitch, distance, zoom } = state.camera3d;
+  const base = Math.min(rect.width, rect.height) * 0.66 * state.scale * zoom;
   const yawCos = Math.cos(yaw);
   const yawSin = Math.sin(yaw);
   const pitchCos = Math.cos(pitch);
@@ -734,7 +736,7 @@ function project3dNode(node) {
     x: rect.width / 2 + state.panX + xYaw * base * perspective,
     y: rect.height / 2 + state.panY + yPitch * base * perspective,
     depth: clamp((zPitch + 0.5) / 1.1, 0, 1),
-    scale: perspective,
+    scale: perspective * Math.sqrt(zoom),
   };
 }
 
@@ -1235,6 +1237,11 @@ function onPointerPoint(event) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
+function onTouchPoint(touch) {
+  const rect = els.canvas.getBoundingClientRect();
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
 function pointerDistance(first, second) {
   return Math.hypot(second.x - first.x, second.y - first.y);
 }
@@ -1251,16 +1258,21 @@ function activePointerPair() {
   return pointers.length >= 2 ? [pointers[0], pointers[1]] : null;
 }
 
-function startPinchGesture() {
-  const pair = activePointerPair();
-  if (!pair) return;
-  const [first, second] = pair;
-  state.pinch = {
+function makePinchGesture(first, second) {
+  return {
     startDistance: Math.max(24, pointerDistance(first, second)),
     startScale: state.scale,
     startCameraDistance: state.camera3d.distance,
+    startCameraZoom: state.camera3d.zoom,
   };
+}
+
+function startPinchGesture(pair = activePointerPair()) {
+  if (!pair) return null;
+  const [first, second] = pair;
+  state.pinch = makePinchGesture(first, second);
   state.moved = true;
+  return state.pinch;
 }
 
 function zoom2dAtPoint(center, nextScale) {
@@ -1271,20 +1283,42 @@ function zoom2dAtPoint(center, nextScale) {
   state.panY += center.y - after.y;
 }
 
+function zoom3dAtPoint(center, nextZoom) {
+  const rect = els.wrap.getBoundingClientRect();
+  const currentZoom = state.camera3d.zoom;
+  const zoom = clamp(nextZoom, 0.48, 3.2);
+  const factor = zoom / currentZoom;
+  const centerOffsetX = center.x - rect.width / 2;
+  const centerOffsetY = center.y - rect.height / 2;
+  state.panX = centerOffsetX + (state.panX - centerOffsetX) * factor;
+  state.panY = centerOffsetY + (state.panY - centerOffsetY) * factor;
+  state.camera3d.zoom = zoom;
+}
+
+function applyPinchZoom(gesture, first, second) {
+  const distance = Math.max(24, pointerDistance(first, second));
+  const ratio = distance / gesture.startDistance;
+  if (state.graphMode === "3d") {
+    const visualZoom = Math.pow(ratio, 1.16);
+    zoom3dAtPoint(pointerCenter(first, second), gesture.startCameraZoom * visualZoom);
+    state.camera3d.distance = clamp(
+      gesture.startCameraDistance / Math.pow(ratio, 0.12),
+      1.45,
+      3.45,
+    );
+  } else {
+    zoom2dAtPoint(pointerCenter(first, second), gesture.startScale * ratio);
+  }
+  state.moved = true;
+  requestDraw();
+}
+
 function updatePinchGesture() {
   const pair = activePointerPair();
   if (!pair) return false;
   if (!state.pinch) startPinchGesture();
   const [first, second] = pair;
-  const distance = Math.max(24, pointerDistance(first, second));
-  const ratio = distance / state.pinch.startDistance;
-  if (state.graphMode === "3d") {
-    state.camera3d.distance = clamp(state.pinch.startCameraDistance / ratio, 1.25, 3.6);
-  } else {
-    zoom2dAtPoint(pointerCenter(first, second), state.pinch.startScale * ratio);
-  }
-  state.moved = true;
-  requestDraw();
+  applyPinchZoom(state.pinch, first, second);
   return true;
 }
 
@@ -1293,6 +1327,7 @@ function resetPointerState() {
   state.pointerStart = null;
   state.lastPointer = null;
   state.pinch = null;
+  state.touchPinch = null;
   state.activePointers.clear();
   state.moved = false;
   els.canvas.classList.remove("is-dragging");
@@ -1309,6 +1344,42 @@ function capturePointer(event) {
 function releasePointer(event) {
   if (!els.canvas.hasPointerCapture?.(event.pointerId)) return;
   els.canvas.releasePointerCapture(event.pointerId);
+}
+
+function touchPair(event) {
+  if (event.touches.length < 2) return null;
+  return [onTouchPoint(event.touches[0]), onTouchPoint(event.touches[1])];
+}
+
+function startTouchPinch(event) {
+  const pair = touchPair(event);
+  if (!pair) return false;
+  state.activePointers.clear();
+  state.pinch = null;
+  state.touchPinch = makePinchGesture(pair[0], pair[1]);
+  state.dragging = false;
+  state.pointerStart = null;
+  state.lastPointer = null;
+  state.moved = true;
+  els.canvas.classList.add("is-dragging");
+  return true;
+}
+
+function updateTouchPinch(event) {
+  const pair = touchPair(event);
+  if (!pair) return false;
+  if (!state.touchPinch) startTouchPinch(event);
+  applyPinchZoom(state.touchPinch, pair[0], pair[1]);
+  return true;
+}
+
+function endTouchPinch(event) {
+  if (event.touches.length >= 2) {
+    startTouchPinch(event);
+    return;
+  }
+  state.touchPinch = null;
+  els.canvas.classList.remove("is-dragging");
 }
 
 function resetView() {
@@ -1403,7 +1474,28 @@ function bindEvents() {
     if (!button) return;
     setGraphMode(button.dataset.graphMode);
   });
+  els.canvas.addEventListener(
+    "touchstart",
+    (event) => {
+      if (event.touches.length < 2) return;
+      event.preventDefault();
+      startTouchPinch(event);
+    },
+    { passive: false },
+  );
+  els.canvas.addEventListener(
+    "touchmove",
+    (event) => {
+      if (event.touches.length < 2 && !state.touchPinch) return;
+      event.preventDefault();
+      updateTouchPinch(event);
+    },
+    { passive: false },
+  );
+  els.canvas.addEventListener("touchend", endTouchPinch);
+  els.canvas.addEventListener("touchcancel", endTouchPinch);
   els.canvas.addEventListener("pointerdown", (event) => {
+    if (state.touchPinch) return;
     capturePointer(event);
     const point = onPointerPoint(event);
     state.activePointers.set(event.pointerId, point);
@@ -1417,6 +1509,7 @@ function bindEvents() {
     els.canvas.classList.add("is-dragging");
   });
   els.canvas.addEventListener("pointermove", (event) => {
+    if (state.touchPinch) return;
     const point = onPointerPoint(event);
     if (state.activePointers.has(event.pointerId)) {
       state.activePointers.set(event.pointerId, point);
@@ -1454,6 +1547,7 @@ function bindEvents() {
     requestDraw();
   });
   els.canvas.addEventListener("pointerup", (event) => {
+    if (state.touchPinch) return;
     const point = onPointerPoint(event);
     const node = pickNode(point);
     const wasPinching = Boolean(state.pinch);
@@ -1478,6 +1572,7 @@ function bindEvents() {
     resetPointerState();
   });
   els.canvas.addEventListener("pointercancel", (event) => {
+    if (state.touchPinch) return;
     releasePointer(event);
     state.activePointers.delete(event.pointerId);
     if (state.activePointers.size) {
@@ -1496,8 +1591,9 @@ function bindEvents() {
       if (!finePointer.matches) return;
       event.preventDefault();
       if (state.graphMode === "3d") {
-        const factor = event.deltaY < 0 ? 0.92 : 1.08;
-        state.camera3d.distance = clamp(state.camera3d.distance * factor, 1.35, 3.4);
+        const point = onPointerPoint(event);
+        const factor = event.deltaY < 0 ? 1.12 : 0.9;
+        zoom3dAtPoint(point, state.camera3d.zoom * factor);
         requestDraw();
         return;
       }
