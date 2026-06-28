@@ -20,7 +20,7 @@ async function expectNoForbiddenVisibleCopy(page) {
   expect(text).not.toMatch(forbiddenProviderPattern);
 }
 
-test.describe("V2 production candidate QA", () => {
+test.describe("V2 site QA", () => {
   for (const viewport of [
     { name: "desktop", width: 1440, height: 1000 },
     { name: "mobile", width: 390, height: 844 },
@@ -28,7 +28,9 @@ test.describe("V2 production candidate QA", () => {
     test(`homepage renders on ${viewport.name} without page overflow`, async ({ page }) => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/");
+      await expect(page).toHaveTitle("Ryan Kamp");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
+      await expect(page.getByText("V2 candidate")).toHaveCount(0);
       await expect(page.getByLabel("system")).toBeChecked();
       await expect(page.locator("header").getByRole("link", { name: "Focus" })).toHaveCount(0);
       await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
@@ -74,7 +76,9 @@ test.describe("V2 production candidate QA", () => {
     }) => {
       await page.setViewportSize(viewport);
       await page.goto("/v2/repositories/");
+      await expect(page).toHaveTitle("Repositories - Ryan Kamp");
       await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
+      await expect(page.getByText("V2 candidate")).toHaveCount(0);
       await expect(page.getByLabel("system")).toBeChecked();
       await expect(page.locator("header").getByRole("link", { name: "Projects" })).toHaveCount(0);
       await expect(page.locator("header").getByRole("link", { name: "CV" })).toBeVisible();
@@ -95,9 +99,7 @@ test.describe("V2 production candidate QA", () => {
     });
   }
 
-  test("candidate theme, search, graph/list selection, and guardrail copy behave", async ({
-    page,
-  }) => {
+  test("theme, search, graph/list selection, and guardrail copy behave", async ({ page }) => {
     await page.goto("/v2/");
     await page.getByLabel("dark").check();
     await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
@@ -158,13 +160,13 @@ test.describe("V2 production candidate QA", () => {
     expect(rowOverlap).toBe(false);
   });
 
-  test("candidate pages pass axe without unbaselined violations", async ({ page }) => {
+  test("V2 pages pass axe without unbaselined violations", async ({ page }) => {
     for (const path of ["/v2/", "/v2/repositories/"]) {
       await page.goto(path);
       const results = await new AxeBuilder({ page }).analyze();
       await mkdir(reportDir, { recursive: true });
       await writeFile(
-        `${reportDir}/axe-v2-candidate-${path.replaceAll("/", "-") || "home"}.json`,
+        `${reportDir}/axe-v2-${path.replaceAll("/", "-") || "home"}.json`,
         JSON.stringify(results.violations, null, 2),
       );
       const blockingViolations = results.violations.filter(
