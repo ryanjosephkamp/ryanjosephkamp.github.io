@@ -30,24 +30,34 @@ async function dispatchTouchPinch(page, startGap, endGap) {
       const rect = canvas.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      const fire = (type, pointerId, x, y) =>
+      const makeTouch = (identifier, x, y) =>
+        new Touch({
+          identifier,
+          target: canvas,
+          clientX: x,
+          clientY: y,
+        });
+      const fire = (type, touches, changedTouches = touches) =>
         canvas.dispatchEvent(
-          new PointerEvent(type, {
+          new TouchEvent(type, {
             bubbles: true,
             cancelable: true,
-            pointerId,
-            pointerType: "touch",
-            clientX: x,
-            clientY: y,
-            isPrimary: pointerId === 1,
+            touches,
+            targetTouches: touches,
+            changedTouches,
           }),
         );
-      fire("pointerdown", 1, centerX - startGap / 2, centerY);
-      fire("pointerdown", 2, centerX + startGap / 2, centerY);
-      fire("pointermove", 1, centerX - endGap / 2, centerY);
-      fire("pointermove", 2, centerX + endGap / 2, centerY);
-      fire("pointerup", 1, centerX - endGap / 2, centerY);
-      fire("pointerup", 2, centerX + endGap / 2, centerY);
+      const startTouches = [
+        makeTouch(1, centerX - startGap / 2, centerY),
+        makeTouch(2, centerX + startGap / 2, centerY),
+      ];
+      const endTouches = [
+        makeTouch(1, centerX - endGap / 2, centerY),
+        makeTouch(2, centerX + endGap / 2, centerY),
+      ];
+      fire("touchstart", startTouches);
+      fire("touchmove", endTouches);
+      fire("touchend", [], endTouches);
       await new Promise((resolve) => requestAnimationFrame(resolve));
     },
     { startGap, endGap },
