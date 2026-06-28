@@ -811,6 +811,28 @@ function nodeColor(node) {
   return node.repo.cluster_color || themeColor(`--node-${node.cluster % 7}`) || themeColor("--ink");
 }
 
+function nodeDepthDusting(screen, mix = modeMix()) {
+  if (mix <= 0.01) return { alpha: 1, radius: 1, ring: 1 };
+  const depth = clamp(screen.depth, 0, 1);
+  const far = 1 - depth;
+  return {
+    alpha: 1 - mix * far * 0.24,
+    radius: 1 + mix * (depth - 0.5) * 0.22,
+    ring: 1 + mix * (depth - 0.5) * 0.14,
+  };
+}
+
+function lineDepthDusting(first, second, mix = modeMix()) {
+  if (mix <= 0.01) return { alpha: 1, width: 1 };
+  const averageDepth = clamp((first.depth + second.depth) / 2, 0, 1);
+  const depthGap = Math.abs(first.depth - second.depth);
+  const far = 1 - averageDepth;
+  return {
+    alpha: 1 - mix * Math.min(0.38, far * 0.34 + depthGap * 0.08),
+    width: 1 + mix * (averageDepth - 0.5) * 0.12,
+  };
+}
+
 function requestDraw() {
   if (state.frame) return;
   state.frame = requestAnimationFrame(() => {
@@ -1258,6 +1280,7 @@ function draw() {
   const ink = themeColor("--ink");
   const line = themeColor("--line");
   const lineStrong = themeColor("--line-strong");
+  const depthMix = modeMix();
   ctx.fillStyle = paper;
   ctx.fillRect(0, 0, rect.width, rect.height);
 
@@ -1280,9 +1303,11 @@ function draw() {
       const bb = nodeToScreen(b);
       const strength = Math.min(1, Math.max(0, (affinity - 0.8) / 2.4));
       const distanceWeight = Math.max(0, 1 - distance / 0.34);
-      ctx.globalAlpha = Math.min(0.105, 0.028 + strength * 0.04 + distanceWeight * 0.035);
+      const depthLine = lineDepthDusting(aa, bb, depthMix);
+      ctx.globalAlpha =
+        Math.min(0.105, 0.028 + strength * 0.04 + distanceWeight * 0.035) * depthLine.alpha;
       ctx.strokeStyle = strength > 0.72 ? lineStrong : line;
-      ctx.lineWidth = 0.35 + strength * 0.22;
+      ctx.lineWidth = (0.35 + strength * 0.22) * depthLine.width;
       ctx.beginPath();
       ctx.moveTo(aa.x, aa.y);
       ctx.lineTo(bb.x, bb.y);
@@ -1316,8 +1341,9 @@ function draw() {
       const distanceWeight = Math.max(0, 1 - candidate.distance / 0.46);
       const baseAlpha = Math.min(0.42, 0.12 + strength * 0.12 + distanceWeight * 0.13);
       const baseWidth = 0.48 + strength * 0.45;
-      ctx.globalAlpha = trace ? baseAlpha * 0.68 : baseAlpha;
-      ctx.lineWidth = baseWidth;
+      const depthLine = lineDepthDusting(focusedScreen, screen, depthMix);
+      ctx.globalAlpha = (trace ? baseAlpha * 0.68 : baseAlpha) * depthLine.alpha;
+      ctx.lineWidth = baseWidth * depthLine.width;
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
@@ -1327,8 +1353,9 @@ function draw() {
         if (progress > 0) {
           const endX = focusedScreen.x + (screen.x - focusedScreen.x) * progress;
           const endY = focusedScreen.y + (screen.y - focusedScreen.y) * progress;
-          ctx.globalAlpha = Math.min(0.36, baseAlpha + 0.08) * (0.76 + trace.progress * 0.24);
-          ctx.lineWidth = baseWidth + 0.22;
+          ctx.globalAlpha =
+            Math.min(0.36, baseAlpha + 0.08) * (0.76 + trace.progress * 0.24) * depthLine.alpha;
+          ctx.lineWidth = (baseWidth + 0.22) * depthLine.width;
           ctx.beginPath();
           ctx.moveTo(focusedScreen.x, focusedScreen.y);
           ctx.lineTo(endX, endY);
@@ -1337,8 +1364,8 @@ function draw() {
       }
       const focusWindow = focusLineWindow(focusEffect, index);
       if (focusWindow?.alpha > 0.01) {
-        ctx.globalAlpha = Math.min(0.2, baseAlpha + 0.06) * focusWindow.alpha;
-        ctx.lineWidth = baseWidth + 0.15;
+        ctx.globalAlpha = Math.min(0.2, baseAlpha + 0.06) * focusWindow.alpha * depthLine.alpha;
+        ctx.lineWidth = (baseWidth + 0.15) * depthLine.width;
         drawLineSegment(focusedScreen, screen, focusWindow.tail, focusWindow.lead);
       }
     }
@@ -1359,10 +1386,15 @@ function draw() {
     const dim = state.selected && !isSelected && !related;
     const depthAlpha = 0.52 + node.depth * 0.28;
     const depthLift = state.graphMode === "3d" ? 0.84 + screen.depth * 0.3 : 1;
-    const nodeAlpha = Math.min(0.96, (isSelected || isHovered ? 0.96 : depthAlpha) * depthLift);
+    const dusting = nodeDepthDusting(screen, depthMix);
+    const nodeAlpha = Math.min(
+      0.96,
+      (isSelected || isHovered ? 0.96 : depthAlpha) * depthLift * dusting.alpha,
+    );
     const radiusScale =
       (isSelected ? 1.48 : isHovered ? 1.34 : focusedNode && related ? 1.04 : 0.92) *
-      clamp(screen.scale, 0.78, 1.22);
+      clamp(screen.scale, 0.78, 1.22) *
+      dusting.radius;
     if ((isSelected || isHovered) && focusedNode === node) {
       drawFocusPulse(node, screen, focusEffect);
     }
@@ -1377,12 +1409,12 @@ function draw() {
       ctx.strokeStyle = colorWithAlpha(nodeColor(node), 0.82);
       ctx.lineWidth = 1.35;
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, node.radius * 2.38, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, node.radius * 2.38 * dusting.ring, 0, Math.PI * 2);
       ctx.stroke();
       ctx.strokeStyle = ink;
       ctx.lineWidth = 0.9;
       ctx.beginPath();
-      ctx.arc(screen.x, screen.y, node.radius * 3.05, 0, Math.PI * 2);
+      ctx.arc(screen.x, screen.y, node.radius * 3.05 * dusting.ring, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
