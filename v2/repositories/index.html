@@ -66,7 +66,14 @@
                     placeholder="name, language, topic, cluster"
                   />
                 </label>
-                <button class="text-button" id="reset-view" type="button">Reset</button>
+                <div class="graph-actions">
+                  <div class="graph-mode" id="graph-mode" aria-label="Graph view mode">
+                    <span>View</span>
+                    <button type="button" data-graph-mode="2d" aria-pressed="true">2D</button>
+                    <button type="button" data-graph-mode="3d" aria-pressed="false">3D</button>
+                  </div>
+                  <button class="text-button" id="reset-view" type="button">Reset</button>
+                </div>
               </div>
               <div class="cluster-row" id="cluster-row" aria-label="Repository filters"></div>
               <p class="filter-summary" id="filter-summary" aria-live="polite">
@@ -76,7 +83,9 @@
                 <canvas id="repo-canvas" aria-hidden="true"></canvas>
                 <p class="graph-hint" id="graph-hint">Select a repository to view details.</p>
               </div>
-              <p class="small-note">Drag to pan, scroll to zoom, or select a repository.</p>
+              <p class="small-note">
+                In 2D, drag to pan. In 3D, drag to rotate. Scroll to zoom, or select a repository.
+              </p>
             </section>
 
             <aside class="repo-side" aria-label="Repository details and activity">
