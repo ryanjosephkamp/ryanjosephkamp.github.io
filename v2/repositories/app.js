@@ -16,6 +16,7 @@ const MAX_TRACE_LINKS = 10;
 const MAX_ECHO_NODES = 7;
 const MAX_CURRENT_LINKS = 6;
 const LINK_CURRENT_BEADS = 2;
+const MAX_CLUSTER_FIELD_NODES = 9;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -25,6 +26,7 @@ const NEIGHBOR_ECHO_MS = 980;
 const NEIGHBOR_ECHO_STAGGER = 0.045;
 const LINK_CURRENT_MS = 1050;
 const LINK_CURRENT_STAGGER = 0.048;
+const CLUSTER_FIELD_MS = 920;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -89,6 +91,7 @@ const state = {
   focusEffect: null,
   neighborhoodEcho: null,
   linkCurrent: null,
+  clusterField: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -448,6 +451,27 @@ function focusLinkCandidates(focusedNode, visible) {
     })
     .sort((a, b) => b.score - a.score || a.distance - b.distance)
     .slice(0, MAX_FOCUS_LINKS);
+}
+
+function clusterFieldCandidates(focusedNode, visible) {
+  if (!focusedNode) return [];
+  const nearestSameCluster = visible
+    .filter((node) => node !== focusedNode && node.repo.cluster === focusedNode.repo.cluster)
+    .map((node) => {
+      const distance = graphDistance(node, focusedNode);
+      const affinity = semanticAffinity(focusedNode, node);
+      const distanceWeight = Math.max(0, 1 - distance / 0.42);
+      return {
+        node,
+        distance,
+        affinity,
+        score: affinity * 1.1 + distanceWeight,
+      };
+    })
+    .filter(({ distance, affinity }) => distance <= 0.4 || affinity >= 1.7)
+    .sort((a, b) => b.score - a.score || a.distance - b.distance);
+
+  return nearestSameCluster.slice(0, MAX_CLUSTER_FIELD_NODES);
 }
 
 function clusterAnchor(cluster, index) {
@@ -811,6 +835,10 @@ function clearLinkCurrent() {
   state.linkCurrent = null;
 }
 
+function clearClusterField() {
+  state.clusterField = null;
+}
+
 function startFocusEffect(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearFocusEffect();
@@ -900,6 +928,22 @@ function startNeighborhoodEcho(node, options = {}) {
   };
 }
 
+function startClusterField(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearClusterField();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.clusterField ? performance.now() - state.clusterField.startedAt : Infinity;
+  if (state.clusterField?.nodeId === nodeId && elapsed < 220) return;
+  state.clusterField = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: CLUSTER_FIELD_MS,
+  };
+}
+
 function currentLinkCurrent(focusedNode) {
   if (!focusedNode || !state.linkCurrent || state.reducedMotion) {
     if (!focusedNode) clearLinkCurrent();
@@ -960,6 +1004,28 @@ function currentNeighborhoodEcho(focusedNode) {
   return {
     raw,
     progress: easeOutQuart(raw),
+  };
+}
+
+function currentClusterField(focusedNode) {
+  if (!focusedNode || !state.clusterField || state.reducedMotion) {
+    if (!focusedNode) clearClusterField();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.clusterField.nodeId !== focusedNode.repo.id) {
+    clearClusterField();
+    return null;
+  }
+  const elapsed = performance.now() - state.clusterField.startedAt;
+  const raw = clamp(elapsed / state.clusterField.duration, 0, 1);
+  if (raw >= 1) {
+    clearClusterField();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(Math.max(0, raw - 0.52) / 0.48),
   };
 }
 
@@ -1071,6 +1137,121 @@ function drawNeighborhoodEchoes(candidates, echo) {
   ctx.restore();
 }
 
+function crossProduct(origin, first, second) {
+  return (
+    (first.x - origin.x) * (second.y - origin.y) - (first.y - origin.y) * (second.x - origin.x)
+  );
+}
+
+function convexHull(points) {
+  if (points.length <= 3) return points;
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  const lower = [];
+  for (const point of sorted) {
+    while (
+      lower.length >= 2 &&
+      crossProduct(lower[lower.length - 2], lower[lower.length - 1], point) <= 0
+    ) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+  const upper = [];
+  for (const point of sorted.slice().reverse()) {
+    while (
+      upper.length >= 2 &&
+      crossProduct(upper[upper.length - 2], upper[upper.length - 1], point) <= 0
+    ) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+  return lower.slice(0, -1).concat(upper.slice(0, -1));
+}
+
+function drawClosedPath(points) {
+  if (!points.length) return;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) {
+    ctx.lineTo(point.x, point.y);
+  }
+  ctx.closePath();
+}
+
+function drawPartialClosedPath(points, progress) {
+  if (points.length < 2) return;
+  const segments = points.map((point, index) => {
+    const next = points[(index + 1) % points.length];
+    return {
+      from: point,
+      to: next,
+      length: Math.hypot(next.x - point.x, next.y - point.y),
+    };
+  });
+  const totalLength = segments.reduce((sum, segment) => sum + segment.length, 0);
+  let remaining = totalLength * clamp(progress, 0, 1);
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (const segment of segments) {
+    if (remaining <= 0) break;
+    if (remaining >= segment.length) {
+      ctx.lineTo(segment.to.x, segment.to.y);
+      remaining -= segment.length;
+      continue;
+    }
+    const local = segment.length ? remaining / segment.length : 0;
+    ctx.lineTo(
+      segment.from.x + (segment.to.x - segment.from.x) * local,
+      segment.from.y + (segment.to.y - segment.from.y) * local,
+    );
+    break;
+  }
+}
+
+function drawClusterField(focusedNode, candidates, field) {
+  if (!field || candidates.length < 3) return;
+  const rawPoints = [focusedNode, ...candidates.map((candidate) => candidate.node)]
+    .map((node) => nodeToScreen(node))
+    .filter((point) => Number.isFinite(point.x) && Number.isFinite(point.y));
+  const hull = convexHull(rawPoints);
+  if (hull.length < 3) return;
+  const centroid = hull.reduce(
+    (sum, point) => ({
+      x: sum.x + point.x / hull.length,
+      y: sum.y + point.y / hull.length,
+    }),
+    { x: 0, y: 0 },
+  );
+  const padded = hull.map((point) => ({
+    x: centroid.x + (point.x - centroid.x) * 1.1,
+    y: centroid.y + (point.y - centroid.y) * 1.1,
+  }));
+  const reveal = easeOutQuart(clamp(field.raw * 1.14, 0, 1));
+  const breath = Math.sin(field.raw * Math.PI);
+  const color = nodeColor(focusedNode);
+
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  if (field.raw > 0.18) {
+    ctx.fillStyle = colorWithAlpha(color, 1);
+    ctx.globalAlpha = Math.min(0.032, 0.012 + breath * 0.02) * field.fade;
+    drawClosedPath(padded);
+    ctx.fill();
+  }
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.globalAlpha = Math.min(0.18, 0.07 + breath * 0.08) * field.fade;
+  ctx.lineWidth = 0.72;
+  drawPartialClosedPath(padded, reveal);
+  ctx.stroke();
+  ctx.globalAlpha = Math.min(0.075, 0.025 + breath * 0.035) * field.fade;
+  ctx.lineWidth = 0.46;
+  drawClosedPath(padded);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function draw() {
   const rect = els.wrap.getBoundingClientRect();
   const paper = themeColor("--paper");
@@ -1114,14 +1295,18 @@ function draw() {
   const focusedNode = state.selected || state.hovered;
   const focusEffect = currentFocusEffect(focusedNode);
   let focusCandidates = [];
+  let fieldCandidates = [];
   let neighborhoodEcho = null;
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
     const trace = currentLinkTrace(focusedNode);
     const linkCurrent = currentLinkCurrent(focusedNode);
+    const clusterField = currentClusterField(focusedNode);
     const candidates = focusLinkCandidates(focusedNode, visible);
     focusCandidates = candidates;
+    fieldCandidates = clusterFieldCandidates(focusedNode, visible);
     neighborhoodEcho = currentNeighborhoodEcho(focusedNode);
+    drawClusterField(focusedNode, fieldCandidates, clusterField);
     ctx.save();
     ctx.lineCap = "round";
     ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 1);
@@ -1229,7 +1414,8 @@ function draw() {
     state.linkTrace ||
     state.focusEffect ||
     state.neighborhoodEcho ||
-    state.linkCurrent
+    state.linkCurrent ||
+    state.clusterField
   ) {
     requestDraw();
   }
@@ -1260,6 +1446,7 @@ function selectNode(node, focus = false) {
   startLinkTrace(node, { allowWhileDragging: true });
   startNeighborhoodEcho(node, { allowWhileDragging: true });
   startLinkCurrent(node, { allowWhileDragging: true });
+  startClusterField(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1611,6 +1798,7 @@ function startPinchGesture(pair = activePointerPair()) {
   clearFocusEffect();
   clearNeighborhoodEcho();
   clearLinkCurrent();
+  clearClusterField();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1702,6 +1890,7 @@ function startTouchPinch(event) {
   clearFocusEffect();
   clearNeighborhoodEcho();
   clearLinkCurrent();
+  clearClusterField();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1737,6 +1926,7 @@ function resetView() {
   clearFocusEffect();
   clearNeighborhoodEcho();
   clearLinkCurrent();
+  clearClusterField();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -1808,6 +1998,7 @@ function bindEvents() {
       clearFocusEffect();
       clearNeighborhoodEcho();
       clearLinkCurrent();
+      clearClusterField();
     }
     requestDraw();
   };
@@ -1957,6 +2148,7 @@ function bindEvents() {
         clearFocusEffect();
         clearNeighborhoodEcho();
         clearLinkCurrent();
+        clearClusterField();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
@@ -1966,6 +2158,7 @@ function bindEvents() {
       clearFocusEffect();
       clearNeighborhoodEcho();
       clearLinkCurrent();
+      clearClusterField();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;

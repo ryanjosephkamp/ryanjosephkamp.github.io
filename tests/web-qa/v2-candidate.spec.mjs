@@ -233,7 +233,9 @@ test.describe("V2 site QA", () => {
     await expect(page.locator("#filter-summary")).toHaveText(/^Showing \d+ public repositories\.$/);
 
     await page.locator("#activity-bars .activity-bar").first().focus();
-    await expect(page.locator("#activity-detail")).toContainText(/public repositories? updated/);
+    await expect(page.locator("#activity-detail")).toContainText(
+      /public repositor(?:y|ies) updated/,
+    );
     await page.locator("#repo-sort-controls").getByRole("button", { name: "name" }).click();
     await expect(
       page.locator("#repo-sort-controls").getByRole("button", { name: "name" }),
