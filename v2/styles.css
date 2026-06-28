@@ -441,15 +441,11 @@ main,
   height: 100%;
   min-height: inherit;
   cursor: grab;
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 #repo-canvas.is-dragging {
   cursor: grabbing;
-}
-
-#repo-canvas[data-graph-mode="3d"] {
-  touch-action: none;
 }
 
 .graph-hint {
