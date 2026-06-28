@@ -14,6 +14,8 @@ const MAX_PASSIVE_LINKS = 180;
 const MAX_FOCUS_LINKS = 18;
 const MAX_TRACE_LINKS = 10;
 const MAX_ECHO_NODES = 7;
+const MAX_CURRENT_LINKS = 6;
+const LINK_CURRENT_BEADS = 2;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -21,6 +23,8 @@ const FOCUS_EFFECT_MS = 1450;
 const FOCUS_EFFECT_STAGGER = 0.024;
 const NEIGHBOR_ECHO_MS = 980;
 const NEIGHBOR_ECHO_STAGGER = 0.045;
+const LINK_CURRENT_MS = 1050;
+const LINK_CURRENT_STAGGER = 0.048;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -84,6 +88,7 @@ const state = {
   linkTrace: null,
   focusEffect: null,
   neighborhoodEcho: null,
+  linkCurrent: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -802,6 +807,10 @@ function clearNeighborhoodEcho() {
   state.neighborhoodEcho = null;
 }
 
+function clearLinkCurrent() {
+  state.linkCurrent = null;
+}
+
 function startFocusEffect(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearFocusEffect();
@@ -857,6 +866,22 @@ function startLinkTrace(node, options = {}) {
   startFocusEffect(node, options);
 }
 
+function startLinkCurrent(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearLinkCurrent();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.linkCurrent ? performance.now() - state.linkCurrent.startedAt : Infinity;
+  if (state.linkCurrent?.nodeId === nodeId && elapsed < 180) return;
+  state.linkCurrent = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: LINK_CURRENT_MS,
+  };
+}
+
 function startNeighborhoodEcho(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearNeighborhoodEcho();
@@ -872,6 +897,27 @@ function startNeighborhoodEcho(node, options = {}) {
     nodeId,
     startedAt: performance.now(),
     duration: NEIGHBOR_ECHO_MS,
+  };
+}
+
+function currentLinkCurrent(focusedNode) {
+  if (!focusedNode || !state.linkCurrent || state.reducedMotion) {
+    if (!focusedNode) clearLinkCurrent();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.linkCurrent.nodeId !== focusedNode.repo.id) {
+    clearLinkCurrent();
+    return null;
+  }
+  const elapsed = performance.now() - state.linkCurrent.startedAt;
+  const raw = clamp(elapsed / state.linkCurrent.duration, 0, 1);
+  if (raw >= 1) {
+    clearLinkCurrent();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
   };
 }
 
@@ -929,6 +975,12 @@ function echoNodeProgress(echo, index) {
   return clamp((echo.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
 }
 
+function linkCurrentProgress(current, index) {
+  if (!current) return 0;
+  const delay = index * LINK_CURRENT_STAGGER;
+  return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
 function focusLineWindow(effect, index) {
   if (!effect) return null;
   const lead = clamp(effect.raw * 1.16 - index * FOCUS_EFFECT_STAGGER, 0, 1);
@@ -965,6 +1017,33 @@ function drawFocusPulse(node, screen, effect) {
   ctx.beginPath();
   ctx.arc(screen.x, screen.y, ringRadius, 0, Math.PI * 2);
   ctx.stroke();
+  ctx.restore();
+}
+
+function drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, current) {
+  if (!current) return;
+  ctx.save();
+  ctx.fillStyle = colorWithAlpha(nodeColor(focusedNode), 1);
+  for (const [index, candidate] of candidates.slice(0, MAX_CURRENT_LINKS).entries()) {
+    const local = linkCurrentProgress(current, index);
+    if (local <= 0 || local >= 1) continue;
+    const screen = nodeToScreen(candidate.node);
+    const strength = Math.min(1, Math.max(0.2, candidate.score / 4.4));
+    const wave = Math.sin(local * Math.PI);
+    const head = easeOutQuart(local);
+    for (let bead = 0; bead < LINK_CURRENT_BEADS; bead += 1) {
+      const t = head - bead * 0.17;
+      if (t <= 0 || t >= 1) continue;
+      const x = focusedScreen.x + (screen.x - focusedScreen.x) * t;
+      const y = focusedScreen.y + (screen.y - focusedScreen.y) * t;
+      const beadFade = bead === 0 ? 1 : 0.54;
+      const radius = (1.05 + strength * 0.75) * beadFade * clamp(screen.scale, 0.84, 1.18);
+      ctx.globalAlpha = Math.min(0.34, 0.12 + strength * 0.15) * wave * beadFade;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.restore();
 }
 
@@ -1039,6 +1118,7 @@ function draw() {
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
     const trace = currentLinkTrace(focusedNode);
+    const linkCurrent = currentLinkCurrent(focusedNode);
     const candidates = focusLinkCandidates(focusedNode, visible);
     focusCandidates = candidates;
     neighborhoodEcho = currentNeighborhoodEcho(focusedNode);
@@ -1078,6 +1158,7 @@ function draw() {
       }
     }
     ctx.restore();
+    drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, linkCurrent);
   }
 
   const nodesForDraw = [...visible].sort((a, b) => {
@@ -1143,7 +1224,13 @@ function draw() {
     }
   }
   ctx.globalAlpha = 1;
-  if (state.transition || state.linkTrace || state.focusEffect || state.neighborhoodEcho) {
+  if (
+    state.transition ||
+    state.linkTrace ||
+    state.focusEffect ||
+    state.neighborhoodEcho ||
+    state.linkCurrent
+  ) {
     requestDraw();
   }
 }
@@ -1172,6 +1259,7 @@ function selectNode(node, focus = false) {
   updateHint();
   startLinkTrace(node, { allowWhileDragging: true });
   startNeighborhoodEcho(node, { allowWhileDragging: true });
+  startLinkCurrent(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1522,6 +1610,7 @@ function startPinchGesture(pair = activePointerPair()) {
   state.linkTrace = null;
   clearFocusEffect();
   clearNeighborhoodEcho();
+  clearLinkCurrent();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1612,6 +1701,7 @@ function startTouchPinch(event) {
   state.linkTrace = null;
   clearFocusEffect();
   clearNeighborhoodEcho();
+  clearLinkCurrent();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1646,6 +1736,7 @@ function resetView() {
   state.linkTrace = null;
   clearFocusEffect();
   clearNeighborhoodEcho();
+  clearLinkCurrent();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -1716,6 +1807,7 @@ function bindEvents() {
       state.linkTrace = null;
       clearFocusEffect();
       clearNeighborhoodEcho();
+      clearLinkCurrent();
     }
     requestDraw();
   };
@@ -1786,7 +1878,10 @@ function bindEvents() {
       state.hovered = hover;
       if (!state.selected && !state.dragging) {
         startLinkTrace(hover);
-        if (finePointer.matches) startNeighborhoodEcho(hover);
+        if (finePointer.matches) {
+          startNeighborhoodEcho(hover);
+          startLinkCurrent(hover);
+        }
       }
       updateHint();
       requestDraw();
@@ -1861,6 +1956,7 @@ function bindEvents() {
       if (state.graphMode === "3d") {
         clearFocusEffect();
         clearNeighborhoodEcho();
+        clearLinkCurrent();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
@@ -1869,6 +1965,7 @@ function bindEvents() {
       }
       clearFocusEffect();
       clearNeighborhoodEcho();
+      clearLinkCurrent();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
