@@ -199,6 +199,26 @@ test.describe("V2 site QA", () => {
         "aria-pressed",
         "false",
       );
+      const connectionsHelp = page.locator("#graph-help-connections");
+      const clustersHelp = page.locator("#graph-help-clusters");
+      await expect(page.getByRole("button", { name: /Connections/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /Clusters/ })).toBeVisible();
+      await expect(connectionsHelp).toBeHidden();
+      await expect(clustersHelp).toBeHidden();
+      await page.getByRole("button", { name: /Connections/ }).focus();
+      await expect(connectionsHelp).toBeVisible();
+      await expect(connectionsHelp).toContainText(
+        "Lines connect nearby repositories with shared cluster, language, topics, tags, or description terms.",
+      );
+      await page.keyboard.press("Escape");
+      await expect(connectionsHelp).toBeHidden();
+      await page.getByRole("button", { name: /Clusters/ }).focus();
+      await expect(clustersHelp).toBeVisible();
+      await expect(clustersHelp).toContainText(
+        "Clusters are assigned from curated repository metadata when available",
+      );
+      await page.keyboard.press("Escape");
+      await expect(clustersHelp).toBeHidden();
       await expect(page.locator("#repo-list article").first()).toBeVisible();
       await expect(page.locator("#repo-list .repo-updated").first()).toBeVisible();
       await expectNoPageOverflow(page);
@@ -233,7 +253,9 @@ test.describe("V2 site QA", () => {
     await expect(page.locator("#filter-summary")).toHaveText(/^Showing \d+ public repositories\.$/);
 
     await page.locator("#activity-bars .activity-bar").first().focus();
-    await expect(page.locator("#activity-detail")).toContainText(/public repositories? updated/);
+    await expect(page.locator("#activity-detail")).toContainText(
+      /public repositor(?:y|ies) updated/,
+    );
     await page.locator("#repo-sort-controls").getByRole("button", { name: "name" }).click();
     await expect(
       page.locator("#repo-sort-controls").getByRole("button", { name: "name" }),
