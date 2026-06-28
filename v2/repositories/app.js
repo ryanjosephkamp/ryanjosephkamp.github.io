@@ -17,6 +17,7 @@ const MAX_ECHO_NODES = 7;
 const MAX_CURRENT_LINKS = 6;
 const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
+const MAX_GLINT_NEIGHBORS = 4;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -27,6 +28,8 @@ const NEIGHBOR_ECHO_STAGGER = 0.045;
 const LINK_CURRENT_MS = 1050;
 const LINK_CURRENT_STAGGER = 0.048;
 const CLUSTER_FIELD_MS = 920;
+const NODE_GLINT_MS = 820;
+const NODE_GLINT_STAGGER = 0.055;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -92,6 +95,7 @@ const state = {
   neighborhoodEcho: null,
   linkCurrent: null,
   clusterField: null,
+  nodeGlint: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -861,6 +865,10 @@ function clearClusterField() {
   state.clusterField = null;
 }
 
+function clearNodeGlint() {
+  state.nodeGlint = null;
+}
+
 function startFocusEffect(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearFocusEffect();
@@ -966,6 +974,22 @@ function startClusterField(node, options = {}) {
   };
 }
 
+function startNodeGlint(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearNodeGlint();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.nodeGlint ? performance.now() - state.nodeGlint.startedAt : Infinity;
+  if (state.nodeGlint?.nodeId === nodeId && elapsed < 180) return;
+  state.nodeGlint = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: NODE_GLINT_MS,
+  };
+}
+
 function currentLinkCurrent(focusedNode) {
   if (!focusedNode || !state.linkCurrent || state.reducedMotion) {
     if (!focusedNode) clearLinkCurrent();
@@ -1051,6 +1075,28 @@ function currentClusterField(focusedNode) {
   };
 }
 
+function currentNodeGlint(focusedNode) {
+  if (!focusedNode || !state.nodeGlint || state.reducedMotion) {
+    if (!focusedNode) clearNodeGlint();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.nodeGlint.nodeId !== focusedNode.repo.id) {
+    clearNodeGlint();
+    return null;
+  }
+  const elapsed = performance.now() - state.nodeGlint.startedAt;
+  const raw = clamp(elapsed / state.nodeGlint.duration, 0, 1);
+  if (raw >= 1) {
+    clearNodeGlint();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(Math.max(0, raw - 0.58) / 0.42),
+  };
+}
+
 function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
@@ -1067,6 +1113,12 @@ function linkCurrentProgress(current, index) {
   if (!current) return 0;
   const delay = index * LINK_CURRENT_STAGGER;
   return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
+function glintNodeProgress(glint, index) {
+  if (!glint) return 0;
+  const delay = index * NODE_GLINT_STAGGER;
+  return clamp((glint.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
 }
 
 function focusLineWindow(effect, index) {
@@ -1106,6 +1158,63 @@ function drawFocusPulse(node, screen, effect) {
   ctx.arc(screen.x, screen.y, ringRadius, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
+}
+
+function repoActivityGlint(repo) {
+  const date = new Date(repo.pushed_at || repo.updated_at || repo.created_at || 0);
+  if (Number.isNaN(date.getTime())) return 0;
+  const ageDays = Math.max(0, (Date.now() - date.getTime()) / 86400000);
+  return clamp(1 - ageDays / 240, 0, 1);
+}
+
+function drawNodeGlintArc(node, screen, progress, strength, selected = false) {
+  if (progress <= 0 || progress >= 1) return;
+  const color = nodeColor(node);
+  const wave = Math.sin(progress * Math.PI);
+  const radius = node.radius * clamp(screen.scale, 0.78, 1.22);
+  const ring = radius * (selected ? 3.75 : 2.8);
+  const sweep = Math.PI * (selected ? 0.56 : 0.42);
+  const start = -Math.PI / 2 + easeOutQuart(progress) * Math.PI * 2.2;
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.globalAlpha = Math.min(selected ? 0.34 : 0.2, (0.08 + strength * 0.13) * wave);
+  ctx.lineWidth = selected ? 1.05 : 0.74;
+  ctx.beginPath();
+  ctx.arc(screen.x, screen.y, ring, start, start + sweep);
+  ctx.stroke();
+
+  const dotAngle = start + sweep;
+  ctx.fillStyle = colorWithAlpha(color, 1);
+  ctx.globalAlpha = Math.min(selected ? 0.3 : 0.16, (0.07 + strength * 0.11) * wave);
+  ctx.beginPath();
+  ctx.arc(
+    screen.x + Math.cos(dotAngle) * ring,
+    screen.y + Math.sin(dotAngle) * ring,
+    selected ? 1.55 : 1.05,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawNodeGlints(focusedNode, focusedScreen, candidates, glint) {
+  if (!glint) return;
+  const selectedStrength = 0.82 + repoActivityGlint(focusedNode.repo) * 0.18;
+  drawNodeGlintArc(focusedNode, focusedScreen, glint.progress, selectedStrength, true);
+
+  for (const [index, candidate] of candidates.slice(0, MAX_GLINT_NEIGHBORS).entries()) {
+    const local = glintNodeProgress(glint, index + 1);
+    if (local <= 0 || local >= 1) continue;
+    const node = candidate.node;
+    const screen = nodeToScreen(node);
+    const activity = repoActivityGlint(node.repo);
+    const semantic = Math.min(1, Math.max(0.16, candidate.score / 4.8));
+    const strength = (0.48 + semantic * 0.24 + activity * 0.14) * (1 - index * 0.08);
+    drawNodeGlintArc(node, screen, local, strength, false);
+  }
 }
 
 function drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, current) {
@@ -1318,6 +1427,7 @@ function draw() {
   ctx.restore();
 
   const focusedNode = state.selected || state.hovered;
+  if (!focusedNode) clearNodeGlint();
   const focusEffect = currentFocusEffect(focusedNode);
   let focusCandidates = [];
   let fieldCandidates = [];
@@ -1327,6 +1437,7 @@ function draw() {
     const trace = currentLinkTrace(focusedNode);
     const linkCurrent = currentLinkCurrent(focusedNode);
     const clusterField = currentClusterField(focusedNode);
+    const nodeGlint = currentNodeGlint(focusedNode);
     const candidates = focusLinkCandidates(focusedNode, visible);
     focusCandidates = candidates;
     fieldCandidates = clusterFieldCandidates(focusedNode, visible);
@@ -1371,6 +1482,7 @@ function draw() {
     }
     ctx.restore();
     drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, linkCurrent);
+    drawNodeGlints(focusedNode, focusedScreen, candidates, nodeGlint);
   }
 
   const nodesForDraw = [...visible].sort((a, b) => {
@@ -1447,7 +1559,8 @@ function draw() {
     state.focusEffect ||
     state.neighborhoodEcho ||
     state.linkCurrent ||
-    state.clusterField
+    state.clusterField ||
+    state.nodeGlint
   ) {
     requestDraw();
   }
@@ -1479,6 +1592,7 @@ function selectNode(node, focus = false) {
   startNeighborhoodEcho(node, { allowWhileDragging: true });
   startLinkCurrent(node, { allowWhileDragging: true });
   startClusterField(node, { allowWhileDragging: true });
+  startNodeGlint(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1831,6 +1945,7 @@ function startPinchGesture(pair = activePointerPair()) {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNodeGlint();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1923,6 +2038,7 @@ function startTouchPinch(event) {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNodeGlint();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1959,6 +2075,7 @@ function resetView() {
   clearNeighborhoodEcho();
   clearLinkCurrent();
   clearClusterField();
+  clearNodeGlint();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -2088,6 +2205,7 @@ function bindEvents() {
       clearNeighborhoodEcho();
       clearLinkCurrent();
       clearClusterField();
+      clearNodeGlint();
     }
     requestDraw();
   };
@@ -2238,6 +2356,7 @@ function bindEvents() {
         clearNeighborhoodEcho();
         clearLinkCurrent();
         clearClusterField();
+        clearNodeGlint();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
@@ -2248,6 +2367,7 @@ function bindEvents() {
       clearNeighborhoodEcho();
       clearLinkCurrent();
       clearClusterField();
+      clearNodeGlint();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
