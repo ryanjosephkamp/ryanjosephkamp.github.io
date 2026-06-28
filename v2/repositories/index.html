@@ -73,6 +73,36 @@
                     <button type="button" data-graph-mode="3d" aria-pressed="false">3D</button>
                   </div>
                   <button class="text-button" id="reset-view" type="button">Reset</button>
+                  <div class="graph-help-list" aria-label="Graph explanation">
+                    <span class="graph-help">
+                      <button
+                        class="graph-help-trigger"
+                        type="button"
+                        aria-describedby="graph-help-connections"
+                      >
+                        Connections <span aria-hidden="true">?</span>
+                      </button>
+                      <span class="graph-tooltip" id="graph-help-connections" role="tooltip">
+                        Lines connect nearby repositories with shared cluster, language, topics,
+                        tags, or description terms. Selected repositories show the strongest
+                        semantic neighbors.
+                      </span>
+                    </span>
+                    <span class="graph-help">
+                      <button
+                        class="graph-help-trigger"
+                        type="button"
+                        aria-describedby="graph-help-clusters"
+                      >
+                        Clusters <span aria-hidden="true">?</span>
+                      </button>
+                      <span class="graph-tooltip" id="graph-help-clusters" role="tooltip">
+                        Clusters are assigned from curated repository metadata when available, with
+                        keyword-based fallback from public repo names, descriptions, languages,
+                        topics, and tags.
+                      </span>
+                    </span>
+                  </div>
                 </div>
               </div>
               <div class="cluster-row" id="cluster-row" aria-label="Repository filters"></div>
