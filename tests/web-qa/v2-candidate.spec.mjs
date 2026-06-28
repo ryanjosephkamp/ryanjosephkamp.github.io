@@ -20,6 +20,65 @@ async function expectNoForbiddenVisibleCopy(page) {
   expect(text).not.toMatch(forbiddenProviderPattern);
 }
 
+async function graphCanvasData(page) {
+  return page.locator("#repo-canvas").evaluate((canvas) => canvas.toDataURL());
+}
+
+async function dispatchTouchPinch(page, startGap, endGap) {
+  await page.locator("#repo-canvas").evaluate(
+    async (canvas, { startGap, endGap }) => {
+      const rect = canvas.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const fire = (type, pointerId, x, y) =>
+        canvas.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            pointerId,
+            pointerType: "touch",
+            clientX: x,
+            clientY: y,
+            isPrimary: pointerId === 1,
+          }),
+        );
+      fire("pointerdown", 1, centerX - startGap / 2, centerY);
+      fire("pointerdown", 2, centerX + startGap / 2, centerY);
+      fire("pointermove", 1, centerX - endGap / 2, centerY);
+      fire("pointermove", 2, centerX + endGap / 2, centerY);
+      fire("pointerup", 1, centerX - endGap / 2, centerY);
+      fire("pointerup", 2, centerX + endGap / 2, centerY);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    },
+    { startGap, endGap },
+  );
+}
+
+async function dispatchTouchDrag(page) {
+  await page.locator("#repo-canvas").evaluate(async (canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const y = rect.top + rect.height / 2;
+    const x1 = rect.left + rect.width / 2 - 50;
+    const x2 = rect.left + rect.width / 2 + 90;
+    const fire = (type, x) =>
+      canvas.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          pointerId: 7,
+          pointerType: "touch",
+          clientX: x,
+          clientY: y,
+          isPrimary: true,
+        }),
+      );
+    fire("pointerdown", x1);
+    fire("pointermove", x2);
+    fire("pointerup", x2);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+}
+
 test.describe("V2 site QA", () => {
   for (const viewport of [
     { name: "desktop", width: 1440, height: 1000 },
@@ -170,6 +229,27 @@ test.describe("V2 site QA", () => {
       }),
     );
     expect(rowOverlap).toBe(false);
+  });
+
+  test("graph touch pinch and 3D drag gestures update the canvas", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/v2/repositories/");
+
+    const before2d = await graphCanvasData(page);
+    await dispatchTouchPinch(page, 72, 150);
+    await expect.poll(() => graphCanvasData(page)).not.toBe(before2d);
+
+    await page.locator("#graph-mode").getByRole("button", { name: "3D" }).click();
+    await expect(page.locator("#repo-canvas")).toHaveAttribute("data-graph-mode", "3d");
+    await page.waitForTimeout(450);
+
+    const before3dPinch = await graphCanvasData(page);
+    await dispatchTouchPinch(page, 150, 72);
+    await expect.poll(() => graphCanvasData(page)).not.toBe(before3dPinch);
+
+    const before3dDrag = await graphCanvasData(page);
+    await dispatchTouchDrag(page);
+    await expect.poll(() => graphCanvasData(page)).not.toBe(before3dDrag);
   });
 
   test("V2 pages pass axe without unbaselined violations", async ({ page }) => {

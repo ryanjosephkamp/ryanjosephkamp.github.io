@@ -13,6 +13,10 @@ const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
 const MAX_PASSIVE_LINKS = 180;
 const MAX_FOCUS_LINKS = 18;
 const GRAPH_TRANSITION_MS = 380;
+const ROTATION_SENSITIVITY = {
+  yaw: 0.008,
+  pitch: 0.0065,
+};
 const CAMERA3D_DEFAULT = {
   yaw: -0.35,
   pitch: 0.18,
@@ -60,6 +64,8 @@ const state = {
   dragging: false,
   pointerStart: null,
   lastPointer: null,
+  activePointers: new Map(),
+  pinch: null,
   moved: false,
   listLimit: DEFAULT_LIST_LIMIT,
   listSort: "updated",
@@ -1229,6 +1235,82 @@ function onPointerPoint(event) {
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
+function pointerDistance(first, second) {
+  return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
+function pointerCenter(first, second) {
+  return {
+    x: (first.x + second.x) / 2,
+    y: (first.y + second.y) / 2,
+  };
+}
+
+function activePointerPair() {
+  const pointers = [...state.activePointers.values()];
+  return pointers.length >= 2 ? [pointers[0], pointers[1]] : null;
+}
+
+function startPinchGesture() {
+  const pair = activePointerPair();
+  if (!pair) return;
+  const [first, second] = pair;
+  state.pinch = {
+    startDistance: Math.max(24, pointerDistance(first, second)),
+    startScale: state.scale,
+    startCameraDistance: state.camera3d.distance,
+  };
+  state.moved = true;
+}
+
+function zoom2dAtPoint(center, nextScale) {
+  const before = screenToWorld(center);
+  state.scale = clamp(nextScale, 0.55, 2.4);
+  const after = worldPointToScreen(before);
+  state.panX += center.x - after.x;
+  state.panY += center.y - after.y;
+}
+
+function updatePinchGesture() {
+  const pair = activePointerPair();
+  if (!pair) return false;
+  if (!state.pinch) startPinchGesture();
+  const [first, second] = pair;
+  const distance = Math.max(24, pointerDistance(first, second));
+  const ratio = distance / state.pinch.startDistance;
+  if (state.graphMode === "3d") {
+    state.camera3d.distance = clamp(state.pinch.startCameraDistance / ratio, 1.25, 3.6);
+  } else {
+    zoom2dAtPoint(pointerCenter(first, second), state.pinch.startScale * ratio);
+  }
+  state.moved = true;
+  requestDraw();
+  return true;
+}
+
+function resetPointerState() {
+  state.dragging = false;
+  state.pointerStart = null;
+  state.lastPointer = null;
+  state.pinch = null;
+  state.activePointers.clear();
+  state.moved = false;
+  els.canvas.classList.remove("is-dragging");
+}
+
+function capturePointer(event) {
+  try {
+    els.canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // Synthetic pointer checks may not register as active pointers before dispatch.
+  }
+}
+
+function releasePointer(event) {
+  if (!els.canvas.hasPointerCapture?.(event.pointerId)) return;
+  els.canvas.releasePointerCapture(event.pointerId);
+}
+
 function resetView() {
   state.query = "";
   state.cluster = "all";
@@ -1240,6 +1322,7 @@ function resetView() {
   state.panY = 0;
   state.selected = null;
   state.hovered = null;
+  resetPointerState();
   els.search.value = "";
   for (const node of state.nodes) {
     node.x = node.x2;
@@ -1321,16 +1404,26 @@ function bindEvents() {
     setGraphMode(button.dataset.graphMode);
   });
   els.canvas.addEventListener("pointerdown", (event) => {
-    els.canvas.setPointerCapture(event.pointerId);
+    capturePointer(event);
     const point = onPointerPoint(event);
+    state.activePointers.set(event.pointerId, point);
     state.dragging = true;
     state.pointerStart = point;
     state.lastPointer = point;
     state.moved = false;
+    if (state.activePointers.size >= 2) {
+      startPinchGesture();
+    }
     els.canvas.classList.add("is-dragging");
   });
   els.canvas.addEventListener("pointermove", (event) => {
     const point = onPointerPoint(event);
+    if (state.activePointers.has(event.pointerId)) {
+      state.activePointers.set(event.pointerId, point);
+    }
+    if (state.activePointers.size >= 2 && updatePinchGesture()) {
+      return;
+    }
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
@@ -1344,13 +1437,17 @@ function bindEvents() {
       state.moved = true;
     }
     if (state.graphMode === "3d") {
-      state.camera3d.yaw += dx * 0.006;
-      state.camera3d.pitch = clamp(state.camera3d.pitch - dy * 0.005, -0.82, 0.82);
+      state.camera3d.yaw += dx * ROTATION_SENSITIVITY.yaw;
+      state.camera3d.pitch = clamp(
+        state.camera3d.pitch - dy * ROTATION_SENSITIVITY.pitch,
+        -0.82,
+        0.82,
+      );
       state.lastPointer = point;
       requestDraw();
       return;
     }
-    if (!finePointer.matches || event.pointerType === "touch") return;
+    if (!finePointer.matches && event.pointerType !== "touch") return;
     state.panX += dx;
     state.panY += dy;
     state.lastPointer = point;
@@ -1359,22 +1456,39 @@ function bindEvents() {
   els.canvas.addEventListener("pointerup", (event) => {
     const point = onPointerPoint(event);
     const node = pickNode(point);
-    els.canvas.releasePointerCapture(event.pointerId);
+    const wasPinching = Boolean(state.pinch);
+    releasePointer(event);
+    state.activePointers.delete(event.pointerId);
+    if (state.activePointers.size >= 2) {
+      startPinchGesture();
+      return;
+    }
+    if (state.activePointers.size === 1) {
+      const [remaining] = state.activePointers.values();
+      state.pointerStart = remaining;
+      state.lastPointer = remaining;
+      state.pinch = null;
+      state.moved = true;
+      return;
+    }
     els.canvas.classList.remove("is-dragging");
-    if (!state.moved) {
+    if (!state.moved && !wasPinching) {
       selectNode(node || null);
     }
-    state.dragging = false;
-    state.pointerStart = null;
-    state.lastPointer = null;
-    state.moved = false;
+    resetPointerState();
   });
-  els.canvas.addEventListener("pointercancel", () => {
-    state.dragging = false;
-    state.pointerStart = null;
-    state.lastPointer = null;
-    state.moved = false;
-    els.canvas.classList.remove("is-dragging");
+  els.canvas.addEventListener("pointercancel", (event) => {
+    releasePointer(event);
+    state.activePointers.delete(event.pointerId);
+    if (state.activePointers.size) {
+      const [remaining] = state.activePointers.values();
+      state.pointerStart = remaining;
+      state.lastPointer = remaining;
+      state.pinch = null;
+      state.moved = true;
+      return;
+    }
+    resetPointerState();
   });
   els.canvas.addEventListener(
     "wheel",
