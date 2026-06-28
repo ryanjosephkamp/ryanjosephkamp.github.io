@@ -12,7 +12,10 @@ const finePointer = window.matchMedia("(pointer: fine)");
 const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const MAX_PASSIVE_LINKS = 180;
 const MAX_FOCUS_LINKS = 18;
+const MAX_TRACE_LINKS = 10;
 const GRAPH_TRANSITION_MS = 380;
+const LINK_TRACE_MS = 390;
+const LINK_TRACE_STAGGER = 0.032;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -73,6 +76,7 @@ const state = {
   listSort: "updated",
   graphMode: "2d",
   transition: null,
+  linkTrace: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -698,6 +702,7 @@ function setGraphMode(mode) {
   }
   renderGraphModeControls();
   updateHint();
+  startLinkTrace(state.selected || state.hovered);
   requestDraw();
 }
 
@@ -778,6 +783,53 @@ function requestDraw() {
   });
 }
 
+function isPinching() {
+  return Boolean(state.pinch || state.touchPinch || state.activePointers.size >= 2);
+}
+
+function startLinkTrace(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) state.linkTrace = null;
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.linkTrace ? performance.now() - state.linkTrace.startedAt : Infinity;
+  if (state.linkTrace?.nodeId === nodeId && elapsed < 120) return;
+  state.linkTrace = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: LINK_TRACE_MS,
+  };
+}
+
+function currentLinkTrace(focusedNode) {
+  if (!focusedNode || !state.linkTrace || state.reducedMotion) {
+    if (!focusedNode) state.linkTrace = null;
+    return null;
+  }
+  if (state.dragging || isPinching() || state.linkTrace.nodeId !== focusedNode.repo.id) {
+    state.linkTrace = null;
+    return null;
+  }
+  const elapsed = performance.now() - state.linkTrace.startedAt;
+  const raw = clamp(elapsed / state.linkTrace.duration, 0, 1);
+  if (raw >= 1) {
+    state.linkTrace = null;
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+  };
+}
+
+function traceLineProgress(trace, index) {
+  if (!trace) return 0;
+  const delay = index * LINK_TRACE_STAGGER;
+  return easeOutQuart(clamp((trace.raw - delay) / Math.max(0.1, 1 - delay), 0, 1));
+}
+
 function draw() {
   const rect = els.wrap.getBoundingClientRect();
   const paper = themeColor("--paper");
@@ -821,19 +873,36 @@ function draw() {
   const focusedNode = state.selected || state.hovered;
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
+    const trace = currentLinkTrace(focusedNode);
+    const candidates = focusLinkCandidates(focusedNode, visible);
     ctx.save();
     ctx.lineCap = "round";
     ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 1);
-    for (const candidate of focusLinkCandidates(focusedNode, visible)) {
+    for (const [index, candidate] of candidates.entries()) {
       const screen = nodeToScreen(candidate.node);
       const strength = Math.min(1, Math.max(0.12, candidate.affinity / 3.4));
       const distanceWeight = Math.max(0, 1 - candidate.distance / 0.46);
-      ctx.globalAlpha = Math.min(0.42, 0.12 + strength * 0.12 + distanceWeight * 0.13);
-      ctx.lineWidth = 0.48 + strength * 0.45;
+      const baseAlpha = Math.min(0.42, 0.12 + strength * 0.12 + distanceWeight * 0.13);
+      const baseWidth = 0.48 + strength * 0.45;
+      ctx.globalAlpha = trace ? baseAlpha * 0.68 : baseAlpha;
+      ctx.lineWidth = baseWidth;
       ctx.beginPath();
       ctx.moveTo(focusedScreen.x, focusedScreen.y);
       ctx.lineTo(screen.x, screen.y);
       ctx.stroke();
+      if (trace && index < MAX_TRACE_LINKS) {
+        const progress = traceLineProgress(trace, index);
+        if (progress > 0) {
+          const endX = focusedScreen.x + (screen.x - focusedScreen.x) * progress;
+          const endY = focusedScreen.y + (screen.y - focusedScreen.y) * progress;
+          ctx.globalAlpha = Math.min(0.36, baseAlpha + 0.08) * (0.76 + trace.progress * 0.24);
+          ctx.lineWidth = baseWidth + 0.22;
+          ctx.beginPath();
+          ctx.moveTo(focusedScreen.x, focusedScreen.y);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
+      }
     }
     ctx.restore();
   }
@@ -897,7 +966,7 @@ function draw() {
     }
   }
   ctx.globalAlpha = 1;
-  if (state.transition) requestDraw();
+  if (state.transition || state.linkTrace) requestDraw();
 }
 
 function pickNode(point) {
@@ -922,6 +991,7 @@ function selectNode(node, focus = false) {
   state.selected = node;
   renderInspector(node?.repo || null);
   updateHint();
+  startLinkTrace(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1269,6 +1339,7 @@ function makePinchGesture(first, second) {
 
 function startPinchGesture(pair = activePointerPair()) {
   if (!pair) return null;
+  state.linkTrace = null;
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1356,6 +1427,7 @@ function startTouchPinch(event) {
   if (!pair) return false;
   state.activePointers.clear();
   state.pinch = null;
+  state.linkTrace = null;
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1387,6 +1459,7 @@ function resetView() {
   state.cluster = "all";
   state.graphMode = "2d";
   state.transition = null;
+  state.linkTrace = null;
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -1452,7 +1525,10 @@ function bindEvents() {
   document.addEventListener("paper-theme-change", requestDraw);
   const handleReducedMotionChange = (event) => {
     state.reducedMotion = event.matches;
-    if (state.reducedMotion) state.transition = null;
+    if (state.reducedMotion) {
+      state.transition = null;
+      state.linkTrace = null;
+    }
     requestDraw();
   };
   if (typeof reducedMotionQuery.addEventListener === "function") {
@@ -1520,6 +1596,7 @@ function bindEvents() {
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
+      if (!state.selected && !state.dragging) startLinkTrace(hover);
       updateHint();
       requestDraw();
     }
