@@ -21,6 +21,7 @@ const CAMERA3D_DEFAULT = {
   yaw: -0.35,
   pitch: 0.18,
   distance: 2.25,
+  zoom: 1,
 };
 const VECTOR_FIELD_WEIGHTS = {
   name: 3,
@@ -720,8 +721,8 @@ function screenToWorld(point) {
 
 function project3dNode(node) {
   const rect = els.wrap.getBoundingClientRect();
-  const base = Math.min(rect.width, rect.height) * 0.66 * state.scale;
-  const { yaw, pitch, distance } = state.camera3d;
+  const { yaw, pitch, distance, zoom } = state.camera3d;
+  const base = Math.min(rect.width, rect.height) * 0.66 * state.scale * zoom;
   const yawCos = Math.cos(yaw);
   const yawSin = Math.sin(yaw);
   const pitchCos = Math.cos(pitch);
@@ -735,7 +736,7 @@ function project3dNode(node) {
     x: rect.width / 2 + state.panX + xYaw * base * perspective,
     y: rect.height / 2 + state.panY + yPitch * base * perspective,
     depth: clamp((zPitch + 0.5) / 1.1, 0, 1),
-    scale: perspective,
+    scale: perspective * Math.sqrt(zoom),
   };
 }
 
@@ -1262,6 +1263,7 @@ function makePinchGesture(first, second) {
     startDistance: Math.max(24, pointerDistance(first, second)),
     startScale: state.scale,
     startCameraDistance: state.camera3d.distance,
+    startCameraZoom: state.camera3d.zoom,
   };
 }
 
@@ -1281,12 +1283,29 @@ function zoom2dAtPoint(center, nextScale) {
   state.panY += center.y - after.y;
 }
 
+function zoom3dAtPoint(center, nextZoom) {
+  const rect = els.wrap.getBoundingClientRect();
+  const currentZoom = state.camera3d.zoom;
+  const zoom = clamp(nextZoom, 0.48, 3.2);
+  const factor = zoom / currentZoom;
+  const centerOffsetX = center.x - rect.width / 2;
+  const centerOffsetY = center.y - rect.height / 2;
+  state.panX = centerOffsetX + (state.panX - centerOffsetX) * factor;
+  state.panY = centerOffsetY + (state.panY - centerOffsetY) * factor;
+  state.camera3d.zoom = zoom;
+}
+
 function applyPinchZoom(gesture, first, second) {
   const distance = Math.max(24, pointerDistance(first, second));
   const ratio = distance / gesture.startDistance;
   if (state.graphMode === "3d") {
-    const pinchPower = Math.pow(ratio, 1.22);
-    state.camera3d.distance = clamp(gesture.startCameraDistance / pinchPower, 1.12, 4.1);
+    const visualZoom = Math.pow(ratio, 1.16);
+    zoom3dAtPoint(pointerCenter(first, second), gesture.startCameraZoom * visualZoom);
+    state.camera3d.distance = clamp(
+      gesture.startCameraDistance / Math.pow(ratio, 0.12),
+      1.45,
+      3.45,
+    );
   } else {
     zoom2dAtPoint(pointerCenter(first, second), gesture.startScale * ratio);
   }
@@ -1572,8 +1591,9 @@ function bindEvents() {
       if (!finePointer.matches) return;
       event.preventDefault();
       if (state.graphMode === "3d") {
-        const factor = event.deltaY < 0 ? 0.92 : 1.08;
-        state.camera3d.distance = clamp(state.camera3d.distance * factor, 1.35, 3.4);
+        const point = onPointerPoint(event);
+        const factor = event.deltaY < 0 ? 1.12 : 0.9;
+        zoom3dAtPoint(point, state.camera3d.zoom * factor);
         requestDraw();
         return;
       }
