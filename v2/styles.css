@@ -332,6 +332,7 @@ main,
 }
 
 .graph-help-trigger {
+  appearance: none;
   border: 0;
   border-bottom: 1px dotted currentColor;
   background: transparent;
@@ -374,13 +375,16 @@ main,
   visibility: hidden;
 }
 
+.graph-tooltip[hidden] {
+  display: none;
+}
+
 .graph-help:first-child .graph-tooltip {
   right: auto;
   left: 0;
 }
 
-.graph-help:hover .graph-tooltip,
-.graph-help:focus-within .graph-tooltip {
+.graph-tooltip.is-visible {
   opacity: 1;
   transform: translateY(0);
   visibility: visible;

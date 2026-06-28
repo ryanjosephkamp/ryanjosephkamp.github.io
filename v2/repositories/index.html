@@ -12,7 +12,7 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffffff'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%23111111' font-family='Arial,sans-serif' font-size='18'%3ERK%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../styles.css?v=20260628-graph-tooltip-fix" />
   </head>
   <body>
     <a class="skip-link" href="#repo-list">Skip to repository list</a>
@@ -78,11 +78,12 @@
                       <button
                         class="graph-help-trigger"
                         type="button"
+                        aria-expanded="false"
                         aria-describedby="graph-help-connections"
                       >
                         Connections <span aria-hidden="true">?</span>
                       </button>
-                      <span class="graph-tooltip" id="graph-help-connections" role="tooltip">
+                      <span class="graph-tooltip" id="graph-help-connections" role="tooltip" hidden>
                         Lines connect nearby repositories with shared cluster, language, topics,
                         tags, or description terms. Selected repositories show the strongest
                         semantic neighbors.
@@ -92,11 +93,12 @@
                       <button
                         class="graph-help-trigger"
                         type="button"
+                        aria-expanded="false"
                         aria-describedby="graph-help-clusters"
                       >
                         Clusters <span aria-hidden="true">?</span>
                       </button>
-                      <span class="graph-tooltip" id="graph-help-clusters" role="tooltip">
+                      <span class="graph-tooltip" id="graph-help-clusters" role="tooltip" hidden>
                         Clusters are assigned from curated repository metadata when available, with
                         keyword-based fallback from public repo names, descriptions, languages,
                         topics, and tags.
@@ -191,6 +193,6 @@
       </footer>
     </div>
     <script src="../theme.js" defer></script>
-    <script src="./app.js" defer></script>
+    <script src="./app.js?v=20260628-graph-tooltip-fix" defer></script>
   </body>
 </html>

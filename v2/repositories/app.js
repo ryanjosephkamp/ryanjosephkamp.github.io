@@ -1988,8 +1988,65 @@ async function refreshFromGithub() {
   }
 }
 
+function bindGraphHelpTooltips() {
+  const items = Array.from(document.querySelectorAll(".graph-help"));
+  const closeTooltip = (item) => {
+    const trigger = item.querySelector(".graph-help-trigger");
+    const tooltip = item.querySelector(".graph-tooltip");
+    if (!trigger || !tooltip) return;
+    window.clearTimeout(Number(tooltip.dataset.hideTimer || 0));
+    tooltip.classList.remove("is-visible");
+    trigger.setAttribute("aria-expanded", "false");
+    tooltip.dataset.hideTimer = String(
+      window.setTimeout(() => {
+        if (!tooltip.classList.contains("is-visible")) tooltip.hidden = true;
+      }, 130),
+    );
+  };
+  const openTooltip = (item) => {
+    const trigger = item.querySelector(".graph-help-trigger");
+    const tooltip = item.querySelector(".graph-tooltip");
+    if (!trigger || !tooltip) return;
+    items.forEach((other) => {
+      if (other !== item) closeTooltip(other);
+    });
+    window.clearTimeout(Number(tooltip.dataset.hideTimer || 0));
+    tooltip.hidden = false;
+    tooltip.classList.add("is-visible");
+    trigger.setAttribute("aria-expanded", "true");
+  };
+
+  items.forEach((item) => {
+    const trigger = item.querySelector(".graph-help-trigger");
+    if (!trigger) return;
+    item.addEventListener("pointerenter", (event) => {
+      if (event.pointerType === "mouse" || event.pointerType === "pen") openTooltip(item);
+    });
+    item.addEventListener("pointerleave", () => closeTooltip(item));
+    trigger.addEventListener("focus", () => openTooltip(item));
+    trigger.addEventListener("blur", () => closeTooltip(item));
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      openTooltip(item);
+    });
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      closeTooltip(item);
+      trigger.blur();
+    });
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest(".graph-help")) return;
+    items.forEach(closeTooltip);
+  });
+}
+
 function bindEvents() {
   document.addEventListener("paper-theme-change", requestDraw);
+  bindGraphHelpTooltips();
   const handleReducedMotionChange = (event) => {
     state.reducedMotion = event.matches;
     if (state.reducedMotion) {
