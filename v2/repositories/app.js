@@ -9,8 +9,23 @@ const SORT_OPTIONS = [
   { id: "cluster", label: "cluster" },
 ];
 const finePointer = window.matchMedia("(pointer: fine)");
+const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 const MAX_PASSIVE_LINKS = 180;
 const MAX_FOCUS_LINKS = 18;
+const GRAPH_TRANSITION_MS = 380;
+const CAMERA3D_DEFAULT = {
+  yaw: -0.35,
+  pitch: 0.18,
+  distance: 2.25,
+};
+const VECTOR_FIELD_WEIGHTS = {
+  name: 3,
+  description: 1,
+  language: 1.6,
+  tags: 2.2,
+  topics: 2.4,
+  cluster: 1.2,
+};
 const SEMANTIC_STOPWORDS = new Set([
   "and",
   "are",
@@ -48,6 +63,10 @@ const state = {
   moved: false,
   listLimit: DEFAULT_LIST_LIMIT,
   listSort: "updated",
+  graphMode: "2d",
+  transition: null,
+  camera3d: { ...CAMERA3D_DEFAULT },
+  reducedMotion: reducedMotionQuery.matches,
   frame: 0,
 };
 
@@ -68,6 +87,7 @@ const els = {
   filterSummary: document.querySelector("#filter-summary"),
   refresh: document.querySelector("#refresh-repos"),
   refreshStatus: document.querySelector("#refresh-status"),
+  graphModeControls: document.querySelector("#graph-mode"),
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: false });
@@ -201,6 +221,7 @@ function applyRepositoryData(repos) {
   renderActivity();
   renderSortControls();
   renderListControls();
+  renderGraphModeControls();
   renderInspector(state.selected?.repo || null);
   resizeCanvas();
   updateVisibility();
@@ -254,6 +275,79 @@ function repoTermSet(values) {
   );
 }
 
+function addWeightedTerms(weights, value, weight, prefix = "") {
+  const values = Array.isArray(value) ? value : [value];
+  for (const item of values) {
+    for (const token of tokenize(item)) {
+      const key = prefix ? `${prefix}:${token}` : token;
+      weights.set(key, (weights.get(key) || 0) + weight);
+    }
+  }
+}
+
+function weightedRepoTerms(repo) {
+  const weights = new Map();
+  addWeightedTerms(weights, repo.name, VECTOR_FIELD_WEIGHTS.name);
+  addWeightedTerms(weights, repo.description, VECTOR_FIELD_WEIGHTS.description);
+  addWeightedTerms(weights, repo.language, VECTOR_FIELD_WEIGHTS.language, "language");
+  addWeightedTerms(weights, repo.tags || [], VECTOR_FIELD_WEIGHTS.tags);
+  addWeightedTerms(weights, repo.topics || [], VECTOR_FIELD_WEIGHTS.topics);
+  addWeightedTerms(weights, repo.cluster_label, VECTOR_FIELD_WEIGHTS.cluster, "cluster");
+  return weights;
+}
+
+function normalizeVector(weights) {
+  const magnitude = Math.sqrt([...weights.values()].reduce((sum, value) => sum + value * value, 0));
+  if (!magnitude) return weights;
+  for (const [key, value] of weights) {
+    weights.set(key, value / magnitude);
+  }
+  return weights;
+}
+
+function buildVectorModel(repos) {
+  const documents = repos.map((repo) => ({ repo, weights: weightedRepoTerms(repo) }));
+  const documentFrequency = new Map();
+  for (const document of documents) {
+    for (const key of document.weights.keys()) {
+      documentFrequency.set(key, (documentFrequency.get(key) || 0) + 1);
+    }
+  }
+
+  const vectors = new Map();
+  for (const document of documents) {
+    const vector = new Map();
+    for (const [key, value] of document.weights) {
+      const idf = Math.log((1 + repos.length) / (1 + (documentFrequency.get(key) || 0))) + 1;
+      vector.set(key, value * idf);
+    }
+    vectors.set(document.repo.id, normalizeVector(vector));
+  }
+  return vectors;
+}
+
+function vectorDot(first, second) {
+  if (!first || !second) return 0;
+  const [small, large] = first.size <= second.size ? [first, second] : [second, first];
+  let dot = 0;
+  for (const [key, value] of small) {
+    dot += value * (large.get(key) || 0);
+  }
+  return dot;
+}
+
+function vectorAxis(vector, salt) {
+  if (!vector?.size) return 0;
+  let sum = 0;
+  let weight = 0;
+  for (const [key, value] of vector) {
+    const axis = hashValue(`${salt}:${key}`) * 2 - 1;
+    sum += axis * value;
+    weight += Math.abs(value);
+  }
+  return weight ? Math.max(-1, Math.min(1, sum / weight)) : 0;
+}
+
 function sharedCount(first, second, limit = 6) {
   let count = 0;
   for (const value of first) {
@@ -295,6 +389,7 @@ function semanticAffinity(first, second) {
   score += Math.min(1.2, sharedCount(first.topicSet, second.topicSet, 4) * 0.45);
   score += Math.min(0.8, sharedCount(first.tagSet, second.tagSet, 4) * 0.25);
   score += Math.min(1.25, sharedCount(first.semanticTokens, second.semanticTokens, 6) * 0.22);
+  score += Math.min(1.05, vectorDot(first.vector, second.vector) * 1.25);
   return score;
 }
 
@@ -309,7 +404,7 @@ function focusLinkCandidates(focusedNode, visible) {
   return visible
     .filter((node) => node !== focusedNode)
     .map((node) => {
-      const distance = Math.hypot(node.x - focusedNode.x, node.y - focusedNode.y);
+      const distance = graphDistance(node, focusedNode);
       const affinity = semanticAffinity(focusedNode, node);
       const sameCluster = node.repo.cluster === focusedNode.repo.cluster;
       const distanceWeight = Math.max(0, 1 - distance / 0.46);
@@ -349,14 +444,68 @@ function clusterAnchor(cluster, index) {
   };
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function graphDistance(first, second) {
+  if (modeMix() > 0.55) {
+    return Math.hypot(first.x3 - second.x3, first.y3 - second.y3, (first.z3 - second.z3) * 0.82);
+  }
+  return Math.hypot(first.x - second.x, first.y - second.y);
+}
+
+function relaxNodes(nodes, dimensions = "2d") {
+  const is3d = dimensions === "3d";
+  const keys = is3d ? ["x3", "y3", "z3"] : ["x2", "y2"];
+  const baseKeys = is3d ? ["baseX3", "baseY3", "baseZ3"] : ["baseX2", "baseY2"];
+  const minDistance = is3d ? 0.034 : 0.027;
+  const iterations = is3d ? 34 : 42;
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    for (let i = 0; i < nodes.length; i += 1) {
+      for (let j = i + 1; j < nodes.length; j += 1) {
+        const first = nodes[i];
+        const second = nodes[j];
+        const dx = second[keys[0]] - first[keys[0]];
+        const dy = second[keys[1]] - first[keys[1]];
+        const dz = is3d ? second[keys[2]] - first[keys[2]] : 0;
+        const distance = Math.max(0.0001, Math.hypot(dx, dy, dz));
+        if (distance >= minDistance) continue;
+        const push = ((minDistance - distance) / distance) * 0.5;
+        first[keys[0]] -= dx * push;
+        second[keys[0]] += dx * push;
+        first[keys[1]] -= dy * push;
+        second[keys[1]] += dy * push;
+        if (is3d) {
+          first[keys[2]] -= dz * push;
+          second[keys[2]] += dz * push;
+        }
+      }
+    }
+
+    for (const node of nodes) {
+      node[keys[0]] += (node[baseKeys[0]] - node[keys[0]]) * 0.018;
+      node[keys[1]] += (node[baseKeys[1]] - node[keys[1]]) * 0.018;
+      node[keys[0]] = clamp(node[keys[0]], -0.62, 0.62);
+      node[keys[1]] = clamp(node[keys[1]], -0.48, 0.48);
+      if (is3d) {
+        node[keys[2]] += (node[baseKeys[2]] - node[keys[2]]) * 0.018;
+        node[keys[2]] = clamp(node[keys[2]], -0.38, 0.38);
+      }
+    }
+  }
+}
+
 function makeNodes(repos, clusters) {
   const clusterIndex = new Map(clusters.map((cluster, index) => [cluster.id, index]));
+  const vectors = buildVectorModel(repos);
   const clusterCounts = new Map();
   for (const repo of repos) {
     clusterCounts.set(repo.cluster, (clusterCounts.get(repo.cluster) || 0) + 1);
   }
   const clusterSeen = new Map();
-  return repos.map((repo) => {
+  const nodes = repos.map((repo) => {
     const cluster = clusterIndex.get(repo.cluster) ?? 0;
     const anchor = clusterAnchor(clusters[cluster] || { id: "other" }, cluster);
     const count = clusterCounts.get(repo.cluster) || 1;
@@ -366,27 +515,44 @@ function makeNodes(repos, clusters) {
     const topicSet = repoTermSet(repo.topics || []);
     const tagSet = repoTermSet(repo.tags || []);
     const affinityKey = primaryAffinityKey(repo, semanticTokens);
+    const vector = vectors.get(repo.id) || new Map();
+    const axisX = vectorAxis(vector, "x");
+    const axisY = vectorAxis(vector, "y");
+    const axisZ = vectorAxis(vector, "z");
     const local = hashValue(`${repo.name}:${repo.created_at}`);
     const depth = hashValue(`${repo.id}:${repo.name}:depth`);
     const keyAngle = hashValue(`${repo.cluster}:${affinityKey}`) * Math.PI * 2;
     const rankAngle = rank * 2.399963 + local * 0.35;
-    const angle = rankAngle * 0.72 + keyAngle * 0.28;
-    const spread = repo.cluster === "s26-airp" ? 0.31 : 0.16;
+    const angle = rankAngle * 0.54 + keyAngle * 0.22 + Math.atan2(axisY, axisX) * 0.24;
+    const spread = repo.cluster === "s26-airp" ? 0.33 : 0.17;
+    const semanticSpread = 0.07 + Math.min(0.12, Math.hypot(axisX, axisY) * 0.16);
     const radius =
       Math.sqrt((rank + 0.5) / count) *
       spread *
       (0.9 + hashValue(`${repo.cluster}:${affinityKey}:radius`) * 0.18);
-    const x = anchor.x + Math.cos(angle) * radius;
-    const y = anchor.y + Math.sin(angle) * radius * 0.76;
+    const x = anchor.x + Math.cos(angle) * radius + axisX * semanticSpread;
+    const y = anchor.y + Math.sin(angle) * radius * 0.76 + axisY * semanticSpread * 0.72;
+    const z = axisZ * 0.3 + (depth - 0.5) * 0.12;
     return {
       repo,
       cluster,
       anchorX: x,
       anchorY: y,
+      baseX2: x,
+      baseY2: y,
+      baseX3: x + axisX * 0.08,
+      baseY3: y + axisY * 0.05,
+      baseZ3: z,
       x,
       y,
+      x2: x,
+      y2: y,
+      x3: x + axisX * 0.08,
+      y3: y + axisY * 0.05,
+      z3: z,
       radius: 2.05 + depth * 1.05 + (repo.stargazers_count > 0 ? 0.65 : 0),
       depth,
+      vector,
       semanticTokens,
       topicSet,
       tagSet,
@@ -394,6 +560,15 @@ function makeNodes(repos, clusters) {
       visible: true,
     };
   });
+  relaxNodes(nodes, "2d");
+  relaxNodes(nodes, "3d");
+  for (const node of nodes) {
+    node.anchorX = node.x2;
+    node.anchorY = node.y2;
+    node.x = node.x2;
+    node.y = node.y2;
+  }
+  return nodes;
 }
 
 function resizeCanvas() {
@@ -466,16 +641,64 @@ function updateHint() {
     return;
   }
   els.hint.textContent = count
-    ? `${count} repositories visible. Select one to view details.`
+    ? state.graphMode === "3d"
+      ? `${count} repositories visible. Drag to rotate, or select one to view details.`
+      : `${count} repositories visible. Select one to view details.`
     : "No repositories match the current search.";
 }
 
-function worldToScreen(node) {
+function easeOutQuart(value) {
+  return 1 - Math.pow(1 - value, 4);
+}
+
+function modeMix() {
+  if (!state.transition) return state.graphMode === "3d" ? 1 : 0;
+  const elapsed = performance.now() - state.transition.startedAt;
+  const raw = clamp(elapsed / state.transition.duration, 0, 1);
+  const eased = easeOutQuart(raw);
+  if (raw >= 1) {
+    state.transition = null;
+    return state.graphMode === "3d" ? 1 : 0;
+  }
+  return state.transition.to === "3d" ? eased : 1 - eased;
+}
+
+function resetCamera3d() {
+  state.camera3d = { ...CAMERA3D_DEFAULT };
+}
+
+function renderGraphModeControls() {
+  for (const button of els.graphModeControls?.querySelectorAll("[data-graph-mode]") || []) {
+    button.setAttribute("aria-pressed", String(button.dataset.graphMode === state.graphMode));
+  }
+  els.canvas.dataset.graphMode = state.graphMode;
+}
+
+function setGraphMode(mode) {
+  if (!["2d", "3d"].includes(mode) || mode === state.graphMode) return;
+  const from = state.graphMode;
+  state.graphMode = mode;
+  if (state.reducedMotion) {
+    state.transition = null;
+  } else {
+    state.transition = {
+      from,
+      to: mode,
+      startedAt: performance.now(),
+      duration: GRAPH_TRANSITION_MS,
+    };
+  }
+  renderGraphModeControls();
+  updateHint();
+  requestDraw();
+}
+
+function worldPointToScreen(point) {
   const rect = els.wrap.getBoundingClientRect();
   const base = Math.min(rect.width, rect.height) * 0.68 * state.scale;
   return {
-    x: rect.width / 2 + state.panX + node.x * base,
-    y: rect.height / 2 + state.panY + node.y * base,
+    x: rect.width / 2 + state.panX + point.x * base,
+    y: rect.height / 2 + state.panY + point.y * base,
   };
 }
 
@@ -485,6 +708,39 @@ function screenToWorld(point) {
   return {
     x: (point.x - rect.width / 2 - state.panX) / base,
     y: (point.y - rect.height / 2 - state.panY) / base,
+  };
+}
+
+function project3dNode(node) {
+  const rect = els.wrap.getBoundingClientRect();
+  const base = Math.min(rect.width, rect.height) * 0.66 * state.scale;
+  const { yaw, pitch, distance } = state.camera3d;
+  const yawCos = Math.cos(yaw);
+  const yawSin = Math.sin(yaw);
+  const pitchCos = Math.cos(pitch);
+  const pitchSin = Math.sin(pitch);
+  const xYaw = node.x3 * yawCos - node.z3 * yawSin;
+  const zYaw = node.x3 * yawSin + node.z3 * yawCos;
+  const yPitch = node.y3 * pitchCos - zYaw * pitchSin;
+  const zPitch = node.y3 * pitchSin + zYaw * pitchCos;
+  const perspective = clamp(distance / Math.max(0.6, distance - zPitch), 0.72, 1.42);
+  return {
+    x: rect.width / 2 + state.panX + xYaw * base * perspective,
+    y: rect.height / 2 + state.panY + yPitch * base * perspective,
+    depth: clamp((zPitch + 0.5) / 1.1, 0, 1),
+    scale: perspective,
+  };
+}
+
+function nodeToScreen(node) {
+  const twoD = worldPointToScreen(node);
+  const threeD = project3dNode(node);
+  const mix = modeMix();
+  return {
+    x: twoD.x + (threeD.x - twoD.x) * mix,
+    y: twoD.y + (threeD.y - twoD.y) * mix,
+    depth: 0.5 + (threeD.depth - 0.5) * mix,
+    scale: 1 + (threeD.scale - 1) * mix,
   };
 }
 
@@ -532,14 +788,14 @@ function draw() {
     for (let j = i + 1; j < visible.length; j += 1) {
       const b = visible[j];
       if (passiveLinks >= MAX_PASSIVE_LINKS) break linkLoop;
-      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      const distance = graphDistance(a, b);
       const affinity = semanticAffinity(a, b);
       const sameCluster = a.repo.cluster === b.repo.cluster;
       if (!sameCluster && affinity < 2.05) continue;
       if (distance > 0.34 && affinity < 2.4) continue;
       if (distance > (sameCluster ? 0.2 : 0.16) && affinity < 1.45) continue;
-      const aa = worldToScreen(a);
-      const bb = worldToScreen(b);
+      const aa = nodeToScreen(a);
+      const bb = nodeToScreen(b);
       const strength = Math.min(1, Math.max(0, (affinity - 0.8) / 2.4));
       const distanceWeight = Math.max(0, 1 - distance / 0.34);
       ctx.globalAlpha = Math.min(0.105, 0.028 + strength * 0.04 + distanceWeight * 0.035);
@@ -556,12 +812,12 @@ function draw() {
 
   const focusedNode = state.selected || state.hovered;
   if (focusedNode) {
-    const focusedScreen = worldToScreen(focusedNode);
+    const focusedScreen = nodeToScreen(focusedNode);
     ctx.save();
     ctx.lineCap = "round";
     ctx.strokeStyle = colorWithAlpha(nodeColor(focusedNode), 1);
     for (const candidate of focusLinkCandidates(focusedNode, visible)) {
-      const screen = worldToScreen(candidate.node);
+      const screen = nodeToScreen(candidate.node);
       const strength = Math.min(1, Math.max(0.12, candidate.affinity / 3.4));
       const distanceWeight = Math.max(0, 1 - candidate.distance / 0.46);
       ctx.globalAlpha = Math.min(0.42, 0.12 + strength * 0.12 + distanceWeight * 0.13);
@@ -574,16 +830,23 @@ function draw() {
     ctx.restore();
   }
 
-  const nodesForDraw = [...visible].sort((a, b) => a.depth - b.depth);
+  const nodesForDraw = [...visible].sort((a, b) => {
+    const projectedA = nodeToScreen(a);
+    const projectedB = nodeToScreen(b);
+    return projectedA.depth - projectedB.depth || a.depth - b.depth;
+  });
   for (const node of nodesForDraw) {
-    const screen = worldToScreen(node);
+    const screen = nodeToScreen(node);
     const isSelected = state.selected === node;
     const isHovered = state.hovered === node;
     const related = isRelatedNode(node, focusedNode);
     const dim = state.selected && !isSelected && !related;
     const depthAlpha = 0.52 + node.depth * 0.28;
-    const nodeAlpha = Math.min(0.96, isSelected || isHovered ? 0.96 : depthAlpha);
-    const radiusScale = isSelected ? 1.48 : isHovered ? 1.34 : focusedNode && related ? 1.04 : 0.92;
+    const depthLift = state.graphMode === "3d" ? 0.84 + screen.depth * 0.3 : 1;
+    const nodeAlpha = Math.min(0.96, (isSelected || isHovered ? 0.96 : depthAlpha) * depthLift);
+    const radiusScale =
+      (isSelected ? 1.48 : isHovered ? 1.34 : focusedNode && related ? 1.04 : 0.92) *
+      clamp(screen.scale, 0.78, 1.22);
     ctx.globalAlpha = dim ? 0.28 : 1;
     ctx.fillStyle = colorWithAlpha(nodeColor(node), nodeAlpha);
     ctx.beginPath();
@@ -617,7 +880,7 @@ function draw() {
         : visible.slice(0, 10);
     for (const node of labels) {
       if (!node.visible) continue;
-      const screen = worldToScreen(node);
+      const screen = nodeToScreen(node);
       ctx.strokeStyle = paper;
       ctx.lineWidth = 3;
       ctx.strokeText(node.repo.name, screen.x + 9, screen.y - 8);
@@ -626,6 +889,7 @@ function draw() {
     }
   }
   ctx.globalAlpha = 1;
+  if (state.transition) requestDraw();
 }
 
 function pickNode(point) {
@@ -633,9 +897,12 @@ function pickNode(point) {
   let best = Infinity;
   for (const node of state.nodes) {
     if (!node.visible) continue;
-    const screen = worldToScreen(node);
+    const screen = nodeToScreen(node);
     const distance = Math.hypot(point.x - screen.x, point.y - screen.y);
-    if (distance < Math.max(12, node.radius * 4) && distance < best) {
+    if (
+      distance < Math.max(12, node.radius * 4 * clamp(screen.scale, 0.82, 1.24)) &&
+      distance < best
+    ) {
       best = distance;
       picked = node;
     }
@@ -965,6 +1232,9 @@ function onPointerPoint(event) {
 function resetView() {
   state.query = "";
   state.cluster = "all";
+  state.graphMode = "2d";
+  state.transition = null;
+  resetCamera3d();
   state.scale = 1;
   state.panX = 0;
   state.panY = 0;
@@ -972,9 +1242,10 @@ function resetView() {
   state.hovered = null;
   els.search.value = "";
   for (const node of state.nodes) {
-    node.x = node.anchorX;
-    node.y = node.anchorY;
+    node.x = node.x2;
+    node.y = node.y2;
   }
+  renderGraphModeControls();
   renderInspector(null);
   renderClusters();
   updateVisibility();
@@ -1025,6 +1296,16 @@ async function refreshFromGithub() {
 
 function bindEvents() {
   document.addEventListener("paper-theme-change", requestDraw);
+  const handleReducedMotionChange = (event) => {
+    state.reducedMotion = event.matches;
+    if (state.reducedMotion) state.transition = null;
+    requestDraw();
+  };
+  if (typeof reducedMotionQuery.addEventListener === "function") {
+    reducedMotionQuery.addEventListener("change", handleReducedMotionChange);
+  } else if (typeof reducedMotionQuery.addListener === "function") {
+    reducedMotionQuery.addListener(handleReducedMotionChange);
+  }
   els.search.addEventListener("input", () => {
     state.query = els.search.value.trim();
     state.selected = null;
@@ -1033,6 +1314,12 @@ function bindEvents() {
   });
   els.reset.addEventListener("click", resetView);
   els.refresh?.addEventListener("click", refreshFromGithub);
+  els.graphModeControls?.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest("[data-graph-mode]");
+    if (!button) return;
+    setGraphMode(button.dataset.graphMode);
+  });
   els.canvas.addEventListener("pointerdown", (event) => {
     els.canvas.setPointerCapture(event.pointerId);
     const point = onPointerPoint(event);
@@ -1050,18 +1337,20 @@ function bindEvents() {
       updateHint();
       requestDraw();
     }
-    if (
-      !state.dragging ||
-      !state.lastPointer ||
-      !finePointer.matches ||
-      event.pointerType === "touch"
-    )
-      return;
+    if (!state.dragging || !state.lastPointer) return;
     const dx = point.x - state.lastPointer.x;
     const dy = point.y - state.lastPointer.y;
     if (Math.hypot(point.x - state.pointerStart.x, point.y - state.pointerStart.y) > 3) {
       state.moved = true;
     }
+    if (state.graphMode === "3d") {
+      state.camera3d.yaw += dx * 0.006;
+      state.camera3d.pitch = clamp(state.camera3d.pitch - dy * 0.005, -0.82, 0.82);
+      state.lastPointer = point;
+      requestDraw();
+      return;
+    }
+    if (!finePointer.matches || event.pointerType === "touch") return;
     state.panX += dx;
     state.panY += dy;
     state.lastPointer = point;
@@ -1092,11 +1381,17 @@ function bindEvents() {
     (event) => {
       if (!finePointer.matches) return;
       event.preventDefault();
+      if (state.graphMode === "3d") {
+        const factor = event.deltaY < 0 ? 0.92 : 1.08;
+        state.camera3d.distance = clamp(state.camera3d.distance * factor, 1.35, 3.4);
+        requestDraw();
+        return;
+      }
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
       state.scale = Math.min(2.4, Math.max(0.55, state.scale * factor));
-      const after = worldToScreen(before);
+      const after = worldPointToScreen(before);
       state.panX += point.x - after.x;
       state.panY += point.y - after.y;
       requestDraw();

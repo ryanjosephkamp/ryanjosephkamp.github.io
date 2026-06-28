@@ -88,6 +88,14 @@ test.describe("V2 site QA", () => {
       await expect(page.getByRole("heading", { name: "Repositories", exact: true })).toBeVisible();
       await expect(page.getByText("The graph is visual.")).toHaveCount(0);
       await expect(page.locator("#repo-canvas")).toBeVisible();
+      await expect(page.locator("#graph-mode").getByRole("button", { name: "2D" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(page.locator("#graph-mode").getByRole("button", { name: "3D" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
       await expect(page.locator("#repo-list article").first()).toBeVisible();
       await expect(page.locator("#repo-list .repo-updated").first()).toBeVisible();
       await expectNoPageOverflow(page);
@@ -114,7 +122,11 @@ test.describe("V2 site QA", () => {
     await page.getByRole("button", { name: /S26 AIRP/ }).click();
     await expect(page.locator("#filter-summary")).toContainText("in S26 AIRP");
     await expect(page.locator("#repo-inspector")).toContainText("S26 AIRP");
+    await page.locator("#graph-mode").getByRole("button", { name: "3D" }).click();
+    await expect(page.locator("#repo-canvas")).toHaveAttribute("data-graph-mode", "3d");
+    await expect(page.locator("#graph-hint")).toContainText("Drag to rotate");
     await page.getByRole("button", { name: "Reset" }).click();
+    await expect(page.locator("#repo-canvas")).toHaveAttribute("data-graph-mode", "2d");
     await expect(page.locator("#filter-summary")).toHaveText(/^Showing \d+ public repositories\.$/);
 
     await page.locator("#activity-bars .activity-bar").first().focus();

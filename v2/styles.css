@@ -312,6 +312,37 @@ main,
   margin-bottom: 0.85rem;
 }
 
+.graph-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1rem;
+  align-items: center;
+}
+
+.graph-mode {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.graph-mode button {
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.08rem 0;
+}
+
+.graph-mode button[aria-pressed="true"] {
+  border-color: currentColor;
+  color: var(--ink);
+  font-weight: 650;
+}
+
 .search-field {
   display: grid;
   min-width: min(100%, 420px);
@@ -415,6 +446,10 @@ main,
 
 #repo-canvas.is-dragging {
   cursor: grabbing;
+}
+
+#repo-canvas[data-graph-mode="3d"] {
+  touch-action: none;
 }
 
 .graph-hint {
