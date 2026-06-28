@@ -16,6 +16,8 @@ const MAX_TRACE_LINKS = 10;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
+const FOCUS_EFFECT_MS = 1450;
+const FOCUS_EFFECT_STAGGER = 0.024;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -77,6 +79,7 @@ const state = {
   graphMode: "2d",
   transition: null,
   linkTrace: null,
+  focusEffect: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -787,6 +790,48 @@ function isPinching() {
   return Boolean(state.pinch || state.touchPinch || state.activePointers.size >= 2);
 }
 
+function clearFocusEffect() {
+  state.focusEffect = null;
+}
+
+function startFocusEffect(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearFocusEffect();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.focusEffect ? performance.now() - state.focusEffect.startedAt : Infinity;
+  if (state.focusEffect?.nodeId === nodeId && elapsed < 160) return;
+  state.focusEffect = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: FOCUS_EFFECT_MS,
+  };
+}
+
+function currentFocusEffect(focusedNode) {
+  if (!focusedNode || !state.focusEffect || state.reducedMotion) {
+    if (!focusedNode) clearFocusEffect();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.focusEffect.nodeId !== focusedNode.repo.id) {
+    clearFocusEffect();
+    return null;
+  }
+  const elapsed = performance.now() - state.focusEffect.startedAt;
+  const raw = clamp(elapsed / state.focusEffect.duration, 0, 1);
+  if (raw >= 1) {
+    clearFocusEffect();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(raw),
+  };
+}
+
 function startLinkTrace(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) state.linkTrace = null;
@@ -801,6 +846,7 @@ function startLinkTrace(node, options = {}) {
     startedAt: performance.now(),
     duration: LINK_TRACE_MS,
   };
+  startFocusEffect(node, options);
 }
 
 function currentLinkTrace(focusedNode) {
@@ -828,6 +874,45 @@ function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
   return easeOutQuart(clamp((trace.raw - delay) / Math.max(0.1, 1 - delay), 0, 1));
+}
+
+function focusLineWindow(effect, index) {
+  if (!effect) return null;
+  const lead = clamp(effect.raw * 1.16 - index * FOCUS_EFFECT_STAGGER, 0, 1);
+  const tail = clamp(lead - 0.16, 0, 1);
+  if (lead <= 0 || tail >= 1) return null;
+  return {
+    tail,
+    lead,
+    alpha: Math.sin(lead * Math.PI) * effect.fade,
+  };
+}
+
+function drawLineSegment(from, to, tail, lead) {
+  const startX = from.x + (to.x - from.x) * tail;
+  const startY = from.y + (to.y - from.y) * tail;
+  const endX = from.x + (to.x - from.x) * lead;
+  const endY = from.y + (to.y - from.y) * lead;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+}
+
+function drawFocusPulse(node, screen, effect) {
+  if (!effect) return;
+  const color = nodeColor(node);
+  const radius = node.radius * clamp(screen.scale, 0.78, 1.22);
+  const pulse = Math.sin(effect.raw * Math.PI);
+  const ringRadius = radius * (2.35 + pulse * 1.55);
+  ctx.save();
+  ctx.globalAlpha = Math.min(0.24, 0.08 + pulse * 0.14) * effect.fade;
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.arc(screen.x, screen.y, ringRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function draw() {
@@ -871,6 +956,7 @@ function draw() {
   ctx.restore();
 
   const focusedNode = state.selected || state.hovered;
+  const focusEffect = currentFocusEffect(focusedNode);
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
     const trace = currentLinkTrace(focusedNode);
@@ -903,6 +989,12 @@ function draw() {
           ctx.stroke();
         }
       }
+      const focusWindow = focusLineWindow(focusEffect, index);
+      if (focusWindow?.alpha > 0.01) {
+        ctx.globalAlpha = Math.min(0.2, baseAlpha + 0.06) * focusWindow.alpha;
+        ctx.lineWidth = baseWidth + 0.15;
+        drawLineSegment(focusedScreen, screen, focusWindow.tail, focusWindow.lead);
+      }
     }
     ctx.restore();
   }
@@ -924,6 +1016,9 @@ function draw() {
     const radiusScale =
       (isSelected ? 1.48 : isHovered ? 1.34 : focusedNode && related ? 1.04 : 0.92) *
       clamp(screen.scale, 0.78, 1.22);
+    if ((isSelected || isHovered) && focusedNode === node) {
+      drawFocusPulse(node, screen, focusEffect);
+    }
     ctx.globalAlpha = dim ? 0.28 : 1;
     ctx.fillStyle = colorWithAlpha(nodeColor(node), nodeAlpha);
     ctx.beginPath();
@@ -966,7 +1061,7 @@ function draw() {
     }
   }
   ctx.globalAlpha = 1;
-  if (state.transition || state.linkTrace) requestDraw();
+  if (state.transition || state.linkTrace || state.focusEffect) requestDraw();
 }
 
 function pickNode(point) {
@@ -1340,6 +1435,7 @@ function makePinchGesture(first, second) {
 function startPinchGesture(pair = activePointerPair()) {
   if (!pair) return null;
   state.linkTrace = null;
+  clearFocusEffect();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -1428,6 +1524,7 @@ function startTouchPinch(event) {
   state.activePointers.clear();
   state.pinch = null;
   state.linkTrace = null;
+  clearFocusEffect();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -1460,6 +1557,7 @@ function resetView() {
   state.graphMode = "2d";
   state.transition = null;
   state.linkTrace = null;
+  clearFocusEffect();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -1528,6 +1626,7 @@ function bindEvents() {
     if (state.reducedMotion) {
       state.transition = null;
       state.linkTrace = null;
+      clearFocusEffect();
     }
     requestDraw();
   };
@@ -1668,12 +1767,14 @@ function bindEvents() {
       if (!finePointer.matches) return;
       event.preventDefault();
       if (state.graphMode === "3d") {
+        clearFocusEffect();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
         requestDraw();
         return;
       }
+      clearFocusEffect();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
