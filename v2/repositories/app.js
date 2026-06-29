@@ -19,7 +19,7 @@ const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
 const MAX_GLINT_NEIGHBORS = 4;
 const MAX_RESEARCH_LENS_NEIGHBORS = 4;
-const MAX_AMBIENT_LINKS = 3;
+const MAX_AMBIENT_LINKS = 4;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -34,11 +34,11 @@ const NODE_GLINT_MS = 820;
 const NODE_GLINT_STAGGER = 0.055;
 const RESEARCH_LENS_MS = 1120;
 const RESEARCH_LENS_STAGGER = 0.042;
-const AMBIENT_CURRENT_MS = 1120;
-const AMBIENT_CURRENT_STAGGER = 0.074;
-const AMBIENT_CURRENT_MIN_DELAY = 3300;
-const AMBIENT_CURRENT_MAX_DELAY = 5200;
-const AMBIENT_IDLE_GRACE_MS = 900;
+const AMBIENT_CURRENT_MS = 1640;
+const AMBIENT_CURRENT_STAGGER = 0.052;
+const AMBIENT_CURRENT_MIN_DELAY = 1050;
+const AMBIENT_CURRENT_MAX_DELAY = 2100;
+const AMBIENT_IDLE_GRACE_MS = 360;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -1082,16 +1082,39 @@ function ambientCandidatesForSeed(seed, visible) {
   return focusLinkCandidates(seed, visible).slice(0, MAX_AMBIENT_LINKS);
 }
 
+function ambientSeedCandidates(visible) {
+  const rect = els.wrap.getBoundingClientRect();
+  return visible
+    .map((node) => {
+      const candidates = ambientCandidatesForSeed(node, visible);
+      if (!candidates.length) return null;
+      const screen = nodeToScreen(node);
+      const centerDistance = Math.hypot(screen.x - rect.width / 2, screen.y - rect.height / 2);
+      const centerWeight = Math.max(0, 1 - centerDistance / Math.max(rect.width, rect.height));
+      const relationshipWeight = candidates.reduce(
+        (sum, candidate) => sum + Math.min(1.6, candidate.score / 3.4),
+        0,
+      );
+      return {
+        node,
+        candidates,
+        score: relationshipWeight + centerWeight * 1.25 + repoActivityGlint(node.repo) * 0.24,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+}
+
 function startAmbientCurrent() {
   if (!canRunAmbientCurrent()) return;
   const visible = state.nodes.filter((node) => node.visible);
   if (visible.length < 2) return;
 
-  const startIndex = Math.floor(Math.random() * visible.length);
-  for (let offset = 0; offset < visible.length; offset += 1) {
-    const seed = visible[(startIndex + offset) % visible.length];
-    const candidates = ambientCandidatesForSeed(seed, visible);
-    if (!candidates.length) continue;
+  const seeds = ambientSeedCandidates(visible);
+  const seedPool = seeds.slice(0, Math.min(12, seeds.length));
+  const selected = seedPool[Math.floor(Math.random() * seedPool.length)];
+  if (selected) {
+    const { node: seed, candidates } = selected;
     state.ambientCurrent = {
       nodeId: seed.repo.id,
       candidates: candidates.map((candidate) => ({
@@ -1715,28 +1738,47 @@ function drawAmbientCurrent(current, depthMix) {
     const wave = Math.sin(local * Math.PI) * current.fade;
     const depthLine = lineDepthDusting(seedScreen, screen, depthMix);
     const lead = easeOutQuart(local);
-    const tail = clamp(lead - 0.2, 0, 1);
+    const tail = clamp(lead - 0.28, 0, 1);
 
-    ctx.globalAlpha = Math.min(0.2, 0.052 + strength * 0.085) * wave * depthLine.alpha;
-    ctx.lineWidth = (0.54 + strength * 0.3) * depthLine.width;
+    ctx.globalAlpha = Math.min(0.24, 0.068 + strength * 0.092) * wave * depthLine.alpha;
+    ctx.lineWidth = (0.64 + strength * 0.32) * depthLine.width;
+    ctx.beginPath();
+    ctx.moveTo(seedScreen.x, seedScreen.y);
+    ctx.lineTo(screen.x, screen.y);
+    ctx.stroke();
+
+    ctx.globalAlpha = Math.min(0.62, 0.2 + strength * 0.22) * wave * depthLine.alpha;
+    ctx.lineWidth = (1.08 + strength * 0.58) * depthLine.width;
     drawLineSegment(seedScreen, screen, tail, lead);
 
     const beadT = clamp(lead - 0.025, 0, 1);
     const x = seedScreen.x + (screen.x - seedScreen.x) * beadT;
     const y = seedScreen.y + (screen.y - seedScreen.y) * beadT;
-    ctx.globalAlpha = Math.min(0.24, 0.068 + strength * 0.1) * wave * depthLine.alpha;
+    ctx.globalAlpha = Math.min(0.68, 0.26 + strength * 0.22) * wave * depthLine.alpha;
     ctx.beginPath();
-    ctx.arc(x, y, (0.82 + strength * 0.52) * clamp(screen.scale, 0.84, 1.16), 0, Math.PI * 2);
+    ctx.arc(x, y, (1.95 + strength * 0.92) * clamp(screen.scale, 0.84, 1.16), 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.globalAlpha = Math.min(0.18, 0.05 + strength * 0.068) * wave * depthLine.alpha;
+    ctx.lineWidth = 0.86;
+    ctx.beginPath();
+    ctx.arc(
+      screen.x,
+      screen.y,
+      candidate.node.radius * 2.55 * clamp(screen.scale, 0.82, 1.16),
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
   }
 
-  ctx.globalAlpha = 0.12 * Math.sin(current.raw * Math.PI) * current.fade;
-  ctx.lineWidth = 0.68;
+  ctx.globalAlpha = 0.42 * Math.sin(current.raw * Math.PI) * current.fade;
+  ctx.lineWidth = 1.22;
   ctx.beginPath();
   ctx.arc(
     seedScreen.x,
     seedScreen.y,
-    seed.radius * 2.18 * clamp(seedScreen.scale, 0.82, 1.16),
+    seed.radius * 3.05 * clamp(seedScreen.scale, 0.82, 1.16),
     0,
     Math.PI * 2,
   );
