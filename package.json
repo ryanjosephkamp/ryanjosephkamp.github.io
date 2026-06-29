@@ -6,10 +6,11 @@
   "scripts": {
     "serve": "python3 -m http.server 4179 --bind 127.0.0.1",
     "qa": "playwright test",
-    "refresh:v2-repos": "node v2/repositories/scripts/fetch-public-repos.mjs",
-    "format:check": "prettier --check package.json playwright.config.mjs stylelint.config.mjs tests/web-qa/*.mjs docs/design/v2-paper-minimal-qa-checklist.md .prettierrc.json v2/**/*.html v2/**/*.css v2/**/*.js",
-    "lint:css": "stylelint \"{prototypes/v2-silent-source-constellation,v2}/**/*.css\"",
-    "impeccable:detect": "node .agents/skills/impeccable/scripts/detect.mjs --json prototypes/v2-silent-source-constellation/index.html prototypes/v2-silent-source-constellation/styles.css prototypes/v2-silent-source-constellation/app.js v2/index.html v2/styles.css v2/theme.js v2/repositories/index.html v2/repositories/app.js"
+    "refresh:repos": "node repositories/scripts/fetch-public-repos.mjs",
+    "refresh:v2-repos": "npm run refresh:repos",
+    "format:check": "prettier --check package.json playwright.config.mjs stylelint.config.mjs .github/workflows/*.yml tests/web-qa/*.mjs docs/design/v2-paper-minimal-qa-checklist.md .prettierrc.json index.html styles.css theme.js repositories/**/*.html repositories/**/*.js repositories/**/*.mjs v2/**/*.html v2/**/*.css v2/**/*.js v2/**/*.mjs",
+    "lint:css": "stylelint \"styles.css\" \"{prototypes/v2-silent-source-constellation,v2}/**/*.css\"",
+    "impeccable:detect": "node .agents/skills/impeccable/scripts/detect.mjs --json prototypes/v2-silent-source-constellation/index.html prototypes/v2-silent-source-constellation/styles.css prototypes/v2-silent-source-constellation/app.js index.html styles.css theme.js repositories/index.html repositories/app.js v2/index.html v2/repositories/index.html"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

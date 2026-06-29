@@ -123,14 +123,14 @@ async function dispatchTouchDrag(page) {
   });
 }
 
-test.describe("V2 site QA", () => {
+test.describe("canonical site QA", () => {
   for (const viewport of [
     { name: "desktop", width: 1440, height: 1000 },
     { name: "mobile", width: 390, height: 844 },
   ]) {
     test(`homepage renders on ${viewport.name} without page overflow`, async ({ page }) => {
       await page.setViewportSize(viewport);
-      await page.goto("/v2/");
+      await page.goto("/");
       await expect(page).toHaveTitle("Ryan Kamp");
       await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
       await expect(page.getByText("V2 candidate")).toHaveCount(0);
@@ -169,7 +169,7 @@ test.describe("V2 site QA", () => {
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
       await page.screenshot({
-        path: `.ai/design/v2-tooling-qa/screenshots/v2-home-${viewport.name}-${viewport.width}x${viewport.height}.png`,
+        path: `.ai/design/v2-tooling-qa/screenshots/home-${viewport.name}-${viewport.width}x${viewport.height}.png`,
         fullPage: true,
       });
     });
@@ -178,7 +178,7 @@ test.describe("V2 site QA", () => {
       page,
     }) => {
       await page.setViewportSize(viewport);
-      await page.goto("/v2/repositories/");
+      await page.goto("/repositories/");
       await expect(page).toHaveTitle("Repositories - Ryan Kamp");
       await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
       await expect(page.getByText("V2 candidate")).toHaveCount(0);
@@ -224,18 +224,18 @@ test.describe("V2 site QA", () => {
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
       await page.screenshot({
-        path: `.ai/design/v2-tooling-qa/screenshots/v2-repositories-${viewport.name}-${viewport.width}x${viewport.height}.png`,
+        path: `.ai/design/v2-tooling-qa/screenshots/repositories-${viewport.name}-${viewport.width}x${viewport.height}.png`,
         fullPage: true,
       });
     });
   }
 
   test("theme, search, graph/list selection, and guardrail copy behave", async ({ page }) => {
-    await page.goto("/v2/");
+    await page.goto("/");
     await page.getByLabel("dark").check();
     await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
 
-    await page.goto("/v2/repositories/");
+    await page.goto("/repositories/");
     await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "dark");
     await page.getByLabel("light").check();
     await expect(page.locator("html")).toHaveAttribute("data-resolved-theme", "light");
@@ -274,7 +274,7 @@ test.describe("V2 site QA", () => {
 
   test("repository list links and long names remain readable", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto("/v2/repositories/");
+    await page.goto("/repositories/");
     await page.locator("#list-limit-controls").getByRole("button", { name: "all" }).click();
     await expect(page.locator("#repo-list")).toContainText(
       "facial-recognition-under-occlusion-project",
@@ -299,7 +299,7 @@ test.describe("V2 site QA", () => {
 
   test("graph touch pinch and 3D drag gestures update the canvas", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/v2/repositories/");
+    await page.goto("/repositories/");
 
     const before2d = await graphCanvasData(page);
     await dispatchTouchPinch(page, 72, 150);
@@ -334,13 +334,23 @@ test.describe("V2 site QA", () => {
     await expect.poll(() => graphCanvasData(page)).not.toBe(before3dDrag);
   });
 
-  test("V2 pages pass axe without unbaselined violations", async ({ page }) => {
-    for (const path of ["/v2/", "/v2/repositories/"]) {
+  test("legacy V2 paths point to canonical pages", async ({ page }) => {
+    await page.goto("/v2/");
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/");
+    await expect(page.getByRole("heading", { name: "Ryan Kamp" })).toBeVisible();
+
+    await page.goto("/v2/repositories/");
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/repositories/");
+    await expect(page.getByRole("heading", { name: "Public GitHub repositories" })).toBeVisible();
+  });
+
+  test("canonical pages pass axe without unbaselined violations", async ({ page }) => {
+    for (const path of ["/", "/repositories/"]) {
       await page.goto(path);
       const results = await new AxeBuilder({ page }).analyze();
       await mkdir(reportDir, { recursive: true });
       await writeFile(
-        `${reportDir}/axe-v2-${path.replaceAll("/", "-") || "home"}.json`,
+        `${reportDir}/axe-${path.replaceAll("/", "-") || "home"}.json`,
         JSON.stringify(results.violations, null, 2),
       );
       const blockingViolations = results.violations.filter(

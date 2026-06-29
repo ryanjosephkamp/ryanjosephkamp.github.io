@@ -1,4 +1,4 @@
-name: Update V2 repository snapshot
+name: Update repository snapshot
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  update-v2-repository-snapshot:
+  update-repository-snapshot:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -20,17 +20,17 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Refresh V2 public repository snapshot
-        run: npm run refresh:v2-repos
+      - name: Refresh public repository snapshot
+        run: npm run refresh:repos
 
       - name: Commit updated snapshot
         run: |
-          if git diff --quiet -- v2/repositories/data/repos.snapshot.json; then
-            echo "No V2 repository snapshot changes."
+          if git diff --quiet -- repositories/data/repos.snapshot.json; then
+            echo "No repository snapshot changes."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add v2/repositories/data/repos.snapshot.json
-          git commit -m "Update V2 repository snapshot"
+          git add repositories/data/repos.snapshot.json
+          git commit -m "Update repository snapshot"
           git push

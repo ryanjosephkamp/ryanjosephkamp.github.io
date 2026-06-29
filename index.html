@@ -1,225 +1,112 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ryan Kamp | Personal Website</title>
-  <meta name="description" content="Ryan Kamp - MS Computer Science student at the University of Cincinnati. Personal website, selected projects, research interests, writing, and CV.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305070a'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%2325e6c8' font-family='monospace' font-size='20'%3ERK%3C/text%3E%3C/svg%3E">
-  <link rel="preload" href="assets/pp1.jpg" as="image">
-  <link rel="stylesheet" href="assets/css/site.css">
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <div class="site-shell">
-    <header class="topbar" aria-label="Personal website navigation">
-      <a class="brand" href="#top" aria-label="Ryan Kamp home">
-        <span class="brand-mark" aria-hidden="true">RK</span>
-        <span>
-          <strong>Ryan Kamp</strong>
-          <small>Personal site</small>
-        </span>
-      </a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#about">About</a>
-        <a href="#work">Work</a>
-        <a href="repositories/">Repositories</a>
-        <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
-        <a href="#cv">CV</a>
-      </nav>
-    </header>
-
-    <main id="main">
-      <section id="top" class="hero" aria-labelledby="hero-title">
-        <div class="hero-media" aria-hidden="true"></div>
-        <div class="hero-grid" aria-hidden="true"></div>
-        <div class="hero-glow" aria-hidden="true"></div>
-        <div class="wrap hero-content">
-          <div class="hero-copy">
-            <p class="console-label">// PERSONAL WEBSITE</p>
-            <h1 id="hero-title">Ryan Kamp</h1>
-            <p class="hero-subtitle">
-              <span aria-hidden="true">🚀</span>
-              MS CS @ <a href="https://www.uc.edu/">UC</a>
-            </p>
-            <p class="hero-text">
-              Projects, writing, portfolio, &amp; live GitHub repo graph.
-            </p>
-            <div class="hero-actions" aria-label="Primary actions">
-              <a class="button primary" href="repositories/">Explore repositories <span aria-hidden="true">-></span></a>
-              <a class="button secondary" href="https://ryanjosephkamp.github.io/blog/">Read the blog <span aria-hidden="true">-></span></a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="about" class="section about-section">
-        <div class="wrap split">
-          <div class="section-copy">
-            <p class="console-label">// ABOUT</p>
-            <h2 aria-label="AI for science">🤖 4️⃣ 🔬</h2>
-            <p>
-              My name is Ryan Kamp, and I am a graduate student at the University
-              of Cincinnati in Cincinnati, OH.
-            </p>
-            <p>
-              In the fall of 2025, I started the MS program in computer science
-              at UC, where my thesis advisor is
-              <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.
-            </p>
-          </div>
-          <aside class="signal-panel" aria-label="Current focus areas">
-            <p class="console-label">// CURRENT FOCUS</p>
-            <ul class="signal-list">
-              <li><span>AI</span> Agentic AI systems</li>
-              <li><span>INTERP</span> Explainable AI</li>
-              <li><span>LLM</span> Generative models and LLMs</li>
-              <li><span>EVAL</span> Benchmarking and evaluation</li>
-              <li><span>BIO</span> Computational biology and research software</li>
-            </ul>
-          </aside>
-        </div>
-      </section>
-
-      <section class="section pathways-section" aria-labelledby="pathways-title">
-        <div class="wrap">
-          <div class="section-heading">
-            <p class="console-label">// SITE MAP</p>
-            <h2 id="pathways-title">Projects, writing, and profile links.</h2>
-            <p>
-              Open the repository explorer for my public GitHub portfolio, visit the blog for
-              notes and writeups, or jump to my CV and profile links.
-            </p>
-          </div>
-
-          <div class="pathway-grid">
-            <a class="pathway-card featured" href="repositories/">
-              <span class="pathway-index">GRAPH</span>
-              <h3>Repository explorer</h3>
-              <p>Explore public GitHub repositories as a graph of clusters, topics, recency, and links.</p>
-              <span class="pathway-action">Open graph -></span>
-            </a>
-            <a class="pathway-card" href="https://ryanjosephkamp.github.io/blog/">
-              <span class="pathway-index">NOTES</span>
-              <h3>Blog</h3>
-              <p>Read project notes, portfolio writeups, and longer-form technical reflections.</p>
-              <span class="pathway-action">Read posts -></span>
-            </a>
-            <a class="pathway-card" href="#cv">
-              <span class="pathway-index">PROFILE</span>
-              <h3>CV and links</h3>
-              <p>See my CV and other external profile links.</p>
-              <span class="pathway-action">Jump to CV -></span>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section id="work" class="section work-section">
-        <div class="wrap">
-          <div class="section-heading with-action">
-            <div>
-              <p class="console-label">// SELECTED WORK</p>
-              <h2>Selected projects and studies.</h2>
-              <p>A small curated set. See the repository explorer for my full public GitHub portfolio.</p>
-            </div>
-            <a class="text-link" href="repositories/">Open repository explorer</a>
-          </div>
-
-          <div class="filter-row" aria-label="Project filters">
-            <button class="filter-button active" type="button" data-filter="all">All</button>
-            <button class="filter-button" type="button" data-filter="ai-ml">AI and ML</button>
-            <button class="filter-button" type="button" data-filter="research-software">Research software</button>
-            <button class="filter-button" type="button" data-filter="data-tooling">Data and tooling</button>
-            <button class="filter-button" type="button" data-filter="coursework">Coursework</button>
-          </div>
-
-          <div id="project-grid" class="project-grid" aria-live="polite"></div>
-          <p id="project-status" class="visually-hidden" aria-live="polite"></p>
-        </div>
-      </section>
-
-      <section id="s26-airp" class="section s26-section">
-        <div class="wrap s26-grid">
-          <div class="section-copy">
-            <p class="console-label">// S26 AIRP</p>
-            <h2>Spring 2026 AI Research Prototype Portfolio.</h2>
-            <p>
-              S26 AIRP is a 67-repository portfolio of AI-assisted research software
-              prototypes. It is presented as software, workflow, interface,
-              documentation, and AI-methodology work.
-            </p>
-            <p>
-              Scientific and domain-specific content in the portfolio is provisional and
-              has not been independently validated by domain experts.
-            </p>
-            <p>
-              The prototypes are primarily software, workflow, interface, and
-              AI-methodology explorations rather than validations of scientific
-              or domain-specific conclusions.
-            </p>
-            <div class="button-row">
-              <a class="button primary" href="https://ryanjosephkamp.github.io/blog/articles/s26-airp/">Read the flagship article <span aria-hidden="true">-></span></a>
-              <a class="button secondary" href="repositories/">Explore the graph <span aria-hidden="true">-></span></a>
-            </div>
-          </div>
-          <aside class="notice-panel" aria-label="S26 AIRP framing">
-            <p class="console-label">DISCLOSURE NOTE</p>
-            <ul>
-              <li>AI-assisted research software prototypes</li>
-              <li>Streamlit apps and paper-to-tool repositories</li>
-              <li>Disclosure-first documentation</li>
-              <li>Scientific content provisional</li>
-            </ul>
-          </aside>
-        </div>
-      </section>
-
-      <section class="section resources-section" aria-labelledby="resources-title">
-        <div class="wrap resource-strip">
-          <div class="resource-intro">
-            <p class="console-label">// RESOURCES</p>
-            <h2 id="resources-title">Writing and CV.</h2>
-            <p>Read my blog and view my CV.</p>
-          </div>
-          <div class="resource-grid" aria-label="Writing and CV links">
-            <a id="writing" class="resource-card" href="https://ryanjosephkamp.github.io/blog/">
-              <span class="resource-kicker">Blog</span>
-              <strong>Notes, articles, and project writeups</strong>
-              <span>Project notes, portfolio writeups, and longer technical reflections.</span>
-              <em>Open the blog -></em>
-            </a>
-            <a id="cv" class="resource-card" href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link">
-              <span class="resource-kicker">CV</span>
-              <strong>Current CV</strong>
-              <span>View the current PDF CV and supporting profile materials.</span>
-              <em>Download CV -></em>
-            </a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="wrap footer-grid">
-        <div>
-          <p class="footer-name">Ryan Kamp</p>
-          <p>Personal website for projects, research interests, writing, and professional materials.</p>
-        </div>
-        <nav class="social-links" aria-label="Personal links">
-          <a href="https://github.com/ryanjosephkamp">GitHub</a>
-          <a href="https://www.linkedin.com/in/rjk1999">LinkedIn</a>
-          <a href="https://x.com/ryanjosephkamp">X</a>
-          <a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a>
-          <a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a>
-          <a href="repositories/">Repositories</a>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ryan Kamp</title>
+    <meta
+      name="description"
+      content="Ryan Kamp's personal website for projects, writing, CV, and public repository exploration."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffffff'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%23111111' font-family='Arial,sans-serif' font-size='18'%3ERK%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#work">Skip to current focus</a>
+    <div class="site" data-theme-choice="system">
+      <header class="site-header" aria-label="Site navigation">
+        <a class="wordmark" href="./" aria-label="Ryan Kamp home">Ryan Kamp</a>
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="./">Home</a>
+          <a href="./repositories/">Repositories</a>
           <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
         </nav>
-      </div>
-    </footer>
-  </div>
+        <fieldset class="theme-switcher" aria-label="Theme">
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="light" /> light</label>
+          <label><input type="radio" name="theme" value="dark" /> dark</label>
+          <label><input type="radio" name="theme" value="system" checked /> system</label>
+        </fieldset>
+      </header>
 
-  <script src="assets/js/site.js" defer></script>
-</body>
+      <main id="home">
+        <section class="intro" aria-labelledby="intro-title">
+          <h1 id="intro-title">Ryan Kamp</h1>
+          <p class="intro-kicker">🚀 MS CS @ <a href="https://www.uc.edu/">UC</a></p>
+          <p>
+            My name is <strong>Ryan Kamp</strong>, and I am a graduate student at the University of
+            Cincinnati in Cincinnati, OH.
+          </p>
+          <p>
+            In the fall of 2025, I started the MS program in computer science at UC, where my thesis
+            advisor is
+            <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.
+          </p>
+          <ul class="link-list" aria-label="Profile links">
+            <li><a href="https://www.linkedin.com/in/rjk1999">LinkedIn</a></li>
+            <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+            <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+            <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+          </ul>
+        </section>
+
+        <section class="section" id="work" aria-labelledby="work-title">
+          <div class="section-head">
+            <h2 id="work-title">Current focus</h2>
+            <p>
+              My current research interests include <strong>agentic AI systems</strong>,
+              <strong>explainable AI</strong>, <strong>generative models</strong>,
+              <strong>LLMs</strong>, and <strong>benchmarking/evaluation</strong>. I also have
+              experience in computational biology, linguistics, and app/game development.
+            </p>
+          </div>
+          <div class="plain-list focus-list">
+            <article>
+              <h3>Research software prototypes</h3>
+              <p>
+                Small, public prototypes for testing software ideas, interface patterns, and
+                research-adjacent workflows.
+              </p>
+            </article>
+            <article>
+              <h3>Evaluation workflows</h3>
+              <p>
+                Notes and tools for comparing behavior, documenting decisions, and keeping project
+                work inspectable.
+              </p>
+            </article>
+            <article>
+              <h3>Public project notes</h3>
+              <p>
+                Portfolio materials, repository metadata, and writing links collected in one place.
+                <a href="./repositories/">Open the repository explorer</a>.
+              </p>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Ryan Kamp</p>
+        <nav aria-label="Footer links">
+          <a href="./repositories/">Repositories</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
+        </nav>
+      </footer>
+    </div>
+    <script src="./theme.js" defer></script>
+  </body>
 </html>

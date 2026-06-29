@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T20:44:37.817Z",
+  "generated_at": "2026-06-29T09:54:02.377Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
@@ -11,7 +11,7 @@
     "filtered_out": [
       {
         "name": "image_token_study",
-        "reason": "Excluded by prototype provider guardrail."
+        "reason": "Excluded by provider guardrail."
       }
     ]
   },
@@ -29,28 +29,10 @@
       "count": 13
     },
     {
-      "id": "research-software",
-      "label": "Research Software",
-      "color": "#18c3d7",
-      "count": 2
-    },
-    {
-      "id": "computational-biology",
-      "label": "Computational Biology",
-      "color": "#c084fc",
-      "count": 0
-    },
-    {
       "id": "data-tooling",
       "label": "Data and Tooling",
       "color": "#4dabf7",
       "count": 5
-    },
-    {
-      "id": "web-portfolio",
-      "label": "Web and Portfolio",
-      "color": "#ffd43b",
-      "count": 2
     },
     {
       "id": "interactive",
@@ -59,19 +41,55 @@
       "count": 2
     },
     {
+      "id": "research-software",
+      "label": "Research Software",
+      "color": "#18c3d7",
+      "count": 2
+    },
+    {
+      "id": "web-portfolio",
+      "label": "Web and Portfolio",
+      "color": "#ffd43b",
+      "count": 2
+    },
+    {
       "id": "writing-docs",
       "label": "Writing and Docs",
       "color": "#f783ac",
       "count": 1
-    },
-    {
-      "id": "other",
-      "label": "Other / Review",
-      "color": "#adb5bd",
-      "count": 0
     }
   ],
   "repos": [
+    {
+      "id": 1235002638,
+      "name": "ryanjosephkamp.github.io",
+      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
+      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
+      "description": "Personal website 🌐",
+      "homepage": "https://ryanjosephkamp.github.io/",
+      "topics": [],
+      "language": "JavaScript",
+      "created_at": "2026-05-10T23:04:14Z",
+      "updated_at": "2026-06-29T07:31:27Z",
+      "pushed_at": "2026-06-29T07:31:23Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 1230,
+      "cluster": "web-portfolio",
+      "cluster_label": "Web and Portfolio",
+      "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
+      "tags": [
+        "CSS",
+        "JavaScript"
+      ]
+    },
     {
       "id": 1266801282,
       "name": "brrrdle-dev",
@@ -82,8 +100,8 @@
       "topics": [],
       "language": "TypeScript",
       "created_at": "2026-06-12T00:59:02Z",
-      "updated_at": "2026-06-25T19:52:55Z",
-      "pushed_at": "2026-06-25T19:53:40Z",
+      "updated_at": "2026-06-29T04:02:52Z",
+      "pushed_at": "2026-06-29T04:03:38Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -92,7 +110,7 @@
       "watchers_count": 0,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 5395,
+      "size": 4696,
       "cluster": "interactive",
       "cluster_label": "Interactive Experiments",
       "cluster_color": "#ff8787",
@@ -105,17 +123,17 @@
       ]
     },
     {
-      "id": 1235002638,
-      "name": "ryanjosephkamp.github.io",
-      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
-      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
-      "description": "Personal academic website of Ryan Kamp - MS Computer Science student at University of Cincinnati. ",
+      "id": 1133031978,
+      "name": "english-openlist",
+      "full_name": "ryanjosephkamp/english-openlist",
+      "html_url": "https://github.com/ryanjosephkamp/english-openlist",
+      "description": "A comprehensive, continuously updated list of valid English words with metadata dictionary. Updated weekly via Merriam-Webster API. Available on Hugging Face Datasets.",
       "homepage": "",
       "topics": [],
-      "language": "CSS",
-      "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-06-25T17:48:42Z",
-      "pushed_at": "2026-06-25T17:48:36Z",
+      "language": "Python",
+      "created_at": "2026-01-12T19:37:23Z",
+      "updated_at": "2026-06-29T00:39:16Z",
+      "pushed_at": "2026-06-29T00:39:12Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -124,13 +142,16 @@
       "watchers_count": 1,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 1174,
-      "cluster": "web-portfolio",
-      "cluster_label": "Web and Portfolio",
-      "cluster_color": "#ffd43b",
-      "secondary_clusters": [],
+      "size": 2601,
+      "cluster": "data-tooling",
+      "cluster_label": "Data and Tooling",
+      "cluster_color": "#4dabf7",
+      "secondary_clusters": [
+        "ai-ml",
+        "web-portfolio"
+      ],
       "tags": [
-        "CSS"
+        "Python"
       ]
     },
     {
@@ -160,38 +181,6 @@
       "secondary_clusters": [],
       "tags": [
         "CSS"
-      ]
-    },
-    {
-      "id": 1133031978,
-      "name": "english-openlist",
-      "full_name": "ryanjosephkamp/english-openlist",
-      "html_url": "https://github.com/ryanjosephkamp/english-openlist",
-      "description": "A comprehensive, continuously updated list of valid English words with metadata dictionary. Updated weekly via Merriam-Webster API. Available on Hugging Face Datasets.",
-      "homepage": "",
-      "topics": [],
-      "language": "Python",
-      "created_at": "2026-01-12T19:37:23Z",
-      "updated_at": "2026-06-25T00:39:06Z",
-      "pushed_at": "2026-06-25T00:39:03Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 2573,
-      "cluster": "data-tooling",
-      "cluster_label": "Data and Tooling",
-      "cluster_color": "#4dabf7",
-      "secondary_clusters": [
-        "ai-ml",
-        "web-portfolio"
-      ],
-      "tags": [
-        "Python"
       ]
     },
     {
@@ -3084,17 +3073,17 @@
     },
     {
       "id": 1110150382,
-      "name": "UC_Graduate_Deep_Learning_Final_Project",
-      "full_name": "ryanjosephkamp/UC_Graduate_Deep_Learning_Final_Project",
-      "html_url": "https://github.com/ryanjosephkamp/UC_Graduate_Deep_Learning_Final_Project",
-      "description": "CS 6073 – Deep Learning (Fall 2025) final project; assessing robustness of SOTA baseline facial recognition models and novel custom model on experimentally controlled, artificially occluded facial images.",
+      "name": "facial-recognition-under-occlusion-project",
+      "full_name": "ryanjosephkamp/facial-recognition-under-occlusion-project",
+      "html_url": "https://github.com/ryanjosephkamp/facial-recognition-under-occlusion-project",
+      "description": "Assesses robustness of SOTA baseline facial recognition models and novel custom model on experimentally controlled, artificially occluded facial images. Final project for CS 6073 Deep Learning, Fall 2025 - University of Cincinnati",
       "homepage": "",
       "topics": [
         "facial-recognition"
       ],
       "language": "HTML",
       "created_at": "2025-12-04T19:31:10Z",
-      "updated_at": "2026-02-10T17:45:42Z",
+      "updated_at": "2026-06-27T18:17:29Z",
       "pushed_at": "2025-12-05T16:37:28Z",
       "fork": false,
       "archived": false,
@@ -3117,15 +3106,15 @@
     },
     {
       "id": 996188739,
-      "name": "UC_Undergraduate_Research_Capstone",
-      "full_name": "ryanjosephkamp/UC_Undergraduate_Research_Capstone",
-      "html_url": "https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone",
-      "description": "UC Undergraduate Research Capstone Code Implementation: My implementation of the paper Notes on Normative Solutions to the Speed-Accuracy Trade-Off in Perceptual Decision-Making (Jan Drugowitsch, 2015). For more details, please see my presentation on YouTube: https://youtu.be/H2HssPbUu9k",
-      "homepage": "",
+      "name": "perceptual-decision-making-capstone",
+      "full_name": "ryanjosephkamp/perceptual-decision-making-capstone",
+      "html_url": "https://github.com/ryanjosephkamp/perceptual-decision-making-capstone",
+      "description": "Implementation of the paper `Notes on Normative Solutions to the Speed-Accuracy Trade-Off in Perceptual Decision-Making` (Jan Drugowitsch, 2015). Undergraduate research capstone, Spring 2025 - University of Cincinnati",
+      "homepage": "https://youtu.be/LRAP1YHy3g0",
       "topics": [],
       "language": "Python",
       "created_at": "2025-06-04T15:27:00Z",
-      "updated_at": "2026-02-10T17:45:28Z",
+      "updated_at": "2026-06-27T18:21:34Z",
       "pushed_at": "2025-06-06T02:05:30Z",
       "fork": false,
       "archived": false,

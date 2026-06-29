@@ -66,7 +66,7 @@ async function fulfillJson(route, body, status = 200) {
 
 async function installRepositoryRoutes(page, { snapshotRepos, refreshRepos, failRefresh = false }) {
   const apiRequests = [];
-  await page.route("**/v2/repositories/data/repos.snapshot.json", (route) =>
+  await page.route("**/repositories/data/repos.snapshot.json", (route) =>
     fulfillJson(route, snapshotFixture(snapshotRepos)),
   );
   await page.route("https://api.github.com/users/ryanjosephkamp/repos**", (route) => {
@@ -180,7 +180,7 @@ test.describe("V2 repository lifecycle refresh QA", () => {
       refreshRepos: refreshedApiRepos,
     });
 
-    await page.goto("/v2/repositories/");
+    await page.goto("/repositories/");
     await expect(page.locator("#repo-list")).toContainText("legacy-data-lab");
     await expect(page.locator("#repo-list")).toContainText("disappearing-private-probe");
     await expect(page.locator("#repo-list")).not.toContainText("agent-benchmark-lab");
@@ -251,7 +251,7 @@ test.describe("V2 repository lifecycle refresh QA", () => {
       failRefresh: true,
     });
 
-    await page.goto("/v2/repositories/");
+    await page.goto("/repositories/");
     await expect(page.locator("#filter-summary")).toHaveText("Showing 3 public repositories.");
     await page.getByRole("button", { name: "Refresh from GitHub" }).click();
 
