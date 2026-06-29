@@ -19,6 +19,11 @@ const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
 const MAX_GLINT_NEIGHBORS = 4;
 const MAX_RESEARCH_LENS_NEIGHBORS = 4;
+const MAX_AMBIENT_LINKS = 5;
+const MAX_AMBIENT_ACTIVE_LINES = 8;
+const MAX_AMBIENT_CHAIN_DEPTH = 5;
+const MAX_AMBIENT_CHAIN_EDGES = 26;
+const MAX_AMBIENT_CHAIN_NODES = 24;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -33,6 +38,13 @@ const NODE_GLINT_MS = 820;
 const NODE_GLINT_STAGGER = 0.055;
 const RESEARCH_LENS_MS = 1120;
 const RESEARCH_LENS_STAGGER = 0.042;
+const AMBIENT_CURRENT_MS = 1520;
+const AMBIENT_CURRENT_STAGGER = 0.034;
+const AMBIENT_CHAIN_HOP_DELAY = 310;
+const AMBIENT_CHAIN_STAGGER_MS = 58;
+const AMBIENT_CURRENT_MIN_DELAY = 620;
+const AMBIENT_CURRENT_MAX_DELAY = 1160;
+const AMBIENT_IDLE_GRACE_MS = 180;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -230,6 +242,10 @@ const state = {
   clusterField: null,
   nodeGlint: null,
   researchLens: null,
+  ambientCurrents: [],
+  ambientTimer: 0,
+  ambientClusterCursor: 0,
+  searchFocused: false,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -818,6 +834,7 @@ function matchesQuery(repo) {
 }
 
 function updateVisibility() {
+  pauseAmbientCurrent();
   for (const node of state.nodes) {
     node.visible =
       (state.cluster === "all" || node.repo.cluster === state.cluster) &&
@@ -834,6 +851,7 @@ function updateVisibility() {
   updateFilterSummary();
   updateHint();
   requestDraw();
+  scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
 }
 
 function getActiveCluster() {
@@ -896,6 +914,7 @@ function renderGraphModeControls() {
 
 function setGraphMode(mode) {
   if (!["2d", "3d"].includes(mode) || mode === state.graphMode) return;
+  pauseAmbientCurrent();
   const from = state.graphMode;
   state.graphMode = mode;
   if (state.reducedMotion) {
@@ -913,6 +932,10 @@ function setGraphMode(mode) {
   startLinkTrace(state.selected || state.hovered);
   startResearchLens(state.selected);
   requestDraw();
+  window.setTimeout(
+    () => scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS),
+    state.reducedMotion ? 0 : GRAPH_TRANSITION_MS + 40,
+  );
 }
 
 function worldPointToScreen(point) {
@@ -1016,6 +1039,209 @@ function requestDraw() {
 
 function isPinching() {
   return Boolean(state.pinch || state.touchPinch || state.activePointers.size >= 2);
+}
+
+function clearAmbientTimer() {
+  if (!state.ambientTimer) return;
+  window.clearTimeout(state.ambientTimer);
+  state.ambientTimer = 0;
+}
+
+function clearAmbientCurrent() {
+  state.ambientCurrents = [];
+}
+
+function pauseAmbientCurrent() {
+  clearAmbientTimer();
+  clearAmbientCurrent();
+}
+
+function ambientDelay() {
+  return (
+    AMBIENT_CURRENT_MIN_DELAY +
+    Math.random() * (AMBIENT_CURRENT_MAX_DELAY - AMBIENT_CURRENT_MIN_DELAY)
+  );
+}
+
+function canDisplayAmbientCurrent() {
+  return !state.reducedMotion && !document.hidden && !state.selected && !state.searchFocused;
+}
+
+function canScheduleAmbientCurrent() {
+  return canDisplayAmbientCurrent();
+}
+
+function scheduleAmbientCurrent(delay = ambientDelay()) {
+  clearAmbientTimer();
+  if (!canScheduleAmbientCurrent() || !state.nodes.some((node) => node.visible)) return;
+  state.ambientTimer = window.setTimeout(() => {
+    state.ambientTimer = 0;
+    startAmbientCurrent();
+  }, delay);
+}
+
+function ambientCandidatesForSeed(seed, visible) {
+  return visible
+    .filter((node) => node !== seed)
+    .map((node) => {
+      const distance = graphDistance(node, seed);
+      const affinity = semanticAffinity(seed, node);
+      const sameCluster = node.repo.cluster === seed.repo.cluster;
+      const sameResearchAxis =
+        seed.researchProfile?.top?.axis?.id &&
+        seed.researchProfile.top.axis.id === node.researchProfile?.top?.axis?.id;
+      const distanceWeight = Math.max(0, 1 - distance / 0.54);
+      return {
+        node,
+        distance,
+        affinity,
+        sameCluster,
+        score:
+          affinity * 1.12 +
+          distanceWeight * 0.92 +
+          (sameCluster ? 0.24 : 0) +
+          (sameResearchAxis ? 0.14 : 0),
+      };
+    })
+    .filter(({ affinity, distance, sameCluster }) => {
+      if (sameCluster) return affinity >= 1.28 || distance <= 0.34;
+      return affinity >= 1.38 && (distance <= 0.58 || affinity >= 2.05);
+    })
+    .sort((a, b) => b.score - a.score || a.distance - b.distance)
+    .slice(0, MAX_AMBIENT_LINKS);
+}
+
+function ambientSeedCandidates(visible) {
+  const rect = els.wrap.getBoundingClientRect();
+  return visible
+    .map((node) => {
+      const candidates = ambientCandidatesForSeed(node, visible);
+      if (!candidates.length) return null;
+      const screen = nodeToScreen(node);
+      const centerDistance = Math.hypot(screen.x - rect.width / 2, screen.y - rect.height / 2);
+      const centerWeight = Math.max(0, 1 - centerDistance / Math.max(rect.width, rect.height));
+      const relationshipWeight = candidates.reduce(
+        (sum, candidate) => sum + Math.min(1.6, candidate.score / 3.4),
+        0,
+      );
+      return {
+        node,
+        candidates,
+        score: relationshipWeight + centerWeight * 1.25 + repoActivityGlint(node.repo) * 0.24,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+}
+
+function ambientClusterOrder(groups) {
+  const graphOrder = state.clusters
+    .map((cluster) => cluster.id)
+    .filter((clusterId) => groups.has(clusterId));
+  const remaining = [...groups.keys()]
+    .filter((clusterId) => !graphOrder.includes(clusterId))
+    .sort();
+  return [...graphOrder, ...remaining];
+}
+
+function pickAmbientSeed(seeds) {
+  const groups = new Map();
+  for (const seed of seeds) {
+    const clusterId = seed.node.repo.cluster || "other";
+    if (!groups.has(clusterId)) groups.set(clusterId, []);
+    groups.get(clusterId).push(seed);
+  }
+  const clusters = ambientClusterOrder(groups);
+  if (!clusters.length) return null;
+
+  const clusterId = clusters[state.ambientClusterCursor % clusters.length];
+  state.ambientClusterCursor = (state.ambientClusterCursor + 1) % clusters.length;
+  const clusterSeeds = groups.get(clusterId) || seeds;
+  const seedPool = clusterSeeds.slice(0, Math.min(6, clusterSeeds.length));
+  const total = seedPool.reduce((sum, seed) => sum + Math.max(0.1, seed.score), 0);
+  let target = Math.random() * total;
+  for (const seed of seedPool) {
+    target -= Math.max(0.1, seed.score);
+    if (target <= 0) return seed;
+  }
+  return seedPool[0] || null;
+}
+
+function ambientChainFanout(depth) {
+  if (depth === 0) return 3;
+  if (depth <= 2) return 2;
+  return 1;
+}
+
+function buildAmbientChain(seed, visible, startedAt) {
+  const visibleById = new Map(visible.map((node) => [node.repo.id, node]));
+  const visited = new Set([seed.repo.id]);
+  const currents = [];
+  let frontier = [seed];
+  let sequence = 0;
+
+  for (
+    let depth = 0;
+    depth < MAX_AMBIENT_CHAIN_DEPTH &&
+    frontier.length &&
+    currents.length < MAX_AMBIENT_CHAIN_EDGES &&
+    visited.size < MAX_AMBIENT_CHAIN_NODES;
+    depth += 1
+  ) {
+    const nextFrontier = [];
+    for (const source of frontier) {
+      const candidates = ambientCandidatesForSeed(source, visible)
+        .filter((candidate) => visibleById.has(candidate.node.repo.id))
+        .filter((candidate) => !visited.has(candidate.node.repo.id))
+        .slice(0, ambientChainFanout(depth));
+      for (const candidate of candidates) {
+        if (currents.length >= MAX_AMBIENT_CHAIN_EDGES || visited.size >= MAX_AMBIENT_CHAIN_NODES) {
+          break;
+        }
+        visited.add(candidate.node.repo.id);
+        nextFrontier.push(candidate.node);
+        currents.push({
+          nodeId: source.repo.id,
+          candidates: [
+            {
+              nodeId: candidate.node.repo.id,
+              score: candidate.score,
+              affinity: candidate.affinity,
+              distance: candidate.distance,
+            },
+          ],
+          depth,
+          startedAt:
+            startedAt + depth * AMBIENT_CHAIN_HOP_DELAY + sequence * AMBIENT_CHAIN_STAGGER_MS,
+          duration: AMBIENT_CURRENT_MS,
+        });
+        sequence += 1;
+      }
+    }
+    frontier = nextFrontier;
+  }
+
+  return currents;
+}
+
+function startAmbientCurrent() {
+  if (!canScheduleAmbientCurrent()) return;
+  if (state.ambientCurrents.length) return;
+  const visible = state.nodes.filter((node) => node.visible);
+  if (visible.length < 2) return;
+
+  const seeds = ambientSeedCandidates(visible);
+  const selected = pickAmbientSeed(seeds);
+  if (selected) {
+    const currents = buildAmbientChain(selected.node, visible, performance.now());
+    if (currents.length) {
+      state.ambientCurrents = currents;
+      requestDraw();
+      return;
+    }
+  }
+
+  scheduleAmbientCurrent(AMBIENT_CURRENT_MAX_DELAY);
 }
 
 function clearFocusEffect() {
@@ -1308,6 +1534,45 @@ function currentResearchLens(focusedNode) {
   };
 }
 
+function currentAmbientCurrents(visible) {
+  if (!state.ambientCurrents.length || !canDisplayAmbientCurrent()) {
+    clearAmbientCurrent();
+    return [];
+  }
+  const byId = new Map(visible.map((node) => [node.repo.id, node]));
+  const nextCurrents = [];
+  const active = [];
+  for (const current of state.ambientCurrents) {
+    const seed = byId.get(current.nodeId);
+    if (!seed) continue;
+    const candidates = current.candidates
+      .map((candidate) => ({
+        ...candidate,
+        node: byId.get(candidate.nodeId),
+      }))
+      .filter((candidate) => candidate.node);
+    if (!candidates.length) continue;
+    const elapsed = performance.now() - current.startedAt;
+    const raw = elapsed / current.duration;
+    if (raw >= 1) continue;
+    nextCurrents.push(current);
+    if (raw <= 0) continue;
+    active.push({
+      raw: clamp(raw, 0, 1),
+      progress: easeOutQuart(clamp(raw, 0, 1)),
+      fade: 1 - easeOutQuart(Math.max(0, raw - 0.68) / 0.32),
+      seed,
+      candidates,
+      depth: current.depth || 0,
+    });
+  }
+  state.ambientCurrents = nextCurrents;
+  if (!state.ambientCurrents.length) scheduleAmbientCurrent();
+  return active
+    .sort((a, b) => a.depth - b.depth || Math.abs(0.48 - b.raw) - Math.abs(0.48 - a.raw))
+    .slice(0, MAX_AMBIENT_ACTIVE_LINES);
+}
+
 function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
@@ -1323,6 +1588,12 @@ function echoNodeProgress(echo, index) {
 function linkCurrentProgress(current, index) {
   if (!current) return 0;
   const delay = index * LINK_CURRENT_STAGGER;
+  return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
+function ambientCurrentProgress(current, index) {
+  if (!current) return 0;
+  const delay = index * AMBIENT_CURRENT_STAGGER;
   return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
 }
 
@@ -1560,6 +1831,83 @@ function drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, current) {
   ctx.restore();
 }
 
+function drawAmbientCurrent(current, depthMix) {
+  if (!current) return;
+  const seed = current.seed;
+  const seedScreen = nodeToScreen(seed);
+  const color = nodeColor(seed);
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.fillStyle = colorWithAlpha(color, 1);
+
+  for (const [index, candidate] of current.candidates.slice(0, MAX_AMBIENT_LINKS).entries()) {
+    const local = ambientCurrentProgress(current, index);
+    if (local <= 0 || local >= 1) continue;
+    const screen = nodeToScreen(candidate.node);
+    const depthFade = Math.max(0.56, 1 - (current.depth || 0) * 0.16);
+    const strength = Math.min(1, Math.max(0.18, candidate.score / 4.6));
+    const wave = Math.sin(local * Math.PI) * current.fade * depthFade;
+    const depthLine = lineDepthDusting(seedScreen, screen, depthMix);
+    const lead = easeOutQuart(local);
+    const tail = clamp(lead - 0.28, 0, 1);
+
+    ctx.globalAlpha = Math.min(0.24, 0.068 + strength * 0.092) * wave * depthLine.alpha;
+    ctx.lineWidth = (0.64 + strength * 0.32) * depthLine.width;
+    ctx.beginPath();
+    ctx.moveTo(seedScreen.x, seedScreen.y);
+    ctx.lineTo(screen.x, screen.y);
+    ctx.stroke();
+
+    ctx.globalAlpha = Math.min(0.62, 0.2 + strength * 0.22) * wave * depthLine.alpha;
+    ctx.lineWidth = (1.08 + strength * 0.58) * depthLine.width;
+    drawLineSegment(seedScreen, screen, tail, lead);
+
+    const beadT = clamp(lead - 0.025, 0, 1);
+    const x = seedScreen.x + (screen.x - seedScreen.x) * beadT;
+    const y = seedScreen.y + (screen.y - seedScreen.y) * beadT;
+    ctx.globalAlpha = Math.min(0.68, 0.26 + strength * 0.22) * wave * depthLine.alpha;
+    ctx.beginPath();
+    ctx.arc(x, y, (1.95 + strength * 0.92) * clamp(screen.scale, 0.84, 1.16), 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = Math.min(0.18, 0.05 + strength * 0.068) * wave * depthLine.alpha;
+    ctx.lineWidth = 0.86;
+    ctx.beginPath();
+    ctx.arc(
+      screen.x,
+      screen.y,
+      candidate.node.radius * 2.55 * clamp(screen.scale, 0.82, 1.16),
+      0,
+      Math.PI * 2,
+    );
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha =
+    0.42 *
+    Math.sin(current.raw * Math.PI) *
+    current.fade *
+    Math.max(0.56, 1 - (current.depth || 0) * 0.16);
+  ctx.lineWidth = 1.22;
+  ctx.beginPath();
+  ctx.arc(
+    seedScreen.x,
+    seedScreen.y,
+    seed.radius * 3.05 * clamp(seedScreen.scale, 0.82, 1.16),
+    0,
+    Math.PI * 2,
+  );
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAmbientCurrents(currents, depthMix) {
+  for (const current of currents) {
+    drawAmbientCurrent(current, depthMix);
+  }
+}
+
 function drawNeighborhoodEchoes(candidates, echo) {
   if (!echo) return;
   ctx.save();
@@ -1743,6 +2091,9 @@ function draw() {
   ctx.restore();
 
   const focusedNode = state.selected || state.hovered;
+  if (state.selected) clearAmbientCurrent();
+  const ambientCurrents = state.selected ? [] : currentAmbientCurrents(visible);
+  drawAmbientCurrents(ambientCurrents, depthMix);
   if (!focusedNode) clearNodeGlint();
   if (!focusedNode) clearResearchLens();
   const focusEffect = currentFocusEffect(focusedNode);
@@ -1883,7 +2234,8 @@ function draw() {
     state.linkCurrent ||
     state.clusterField ||
     state.nodeGlint ||
-    state.researchLens
+    state.researchLens ||
+    state.ambientCurrents.length
   ) {
     requestDraw();
   }
@@ -1908,6 +2260,11 @@ function pickNode(point) {
 }
 
 function selectNode(node, focus = false) {
+  if (node) {
+    pauseAmbientCurrent();
+  } else {
+    clearAmbientCurrent();
+  }
   state.selected = node;
   renderInspector(node?.repo || null);
   updateHint();
@@ -1918,6 +2275,7 @@ function selectNode(node, focus = false) {
   startNodeGlint(node, { allowWhileDragging: true });
   startResearchLens(node, { allowWhileDragging: true });
   requestDraw();
+  if (!node) scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
   }
@@ -2389,9 +2747,11 @@ function endTouchPinch(event) {
   }
   state.touchPinch = null;
   els.canvas.classList.remove("is-dragging");
+  scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
 }
 
 function resetView() {
+  pauseAmbientCurrent();
   state.query = "";
   state.cluster = "all";
   state.graphMode = "2d";
@@ -2526,6 +2886,7 @@ function bindEvents() {
   const handleReducedMotionChange = (event) => {
     state.reducedMotion = event.matches;
     if (state.reducedMotion) {
+      pauseAmbientCurrent();
       state.transition = null;
       state.linkTrace = null;
       clearFocusEffect();
@@ -2534,6 +2895,8 @@ function bindEvents() {
       clearClusterField();
       clearNodeGlint();
       clearResearchLens();
+    } else {
+      scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
     }
     requestDraw();
   };
@@ -2543,10 +2906,19 @@ function bindEvents() {
     reducedMotionQuery.addListener(handleReducedMotionChange);
   }
   els.search.addEventListener("input", () => {
+    pauseAmbientCurrent();
     state.query = els.search.value.trim();
     state.selected = null;
     renderPassiveInspector();
     updateVisibility();
+  });
+  els.search.addEventListener("focus", () => {
+    state.searchFocused = true;
+    pauseAmbientCurrent();
+  });
+  els.search.addEventListener("blur", () => {
+    state.searchFocused = false;
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.reset.addEventListener("click", resetView);
   els.refresh?.addEventListener("click", refreshFromGithub);
@@ -2602,6 +2974,7 @@ function bindEvents() {
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
+      if (!hover) scheduleAmbientCurrent();
       if (!state.selected && !state.dragging) {
         startLinkTrace(hover);
         if (finePointer.matches) {
@@ -2656,9 +3029,14 @@ function bindEvents() {
     }
     els.canvas.classList.remove("is-dragging");
     if (!state.moved && !wasPinching) {
-      selectNode(node || null);
+      if (node) {
+        selectNode(node);
+      } else if (state.selected) {
+        selectNode(null);
+      }
     }
     resetPointerState();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.canvas.addEventListener("pointercancel", (event) => {
     if (state.touchPinch) return;
@@ -2673,6 +3051,15 @@ function bindEvents() {
       return;
     }
     resetPointerState();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+  });
+  els.canvas.addEventListener("pointerleave", () => {
+    if (state.dragging || isPinching()) return;
+    if (!state.hovered) return;
+    state.hovered = null;
+    updateHint();
+    requestDraw();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.canvas.addEventListener(
     "wheel",
@@ -2690,6 +3077,7 @@ function bindEvents() {
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
         requestDraw();
+        scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
         return;
       }
       clearFocusEffect();
@@ -2706,10 +3094,18 @@ function bindEvents() {
       state.panX += point.x - after.x;
       state.panY += point.y - after.y;
       requestDraw();
+      scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
     },
     { passive: false },
   );
   window.addEventListener("resize", resizeCanvas);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      pauseAmbientCurrent();
+      return;
+    }
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+  });
   window.addEventListener("keydown", (event) => {
     if (event.key === "/" && document.activeElement !== els.search) {
       event.preventDefault();
