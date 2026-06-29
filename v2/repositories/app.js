@@ -18,6 +18,7 @@ const MAX_CURRENT_LINKS = 6;
 const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
 const MAX_GLINT_NEIGHBORS = 4;
+const MAX_RESEARCH_LENS_NEIGHBORS = 4;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -30,6 +31,8 @@ const LINK_CURRENT_STAGGER = 0.048;
 const CLUSTER_FIELD_MS = 920;
 const NODE_GLINT_MS = 820;
 const NODE_GLINT_STAGGER = 0.055;
+const RESEARCH_LENS_MS = 880;
+const RESEARCH_LENS_STAGGER = 0.05;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -67,6 +70,136 @@ const SEMANTIC_STOPWORDS = new Set([
   "this",
   "with",
 ]);
+const RESEARCH_AXES = [
+  {
+    id: "agentic-ai-systems",
+    terms: [
+      "agentic",
+      "agent",
+      "agents",
+      "autonomous",
+      "automation",
+      "workflow",
+      "workflows",
+      "orchestration",
+      "planner",
+      "planning",
+      "assistant",
+      "tool",
+      "tools",
+    ],
+  },
+  {
+    id: "explainable-ai",
+    terms: [
+      "explainable",
+      "explanation",
+      "explanations",
+      "interpretability",
+      "interpretable",
+      "transparency",
+      "audit",
+      "inspection",
+      "trace",
+      "traces",
+      "rationale",
+      "attribution",
+    ],
+  },
+  {
+    id: "generative-models-llms",
+    terms: [
+      "generative",
+      "generation",
+      "llm",
+      "llms",
+      "language",
+      "model",
+      "models",
+      "transformer",
+      "diffusion",
+      "prompt",
+      "prompts",
+      "chat",
+      "text",
+    ],
+  },
+  {
+    id: "benchmarking-evaluation",
+    terms: [
+      "benchmark",
+      "benchmarks",
+      "benchmarking",
+      "evaluation",
+      "evaluations",
+      "eval",
+      "metric",
+      "metrics",
+      "score",
+      "scoring",
+      "compare",
+      "comparison",
+      "test",
+      "testing",
+      "validation",
+    ],
+  },
+  {
+    id: "computational-biology",
+    terms: [
+      "biology",
+      "bio",
+      "bioinformatics",
+      "protein",
+      "proteins",
+      "gene",
+      "genes",
+      "genomics",
+      "sequence",
+      "molecule",
+      "molecular",
+      "drug",
+      "cell",
+      "binding",
+    ],
+  },
+  {
+    id: "linguistics",
+    terms: [
+      "linguistics",
+      "language",
+      "languages",
+      "syntax",
+      "semantic",
+      "semantics",
+      "corpus",
+      "text",
+      "nlp",
+      "token",
+      "tokens",
+      "grammar",
+    ],
+  },
+  {
+    id: "app-game-development",
+    terms: [
+      "app",
+      "apps",
+      "game",
+      "games",
+      "web",
+      "ui",
+      "interface",
+      "frontend",
+      "site",
+      "browser",
+      "canvas",
+      "mobile",
+      "portfolio",
+      "brrrdle",
+    ],
+  },
+];
 
 const state = {
   repos: [],
@@ -96,6 +229,7 @@ const state = {
   linkCurrent: null,
   clusterField: null,
   nodeGlint: null,
+  researchLens: null,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -357,6 +491,20 @@ function buildVectorModel(repos) {
   return vectors;
 }
 
+function researchAxisVectors() {
+  return RESEARCH_AXES.map((axis, index) => {
+    const weights = new Map();
+    addWeightedTerms(weights, axis.terms, 1.7);
+    addWeightedTerms(weights, axis.id, 1.1);
+    return {
+      ...axis,
+      index,
+      termSet: repoTermSet([axis.id, ...(axis.terms || [])]),
+      vector: normalizeVector(weights),
+    };
+  });
+}
+
 function vectorDot(first, second) {
   if (!first || !second) return 0;
   const [small, large] = first.size <= second.size ? [first, second] : [second, first];
@@ -388,6 +536,23 @@ function sharedCount(first, second, limit = 6) {
     }
   }
   return count;
+}
+
+function researchAxisProfile(vector, tokens, axes) {
+  const entries = axes
+    .map((axis) => {
+      const lexicalOverlap = sharedCount(tokens, axis.termSet, 5);
+      const score = clamp(vectorDot(vector, axis.vector) * 2.1 + lexicalOverlap * 0.075, 0, 1);
+      return { axis, score };
+    })
+    .sort((a, b) => b.score - a.score || a.axis.index - b.axis.index);
+  const scores = new Map(entries.map((entry) => [entry.axis.id, entry.score]));
+  const top = entries[0] || null;
+  return {
+    scores,
+    top,
+    strength: top ? clamp((top.score - 0.045) / 0.32, 0, 1) : 0,
+  };
 }
 
 function primaryAffinityKey(repo, tokens) {
@@ -552,6 +717,7 @@ function relaxNodes(nodes, dimensions = "2d") {
 function makeNodes(repos, clusters) {
   const clusterIndex = new Map(clusters.map((cluster, index) => [cluster.id, index]));
   const vectors = buildVectorModel(repos);
+  const researchAxes = researchAxisVectors();
   const clusterCounts = new Map();
   for (const repo of repos) {
     clusterCounts.set(repo.cluster, (clusterCounts.get(repo.cluster) || 0) + 1);
@@ -568,6 +734,7 @@ function makeNodes(repos, clusters) {
     const tagSet = repoTermSet(repo.tags || []);
     const affinityKey = primaryAffinityKey(repo, semanticTokens);
     const vector = vectors.get(repo.id) || new Map();
+    const researchProfile = researchAxisProfile(vector, semanticTokens, researchAxes);
     const axisX = vectorAxis(vector, "x");
     const axisY = vectorAxis(vector, "y");
     const axisZ = vectorAxis(vector, "z");
@@ -609,6 +776,7 @@ function makeNodes(repos, clusters) {
       topicSet,
       tagSet,
       affinityKey,
+      researchProfile,
       visible: true,
     };
   });
@@ -743,6 +911,7 @@ function setGraphMode(mode) {
   renderGraphModeControls();
   updateHint();
   startLinkTrace(state.selected || state.hovered);
+  startResearchLens(state.selected);
   requestDraw();
 }
 
@@ -869,6 +1038,10 @@ function clearNodeGlint() {
   state.nodeGlint = null;
 }
 
+function clearResearchLens() {
+  state.researchLens = null;
+}
+
 function startFocusEffect(node, options = {}) {
   if (!node || state.reducedMotion || isPinching()) {
     if (!node) clearFocusEffect();
@@ -990,6 +1163,22 @@ function startNodeGlint(node, options = {}) {
   };
 }
 
+function startResearchLens(node, options = {}) {
+  if (!node || state.reducedMotion || isPinching()) {
+    if (!node) clearResearchLens();
+    return;
+  }
+  if (state.dragging && !options.allowWhileDragging) return;
+  const nodeId = node.repo.id;
+  const elapsed = state.researchLens ? performance.now() - state.researchLens.startedAt : Infinity;
+  if (state.researchLens?.nodeId === nodeId && elapsed < 180) return;
+  state.researchLens = {
+    nodeId,
+    startedAt: performance.now(),
+    duration: RESEARCH_LENS_MS,
+  };
+}
+
 function currentLinkCurrent(focusedNode) {
   if (!focusedNode || !state.linkCurrent || state.reducedMotion) {
     if (!focusedNode) clearLinkCurrent();
@@ -1097,6 +1286,28 @@ function currentNodeGlint(focusedNode) {
   };
 }
 
+function currentResearchLens(focusedNode) {
+  if (!focusedNode || !state.researchLens || state.reducedMotion) {
+    if (!focusedNode) clearResearchLens();
+    return null;
+  }
+  if (state.dragging || isPinching() || state.researchLens.nodeId !== focusedNode.repo.id) {
+    clearResearchLens();
+    return null;
+  }
+  const elapsed = performance.now() - state.researchLens.startedAt;
+  const raw = clamp(elapsed / state.researchLens.duration, 0, 1);
+  if (raw >= 1) {
+    clearResearchLens();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(Math.max(0, raw - 0.56) / 0.44),
+  };
+}
+
 function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
@@ -1119,6 +1330,12 @@ function glintNodeProgress(glint, index) {
   if (!glint) return 0;
   const delay = index * NODE_GLINT_STAGGER;
   return clamp((glint.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
+function researchLensNodeProgress(lens, index) {
+  if (!lens) return 0;
+  const delay = index * RESEARCH_LENS_STAGGER;
+  return clamp((lens.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
 }
 
 function focusLineWindow(effect, index) {
@@ -1214,6 +1431,90 @@ function drawNodeGlints(focusedNode, focusedScreen, candidates, glint) {
     const semantic = Math.min(1, Math.max(0.16, candidate.score / 4.8));
     const strength = (0.48 + semantic * 0.24 + activity * 0.14) * (1 - index * 0.08);
     drawNodeGlintArc(node, screen, local, strength, false);
+  }
+}
+
+function researchAxisAngle(axis) {
+  if (!axis) return -Math.PI / 2;
+  const count = Math.max(1, RESEARCH_AXES.length);
+  return -Math.PI / 2 + (axis.index / count) * Math.PI * 2 + (hashValue(axis.id) - 0.5) * 0.22;
+}
+
+function researchAxisScore(node, axisId) {
+  return node?.researchProfile?.scores?.get(axisId) || 0;
+}
+
+function researchLensCandidates(focusedNode, candidates) {
+  const top = focusedNode?.researchProfile?.top;
+  if (!top) return [];
+  return candidates
+    .map((candidate) => {
+      const nodeScore = researchAxisScore(candidate.node, top.axis.id);
+      const sameAxis = candidate.node.researchProfile?.top?.axis?.id === top.axis.id;
+      const semantic = Math.min(1, Math.max(0.14, candidate.score / 4.8));
+      const alignment = nodeScore * 0.74 + semantic * 0.22 + (sameAxis ? 0.08 : 0);
+      return { ...candidate, researchAlignment: alignment };
+    })
+    .filter((candidate) => candidate.researchAlignment >= 0.14)
+    .sort(
+      (a, b) =>
+        b.researchAlignment - a.researchAlignment || b.score - a.score || a.distance - b.distance,
+    )
+    .slice(0, MAX_RESEARCH_LENS_NEIGHBORS);
+}
+
+function drawResearchLensTick(node, screen, angle, progress, strength, selected = false) {
+  if (progress <= 0 || progress >= 1) return;
+  const wave = Math.sin(progress * Math.PI);
+  const color = nodeColor(node);
+  const radius = node.radius * clamp(screen.scale, 0.78, 1.22);
+  const ring = radius * (selected ? 4.65 : 3.15);
+  const sweep = selected ? 0.42 : 0.28;
+  const offset = selected ? easeOutQuart(progress) * 0.34 : easeOutQuart(progress) * 0.2;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.globalAlpha = Math.min(selected ? 0.2 : 0.13, (0.045 + strength * 0.105) * wave);
+  ctx.lineWidth = selected ? 0.72 : 0.52;
+  ctx.beginPath();
+  ctx.arc(screen.x, screen.y, ring, angle - sweep / 2 + offset, angle + sweep / 2 + offset);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawResearchLens(focusedNode, focusedScreen, candidates, lens) {
+  const profile = focusedNode?.researchProfile;
+  const top = profile?.top;
+  if (!lens || !top || profile.strength <= 0.01) return;
+  const baseAngle = researchAxisAngle(top.axis);
+  const selectedProgress = researchLensNodeProgress(lens, 0);
+  const selectedStrength = clamp(0.42 + profile.strength * 0.58, 0, 1);
+
+  drawResearchLensTick(
+    focusedNode,
+    focusedScreen,
+    baseAngle,
+    selectedProgress,
+    selectedStrength,
+    true,
+  );
+  drawResearchLensTick(
+    focusedNode,
+    focusedScreen,
+    baseAngle + Math.PI * 0.72,
+    selectedProgress,
+    selectedStrength * 0.72,
+    true,
+  );
+
+  for (const [index, candidate] of researchLensCandidates(focusedNode, candidates).entries()) {
+    const local = researchLensNodeProgress(lens, index + 1);
+    if (local <= 0 || local >= 1) continue;
+    const node = candidate.node;
+    const screen = nodeToScreen(node);
+    const angle = Math.atan2(screen.y - focusedScreen.y, screen.x - focusedScreen.x) + Math.PI;
+    const strength = clamp(candidate.researchAlignment * 0.78, 0.14, 0.72) * (1 - index * 0.1);
+    drawResearchLensTick(node, screen, angle, local, strength, false);
   }
 }
 
@@ -1428,16 +1729,19 @@ function draw() {
 
   const focusedNode = state.selected || state.hovered;
   if (!focusedNode) clearNodeGlint();
+  if (!focusedNode) clearResearchLens();
   const focusEffect = currentFocusEffect(focusedNode);
   let focusCandidates = [];
   let fieldCandidates = [];
   let neighborhoodEcho = null;
+  let researchLens = null;
   if (focusedNode) {
     const focusedScreen = nodeToScreen(focusedNode);
     const trace = currentLinkTrace(focusedNode);
     const linkCurrent = currentLinkCurrent(focusedNode);
     const clusterField = currentClusterField(focusedNode);
     const nodeGlint = currentNodeGlint(focusedNode);
+    researchLens = currentResearchLens(focusedNode);
     const candidates = focusLinkCandidates(focusedNode, visible);
     focusCandidates = candidates;
     fieldCandidates = clusterFieldCandidates(focusedNode, visible);
@@ -1531,6 +1835,9 @@ function draw() {
     }
   }
   drawNeighborhoodEchoes(focusCandidates, neighborhoodEcho);
+  if (focusedNode) {
+    drawResearchLens(focusedNode, nodeToScreen(focusedNode), focusCandidates, researchLens);
+  }
 
   const shouldLabel = state.selected || state.hovered || (state.query && visible.length <= 10);
   if (shouldLabel) {
@@ -1560,7 +1867,8 @@ function draw() {
     state.neighborhoodEcho ||
     state.linkCurrent ||
     state.clusterField ||
-    state.nodeGlint
+    state.nodeGlint ||
+    state.researchLens
   ) {
     requestDraw();
   }
@@ -1593,6 +1901,7 @@ function selectNode(node, focus = false) {
   startLinkCurrent(node, { allowWhileDragging: true });
   startClusterField(node, { allowWhileDragging: true });
   startNodeGlint(node, { allowWhileDragging: true });
+  startResearchLens(node, { allowWhileDragging: true });
   requestDraw();
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
@@ -1946,6 +2255,7 @@ function startPinchGesture(pair = activePointerPair()) {
   clearLinkCurrent();
   clearClusterField();
   clearNodeGlint();
+  clearResearchLens();
   const [first, second] = pair;
   state.pinch = makePinchGesture(first, second);
   state.moved = true;
@@ -2039,6 +2349,7 @@ function startTouchPinch(event) {
   clearLinkCurrent();
   clearClusterField();
   clearNodeGlint();
+  clearResearchLens();
   state.touchPinch = makePinchGesture(pair[0], pair[1]);
   state.dragging = false;
   state.pointerStart = null;
@@ -2076,6 +2387,7 @@ function resetView() {
   clearLinkCurrent();
   clearClusterField();
   clearNodeGlint();
+  clearResearchLens();
   resetCamera3d();
   state.scale = 1;
   state.panX = 0;
@@ -2206,6 +2518,7 @@ function bindEvents() {
       clearLinkCurrent();
       clearClusterField();
       clearNodeGlint();
+      clearResearchLens();
     }
     requestDraw();
   };
@@ -2357,6 +2670,7 @@ function bindEvents() {
         clearLinkCurrent();
         clearClusterField();
         clearNodeGlint();
+        clearResearchLens();
         const point = onPointerPoint(event);
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
@@ -2368,6 +2682,7 @@ function bindEvents() {
       clearLinkCurrent();
       clearClusterField();
       clearNodeGlint();
+      clearResearchLens();
       const point = onPointerPoint(event);
       const before = screenToWorld(point);
       const factor = event.deltaY < 0 ? 1.08 : 0.92;
