@@ -31,8 +31,8 @@ const LINK_CURRENT_STAGGER = 0.048;
 const CLUSTER_FIELD_MS = 920;
 const NODE_GLINT_MS = 820;
 const NODE_GLINT_STAGGER = 0.055;
-const RESEARCH_LENS_MS = 880;
-const RESEARCH_LENS_STAGGER = 0.05;
+const RESEARCH_LENS_MS = 1120;
+const RESEARCH_LENS_STAGGER = 0.042;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -1468,17 +1468,32 @@ function drawResearchLensTick(node, screen, angle, progress, strength, selected 
   const wave = Math.sin(progress * Math.PI);
   const color = nodeColor(node);
   const radius = node.radius * clamp(screen.scale, 0.78, 1.22);
-  const ring = radius * (selected ? 4.65 : 3.15);
-  const sweep = selected ? 0.42 : 0.28;
-  const offset = selected ? easeOutQuart(progress) * 0.34 : easeOutQuart(progress) * 0.2;
+  const ring = radius * (selected ? 5.35 : 3.65);
+  const sweep = selected ? 0.68 : 0.4;
+  const offset = selected ? easeOutQuart(progress) * 0.4 : easeOutQuart(progress) * 0.24;
+  const alpha = Math.min(selected ? 0.34 : 0.22, (0.075 + strength * 0.16) * wave);
   ctx.save();
   ctx.lineCap = "round";
   ctx.strokeStyle = colorWithAlpha(color, 1);
-  ctx.globalAlpha = Math.min(selected ? 0.2 : 0.13, (0.045 + strength * 0.105) * wave);
-  ctx.lineWidth = selected ? 0.72 : 0.52;
+  ctx.globalAlpha = alpha;
+  ctx.lineWidth = selected ? 1.08 : 0.76;
   ctx.beginPath();
   ctx.arc(screen.x, screen.y, ring, angle - sweep / 2 + offset, angle + sweep / 2 + offset);
   ctx.stroke();
+
+  if (selected) {
+    ctx.globalAlpha = alpha * 0.46;
+    ctx.lineWidth = 0.58;
+    ctx.beginPath();
+    ctx.arc(
+      screen.x,
+      screen.y,
+      ring * 1.22,
+      angle - sweep * 0.36 - offset * 0.2,
+      angle + sweep * 0.36 - offset * 0.2,
+    );
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -1503,7 +1518,7 @@ function drawResearchLens(focusedNode, focusedScreen, candidates, lens) {
     focusedScreen,
     baseAngle + Math.PI * 0.72,
     selectedProgress,
-    selectedStrength * 0.72,
+    selectedStrength * 0.78,
     true,
   );
 
