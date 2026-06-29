@@ -19,6 +19,7 @@ const LINK_CURRENT_BEADS = 2;
 const MAX_CLUSTER_FIELD_NODES = 9;
 const MAX_GLINT_NEIGHBORS = 4;
 const MAX_RESEARCH_LENS_NEIGHBORS = 4;
+const MAX_AMBIENT_LINKS = 3;
 const GRAPH_TRANSITION_MS = 380;
 const LINK_TRACE_MS = 390;
 const LINK_TRACE_STAGGER = 0.032;
@@ -33,6 +34,11 @@ const NODE_GLINT_MS = 820;
 const NODE_GLINT_STAGGER = 0.055;
 const RESEARCH_LENS_MS = 1120;
 const RESEARCH_LENS_STAGGER = 0.042;
+const AMBIENT_CURRENT_MS = 1120;
+const AMBIENT_CURRENT_STAGGER = 0.074;
+const AMBIENT_CURRENT_MIN_DELAY = 3300;
+const AMBIENT_CURRENT_MAX_DELAY = 5200;
+const AMBIENT_IDLE_GRACE_MS = 900;
 const ROTATION_SENSITIVITY = {
   yaw: 0.008,
   pitch: 0.0065,
@@ -230,6 +236,9 @@ const state = {
   clusterField: null,
   nodeGlint: null,
   researchLens: null,
+  ambientCurrent: null,
+  ambientTimer: 0,
+  searchFocused: false,
   camera3d: { ...CAMERA3D_DEFAULT },
   reducedMotion: reducedMotionQuery.matches,
   frame: 0,
@@ -818,6 +827,7 @@ function matchesQuery(repo) {
 }
 
 function updateVisibility() {
+  pauseAmbientCurrent();
   for (const node of state.nodes) {
     node.visible =
       (state.cluster === "all" || node.repo.cluster === state.cluster) &&
@@ -834,6 +844,7 @@ function updateVisibility() {
   updateFilterSummary();
   updateHint();
   requestDraw();
+  scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
 }
 
 function getActiveCluster() {
@@ -896,6 +907,7 @@ function renderGraphModeControls() {
 
 function setGraphMode(mode) {
   if (!["2d", "3d"].includes(mode) || mode === state.graphMode) return;
+  pauseAmbientCurrent();
   const from = state.graphMode;
   state.graphMode = mode;
   if (state.reducedMotion) {
@@ -913,6 +925,10 @@ function setGraphMode(mode) {
   startLinkTrace(state.selected || state.hovered);
   startResearchLens(state.selected);
   requestDraw();
+  window.setTimeout(
+    () => scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS),
+    state.reducedMotion ? 0 : GRAPH_TRANSITION_MS + 40,
+  );
 }
 
 function worldPointToScreen(point) {
@@ -1016,6 +1032,82 @@ function requestDraw() {
 
 function isPinching() {
   return Boolean(state.pinch || state.touchPinch || state.activePointers.size >= 2);
+}
+
+function clearAmbientTimer() {
+  if (!state.ambientTimer) return;
+  window.clearTimeout(state.ambientTimer);
+  state.ambientTimer = 0;
+}
+
+function clearAmbientCurrent() {
+  state.ambientCurrent = null;
+}
+
+function pauseAmbientCurrent() {
+  clearAmbientTimer();
+  clearAmbientCurrent();
+}
+
+function ambientDelay() {
+  return (
+    AMBIENT_CURRENT_MIN_DELAY +
+    Math.random() * (AMBIENT_CURRENT_MAX_DELAY - AMBIENT_CURRENT_MIN_DELAY)
+  );
+}
+
+function canRunAmbientCurrent() {
+  return (
+    !state.reducedMotion &&
+    !document.hidden &&
+    !state.selected &&
+    !state.hovered &&
+    !state.dragging &&
+    !state.transition &&
+    !state.searchFocused &&
+    !isPinching()
+  );
+}
+
+function scheduleAmbientCurrent(delay = ambientDelay()) {
+  clearAmbientTimer();
+  if (!canRunAmbientCurrent() || !state.nodes.some((node) => node.visible)) return;
+  state.ambientTimer = window.setTimeout(() => {
+    state.ambientTimer = 0;
+    startAmbientCurrent();
+  }, delay);
+}
+
+function ambientCandidatesForSeed(seed, visible) {
+  return focusLinkCandidates(seed, visible).slice(0, MAX_AMBIENT_LINKS);
+}
+
+function startAmbientCurrent() {
+  if (!canRunAmbientCurrent()) return;
+  const visible = state.nodes.filter((node) => node.visible);
+  if (visible.length < 2) return;
+
+  const startIndex = Math.floor(Math.random() * visible.length);
+  for (let offset = 0; offset < visible.length; offset += 1) {
+    const seed = visible[(startIndex + offset) % visible.length];
+    const candidates = ambientCandidatesForSeed(seed, visible);
+    if (!candidates.length) continue;
+    state.ambientCurrent = {
+      nodeId: seed.repo.id,
+      candidates: candidates.map((candidate) => ({
+        nodeId: candidate.node.repo.id,
+        score: candidate.score,
+        affinity: candidate.affinity,
+        distance: candidate.distance,
+      })),
+      startedAt: performance.now(),
+      duration: AMBIENT_CURRENT_MS,
+    };
+    requestDraw();
+    return;
+  }
+
+  scheduleAmbientCurrent(AMBIENT_CURRENT_MAX_DELAY);
 }
 
 function clearFocusEffect() {
@@ -1308,6 +1400,45 @@ function currentResearchLens(focusedNode) {
   };
 }
 
+function currentAmbientCurrent(visible) {
+  if (!state.ambientCurrent || !canRunAmbientCurrent()) {
+    clearAmbientCurrent();
+    return null;
+  }
+  const seed = visible.find((node) => node.repo.id === state.ambientCurrent.nodeId);
+  if (!seed) {
+    clearAmbientCurrent();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+    return null;
+  }
+  const byId = new Map(visible.map((node) => [node.repo.id, node]));
+  const candidates = state.ambientCurrent.candidates
+    .map((candidate) => ({
+      ...candidate,
+      node: byId.get(candidate.nodeId),
+    }))
+    .filter((candidate) => candidate.node);
+  if (!candidates.length) {
+    clearAmbientCurrent();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+    return null;
+  }
+  const elapsed = performance.now() - state.ambientCurrent.startedAt;
+  const raw = clamp(elapsed / state.ambientCurrent.duration, 0, 1);
+  if (raw >= 1) {
+    clearAmbientCurrent();
+    scheduleAmbientCurrent();
+    return null;
+  }
+  return {
+    raw,
+    progress: easeOutQuart(raw),
+    fade: 1 - easeOutQuart(Math.max(0, raw - 0.68) / 0.32),
+    seed,
+    candidates,
+  };
+}
+
 function traceLineProgress(trace, index) {
   if (!trace) return 0;
   const delay = index * LINK_TRACE_STAGGER;
@@ -1323,6 +1454,12 @@ function echoNodeProgress(echo, index) {
 function linkCurrentProgress(current, index) {
   if (!current) return 0;
   const delay = index * LINK_CURRENT_STAGGER;
+  return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
+}
+
+function ambientCurrentProgress(current, index) {
+  if (!current) return 0;
+  const delay = index * AMBIENT_CURRENT_STAGGER;
   return clamp((current.raw - delay) / Math.max(0.1, 1 - delay), 0, 1);
 }
 
@@ -1560,6 +1697,53 @@ function drawLinkCurrentBeads(focusedNode, focusedScreen, candidates, current) {
   ctx.restore();
 }
 
+function drawAmbientCurrent(current, depthMix) {
+  if (!current) return;
+  const seed = current.seed;
+  const seedScreen = nodeToScreen(seed);
+  const color = nodeColor(seed);
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.strokeStyle = colorWithAlpha(color, 1);
+  ctx.fillStyle = colorWithAlpha(color, 1);
+
+  for (const [index, candidate] of current.candidates.slice(0, MAX_AMBIENT_LINKS).entries()) {
+    const local = ambientCurrentProgress(current, index);
+    if (local <= 0 || local >= 1) continue;
+    const screen = nodeToScreen(candidate.node);
+    const strength = Math.min(1, Math.max(0.18, candidate.score / 4.6));
+    const wave = Math.sin(local * Math.PI) * current.fade;
+    const depthLine = lineDepthDusting(seedScreen, screen, depthMix);
+    const lead = easeOutQuart(local);
+    const tail = clamp(lead - 0.2, 0, 1);
+
+    ctx.globalAlpha = Math.min(0.2, 0.052 + strength * 0.085) * wave * depthLine.alpha;
+    ctx.lineWidth = (0.54 + strength * 0.3) * depthLine.width;
+    drawLineSegment(seedScreen, screen, tail, lead);
+
+    const beadT = clamp(lead - 0.025, 0, 1);
+    const x = seedScreen.x + (screen.x - seedScreen.x) * beadT;
+    const y = seedScreen.y + (screen.y - seedScreen.y) * beadT;
+    ctx.globalAlpha = Math.min(0.24, 0.068 + strength * 0.1) * wave * depthLine.alpha;
+    ctx.beginPath();
+    ctx.arc(x, y, (0.82 + strength * 0.52) * clamp(screen.scale, 0.84, 1.16), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 0.12 * Math.sin(current.raw * Math.PI) * current.fade;
+  ctx.lineWidth = 0.68;
+  ctx.beginPath();
+  ctx.arc(
+    seedScreen.x,
+    seedScreen.y,
+    seed.radius * 2.18 * clamp(seedScreen.scale, 0.82, 1.16),
+    0,
+    Math.PI * 2,
+  );
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawNeighborhoodEchoes(candidates, echo) {
   if (!echo) return;
   ctx.save();
@@ -1743,6 +1927,9 @@ function draw() {
   ctx.restore();
 
   const focusedNode = state.selected || state.hovered;
+  if (focusedNode) clearAmbientCurrent();
+  const ambientCurrent = focusedNode ? null : currentAmbientCurrent(visible);
+  drawAmbientCurrent(ambientCurrent, depthMix);
   if (!focusedNode) clearNodeGlint();
   if (!focusedNode) clearResearchLens();
   const focusEffect = currentFocusEffect(focusedNode);
@@ -1883,7 +2070,8 @@ function draw() {
     state.linkCurrent ||
     state.clusterField ||
     state.nodeGlint ||
-    state.researchLens
+    state.researchLens ||
+    state.ambientCurrent
   ) {
     requestDraw();
   }
@@ -1908,6 +2096,11 @@ function pickNode(point) {
 }
 
 function selectNode(node, focus = false) {
+  if (node) {
+    pauseAmbientCurrent();
+  } else {
+    clearAmbientCurrent();
+  }
   state.selected = node;
   renderInspector(node?.repo || null);
   updateHint();
@@ -1918,6 +2111,7 @@ function selectNode(node, focus = false) {
   startNodeGlint(node, { allowWhileDragging: true });
   startResearchLens(node, { allowWhileDragging: true });
   requestDraw();
+  if (!node) scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   if (node && focus) {
     els.inspector.focus({ preventScroll: false });
   }
@@ -2264,6 +2458,7 @@ function makePinchGesture(first, second) {
 
 function startPinchGesture(pair = activePointerPair()) {
   if (!pair) return null;
+  pauseAmbientCurrent();
   state.linkTrace = null;
   clearFocusEffect();
   clearNeighborhoodEcho();
@@ -2356,6 +2551,7 @@ function touchPair(event) {
 function startTouchPinch(event) {
   const pair = touchPair(event);
   if (!pair) return false;
+  pauseAmbientCurrent();
   state.activePointers.clear();
   state.pinch = null;
   state.linkTrace = null;
@@ -2389,9 +2585,11 @@ function endTouchPinch(event) {
   }
   state.touchPinch = null;
   els.canvas.classList.remove("is-dragging");
+  scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
 }
 
 function resetView() {
+  pauseAmbientCurrent();
   state.query = "";
   state.cluster = "all";
   state.graphMode = "2d";
@@ -2526,6 +2724,7 @@ function bindEvents() {
   const handleReducedMotionChange = (event) => {
     state.reducedMotion = event.matches;
     if (state.reducedMotion) {
+      pauseAmbientCurrent();
       state.transition = null;
       state.linkTrace = null;
       clearFocusEffect();
@@ -2534,6 +2733,8 @@ function bindEvents() {
       clearClusterField();
       clearNodeGlint();
       clearResearchLens();
+    } else {
+      scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
     }
     requestDraw();
   };
@@ -2543,10 +2744,19 @@ function bindEvents() {
     reducedMotionQuery.addListener(handleReducedMotionChange);
   }
   els.search.addEventListener("input", () => {
+    pauseAmbientCurrent();
     state.query = els.search.value.trim();
     state.selected = null;
     renderPassiveInspector();
     updateVisibility();
+  });
+  els.search.addEventListener("focus", () => {
+    state.searchFocused = true;
+    pauseAmbientCurrent();
+  });
+  els.search.addEventListener("blur", () => {
+    state.searchFocused = false;
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.reset.addEventListener("click", resetView);
   els.refresh?.addEventListener("click", refreshFromGithub);
@@ -2578,6 +2788,7 @@ function bindEvents() {
   els.canvas.addEventListener("touchcancel", endTouchPinch);
   els.canvas.addEventListener("pointerdown", (event) => {
     if (state.touchPinch) return;
+    pauseAmbientCurrent();
     capturePointer(event);
     const point = onPointerPoint(event);
     state.activePointers.set(event.pointerId, point);
@@ -2602,6 +2813,11 @@ function bindEvents() {
     const hover = pickNode(point);
     if (hover !== state.hovered) {
       state.hovered = hover;
+      if (hover) {
+        pauseAmbientCurrent();
+      } else {
+        scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+      }
       if (!state.selected && !state.dragging) {
         startLinkTrace(hover);
         if (finePointer.matches) {
@@ -2659,6 +2875,7 @@ function bindEvents() {
       selectNode(node || null);
     }
     resetPointerState();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.canvas.addEventListener("pointercancel", (event) => {
     if (state.touchPinch) return;
@@ -2673,12 +2890,22 @@ function bindEvents() {
       return;
     }
     resetPointerState();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+  });
+  els.canvas.addEventListener("pointerleave", () => {
+    if (state.dragging || isPinching()) return;
+    if (!state.hovered) return;
+    state.hovered = null;
+    updateHint();
+    requestDraw();
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
   });
   els.canvas.addEventListener(
     "wheel",
     (event) => {
       if (!finePointer.matches) return;
       event.preventDefault();
+      pauseAmbientCurrent();
       if (state.graphMode === "3d") {
         clearFocusEffect();
         clearNeighborhoodEcho();
@@ -2690,6 +2917,7 @@ function bindEvents() {
         const factor = event.deltaY < 0 ? 1.12 : 0.9;
         zoom3dAtPoint(point, state.camera3d.zoom * factor);
         requestDraw();
+        scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
         return;
       }
       clearFocusEffect();
@@ -2706,10 +2934,18 @@ function bindEvents() {
       state.panX += point.x - after.x;
       state.panY += point.y - after.y;
       requestDraw();
+      scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
     },
     { passive: false },
   );
   window.addEventListener("resize", resizeCanvas);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      pauseAmbientCurrent();
+      return;
+    }
+    scheduleAmbientCurrent(AMBIENT_IDLE_GRACE_MS);
+  });
   window.addEventListener("keydown", (event) => {
     if (event.key === "/" && document.activeElement !== els.search) {
       event.preventDefault();
