@@ -3,208 +3,196 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Repository Explorer | Ryan Kamp</title>
+    <title>Repositories - Ryan Kamp</title>
     <meta
       name="description"
-      content="A graph-based explorer for Ryan Kamp's public GitHub repositories."
+      content="Explore Ryan Kamp's public GitHub repositories by search, cluster, repository metadata, and update activity."
     />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2305070a'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%2325e6c8' font-family='monospace' font-size='20'%3ERK%3C/text%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ffffff'/%3E%3Ctext x='32' y='38' text-anchor='middle' fill='%23111111' font-family='Arial,sans-serif' font-size='18'%3ERK%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="../styles.css?v=20260628-graph-tooltip-fix" />
   </head>
   <body>
-    <div class="shell" data-view="graph">
-      <header class="topbar" aria-label="Repository explorer navigation">
-        <a class="brand" href="../index.html" aria-label="Ryan Kamp home">
-          <span class="brand-mark">RK</span>
-          <span>
-            <strong>Ryan Kamp</strong>
-            <small>Repository explorer</small>
-          </span>
-        </a>
-        <nav class="nav-links" aria-label="Primary links">
-          <a href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="https://ryanjosephkamp.github.io/blog/" target="_blank" rel="noreferrer">Blog</a>
-          <a href="../index.html">Home</a>
+    <a class="skip-link" href="#repo-list">Skip to repository list</a>
+    <div class="site" data-theme-choice="system">
+      <header class="site-header" aria-label="Site navigation">
+        <a class="wordmark" href="../" aria-label="Ryan Kamp home">Ryan Kamp</a>
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="../">Home</a>
+          <a href="./">Repositories</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
         </nav>
+        <fieldset class="theme-switcher" aria-label="Theme">
+          <legend>Theme</legend>
+          <label><input type="radio" name="theme" value="light" /> light</label>
+          <label><input type="radio" name="theme" value="dark" /> dark</label>
+          <label><input type="radio" name="theme" value="system" checked /> system</label>
+        </fieldset>
       </header>
 
-      <main class="workspace">
-        <aside class="panel intro-panel" aria-label="About this repository explorer">
-          <section>
-            <p class="console-label">// REPOSITORY EXPLORER</p>
-            <h1>Projects and repositories as an explorable graph.</h1>
-            <p>
-              A dedicated projects page for exploring my public GitHub repositories by cluster,
-              language, recency, and public project metadata.
-            </p>
-          </section>
-
-          <section class="notice-card">
-            <p class="console-label">S26 AIRP NOTE</p>
-            <p>
-              S26 AIRP entries are AI-assisted research software prototypes. Scientific and
-              domain-specific content is provisional and not presented as validated scientific claims.
-            </p>
-          </section>
-
-          <section class="source-card">
-            <p class="console-label">// DATA SOURCE</p>
-            <dl>
-              <div>
-                <dt>Snapshot</dt>
-                <dd id="snapshot-time">Loading</dd>
-              </div>
-              <div>
-                <dt>Public repos</dt>
-                <dd id="repo-count">0</dd>
-              </div>
-              <div>
-                <dt>Auth</dt>
-                <dd>No token</dd>
-              </div>
-            </dl>
-            <button class="ghost-button" id="refresh-button" type="button">Refresh from public API</button>
-            <p class="microcopy" id="refresh-status" role="status">
-              Static snapshot is used by default.
-            </p>
-          </section>
-
-          <section class="activity-panel" aria-labelledby="activity-title">
-            <div class="activity-head">
-              <div>
-                <p class="console-label">// GITHUB ACTIVITY</p>
-                <h2 id="activity-title">Public repo activity</h2>
-                <p id="activity-summary">
-                  Recent public repository updates from the local GitHub metadata snapshot.
-                </p>
-              </div>
-              <a class="ghost-link" href="https://github.com/ryanjosephkamp" target="_blank" rel="noreferrer">
-                Open GitHub profile
-              </a>
-            </div>
-            <div class="activity-content">
-              <div id="repo-activity-bars" class="activity-bars" aria-label="Recent public repository update activity"></div>
-              <div class="activity-notes" aria-label="Activity module notes">
-                <span id="activity-window">Snapshot activity window</span>
-                <span id="activity-peak">Peak update week</span>
-                <span>Not the full GitHub contribution calendar.</span>
-              </div>
-            </div>
-          </section>
-        </aside>
-
-        <section class="graph-stage" aria-labelledby="graph-title">
-          <div class="stage-head">
-            <div>
-              <p class="console-label">// PORTFOLIO GRAPH</p>
-              <h2 id="graph-title">Repository Explorer</h2>
-            </div>
-            <div class="stage-meta" aria-live="polite">
-              <span id="visible-count">0 visible</span>
-              <span id="cluster-count">0 clusters</span>
-            </div>
-          </div>
-
-          <div class="search-row">
-            <label class="search-box" for="search-input">
-              <span aria-hidden="true">&gt;</span>
-              <input id="search-input" type="search" placeholder="Search repositories, topics, clusters..." />
-            </label>
-            <div class="density-control">
-              <label for="density-input">Spread</label>
-              <input id="density-input" type="range" min="1" max="1.95" step="0.05" value="1.6" />
-            </div>
-          </div>
-
-          <div class="graph-toolbar" aria-label="Graph view controls">
-            <div class="segmented-control" aria-label="Graph mode">
-              <button class="segment-button" id="cluster-view-button" type="button" aria-pressed="true">
-                Cluster view
-              </button>
-              <button class="segment-button" id="all-nodes-button" type="button" aria-pressed="false">
-                All nodes
-              </button>
-            </div>
-            <button class="ghost-button graph-reset-button" id="reset-button" type="button">Reset graph</button>
-          </div>
-          <p class="graph-mode-summary" id="graph-mode-summary">
-            Mobile opens in cluster view; choose a cluster to expand its repositories.
+      <main id="repositories">
+        <section class="intro repo-intro" aria-labelledby="repositories-title">
+          <h1 id="repositories-title">Public GitHub repositories</h1>
+          <p>
+            Search or select a repository to view public GitHub metadata: description, language,
+            last update, tags, and links.
           </p>
+          <p class="small-note">
+            Public metadata snapshot. No token required.
+            <button class="text-button inline-button" id="refresh-repos" type="button">
+              Refresh from GitHub
+            </button>
+            <span id="refresh-status" aria-live="polite"></span>
+          </p>
+        </section>
 
-          <div class="filter-strip" id="cluster-filters" aria-label="Cluster filters"></div>
+        <section class="section repositories" aria-label="Repository explorer">
+          <div class="repo-layout">
+            <section class="graph-panel" aria-label="Repository graph">
+              <div class="graph-controls">
+                <label class="search-field" for="repo-search">
+                  <span>Search</span>
+                  <input
+                    id="repo-search"
+                    type="search"
+                    autocomplete="off"
+                    placeholder="name, language, topic, cluster"
+                  />
+                </label>
+                <div class="graph-actions">
+                  <div class="graph-mode" id="graph-mode" aria-label="Graph view mode">
+                    <span>View</span>
+                    <button type="button" data-graph-mode="2d" aria-pressed="true">2D</button>
+                    <button type="button" data-graph-mode="3d" aria-pressed="false">3D</button>
+                  </div>
+                  <button class="text-button" id="reset-view" type="button">Reset</button>
+                  <div class="graph-help-list" aria-label="Graph explanation">
+                    <span class="graph-help">
+                      <button
+                        class="graph-help-trigger"
+                        type="button"
+                        aria-expanded="false"
+                        aria-describedby="graph-help-connections"
+                      >
+                        Connections <span aria-hidden="true">?</span>
+                      </button>
+                      <span class="graph-tooltip" id="graph-help-connections" role="tooltip" hidden>
+                        Lines connect nearby repositories with shared cluster, language, topics,
+                        tags, or description terms. Selected repositories show the strongest
+                        semantic neighbors.
+                      </span>
+                    </span>
+                    <span class="graph-help">
+                      <button
+                        class="graph-help-trigger"
+                        type="button"
+                        aria-expanded="false"
+                        aria-describedby="graph-help-clusters"
+                      >
+                        Clusters <span aria-hidden="true">?</span>
+                      </button>
+                      <span class="graph-tooltip" id="graph-help-clusters" role="tooltip" hidden>
+                        Clusters are assigned from curated repository metadata when available, with
+                        keyword-based fallback from public repo names, descriptions, languages,
+                        topics, and tags.
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="cluster-row" id="cluster-row" aria-label="Repository filters"></div>
+              <p class="filter-summary" id="filter-summary" aria-live="polite">
+                Showing public repositories.
+              </p>
+              <div class="canvas-wrap" id="canvas-wrap">
+                <canvas id="repo-canvas" aria-hidden="true"></canvas>
+                <p class="graph-hint" id="graph-hint">Select a repository to view details.</p>
+              </div>
+              <p class="small-note">
+                In 2D, drag to pan. In 3D, drag to rotate. Scroll to zoom, or select a repository.
+              </p>
+            </section>
 
-          <div class="edge-legend" aria-label="Graph edge legend">
-            <span><i class="legend-line primary" aria-hidden="true"></i> Cluster membership</span>
-            <span><i class="legend-line secondary" aria-hidden="true"></i> Secondary metadata affinity</span>
-            <span><i class="legend-dot" aria-hidden="true"></i> Selected neighborhood</span>
-          </div>
-
-          <div class="graph-frame">
-            <svg id="repo-graph" role="img" aria-labelledby="graph-title graph-desc">
-              <desc id="graph-desc">
-                Interactive graph of public GitHub repositories clustered by public metadata.
-              </desc>
-            </svg>
-            <div class="graph-empty" id="graph-empty" hidden>
-              No repositories match the current filters.
-            </div>
-          </div>
-
-          <div class="keyboard-strip" aria-label="Prototype shortcuts">
-            <span><kbd>/</kbd> focus search</span>
-            <span><kbd>esc</kbd> clear filters</span>
-            <span><kbd>drag</kbd> move nodes</span>
-            <span><kbd>shift</kbd> + scroll zoom</span>
-            <span><kbd>enter</kbd> open selected</span>
+            <aside class="repo-side" aria-label="Repository details and activity">
+              <section class="inspector" id="repo-inspector" tabindex="-1" aria-live="polite">
+                <h2>Select a repository</h2>
+                <p>
+                  Choose a repository to see its public description, language, update date, tags,
+                  and links.
+                </p>
+              </section>
+              <section class="activity" aria-labelledby="activity-title">
+                <h2 id="activity-title">Public repo activity</h2>
+                <div
+                  class="activity-bars"
+                  id="activity-bars"
+                  aria-label="Recent public repository update activity"
+                ></div>
+                <p class="activity-detail small-note" id="activity-detail" aria-live="polite">
+                  Focus a bar to read the week count.
+                </p>
+                <p class="small-note">
+                  Approximate view based on public repository timestamps, not GitHub's contribution
+                  calendar.
+                </p>
+              </section>
+            </aside>
           </div>
         </section>
 
-        <aside class="panel inspector-panel" aria-label="Selected repository inspector">
-          <div class="inspector-head">
-            <p class="console-label">// INSPECTOR</p>
-            <button class="icon-button" id="clear-selection" type="button" aria-label="Clear selected repository">x</button>
+        <section class="section repo-index" aria-labelledby="repo-index-title">
+          <div class="section-head split-head">
+            <div>
+              <h2 id="repo-index-title">Repositories</h2>
+            </div>
+            <div class="list-tools" aria-label="Repository list length">
+              <span class="small-note" id="repo-list-note">Showing the current filtered set.</span>
+              <div
+                class="sort-controls"
+                id="repo-sort-controls"
+                aria-label="Sort repositories"
+              ></div>
+              <div class="limit-controls" id="list-limit-controls" aria-label="Rows to show"></div>
+            </div>
           </div>
+          <div class="repo-list" id="repo-list"></div>
+        </section>
 
-          <article id="repo-inspector" class="repo-inspector" tabindex="-1">
-            <p class="empty-state">Select a repository node to inspect public metadata.</p>
-          </article>
-        </aside>
+        <section class="section s26-note" id="s26-note" aria-labelledby="s26-title">
+          <h2 id="s26-title">S26 AIRP disclosure</h2>
+          <p>
+            S26 AIRP entries are AI-assisted research software prototypes. Scientific and
+            domain-specific content is provisional and is not presented as independently validated
+            scientific output.
+          </p>
+          <p>
+            The prototypes are primarily software, workflow, interface, and AI-methodology
+            explorations rather than validations of scientific or domain-specific conclusions.
+          </p>
+        </section>
       </main>
 
-      <section class="list-panel is-collapsed" id="repository-list-panel" aria-labelledby="list-title">
-        <div class="list-head">
-          <div>
-            <p class="console-label">// ACCESSIBLE LIST</p>
-            <h2 id="list-title">Repository index</h2>
-            <p class="list-summary" id="list-summary">
-              Table collapsed by default. Open it for the most recent repositories.
-            </p>
-          </div>
-          <div class="list-actions">
-            <button class="ghost-button" id="toggle-list-button" type="button" aria-controls="repository-table-wrap" aria-expanded="false">Show recent 25</button>
-            <button class="ghost-button" id="show-all-button" type="button" hidden>Show all</button>
-          </div>
-        </div>
-        <div class="table-wrap" id="repository-table-wrap" hidden>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Repository</th>
-                <th scope="col">Cluster</th>
-                <th scope="col">Language</th>
-                <th scope="col">Updated</th>
-                <th scope="col">Links</th>
-              </tr>
-            </thead>
-            <tbody id="repo-table"></tbody>
-          </table>
-        </div>
-      </section>
+      <footer class="site-footer">
+        <p>Ryan Kamp</p>
+        <nav aria-label="Footer links">
+          <a href="../">Home</a>
+          <a href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+          <a href="https://github.com/ryanjosephkamp">GitHub</a>
+          <a
+            href="https://drive.google.com/file/d/1sOmKOi1vm_A7cPvQ5TMvhWqf-2mdXLcu/view?usp=drive_link"
+            >CV</a
+          >
+        </nav>
+      </footer>
     </div>
-
-    <script type="module" src="./app.js"></script>
+    <script src="../theme.js" defer></script>
+    <script src="./app.js?v=20260628-graph-tooltip-fix" defer></script>
   </body>
 </html>

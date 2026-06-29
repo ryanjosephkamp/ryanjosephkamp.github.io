@@ -1,163 +1,28 @@
 #!/usr/bin/env node
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const OWNER = "ryanjosephkamp";
 const API_ROOT = `https://api.github.com/users/${OWNER}/repos`;
 const BLOCKED_PROVIDER_TERMS = ["gr" + "okedex", "gr" + "ok", "x." + "ai", "x" + "ai"];
-const PRIMARY_CLUSTER_OVERRIDES = new Map([
-  ["brrrdle", "games"],
-  ["brrrdle-dev", "games"],
-]);
 
-const CLUSTERS = [
-  {
-    id: "s26-airp",
-    label: "S26 AIRP",
-    color: "#12b886",
-    keywords: ["s26 airp", "streamlit", "prototype portfolio"],
-  },
-  {
-    id: "ai-ml",
-    label: "AI and ML",
-    color: "#7c5cff",
-    keywords: [
-      "ai",
-      "agent",
-      "attention",
-      "diffusion",
-      "ebm",
-      "egnn",
-      "llm",
-      "machine learning",
-      "ml",
-      "model",
-      "neural",
-      "transformer",
-    ],
-  },
-  {
-    id: "research-software",
-    label: "Research Software",
-    color: "#18c3d7",
-    keywords: [
-      "analysis",
-      "benchmark",
-      "experiment",
-      "pipeline",
-      "reproducible",
-      "research",
-      "simulation",
-      "solver",
-      "tool",
-      "visualization",
-    ],
-  },
-  {
-    id: "computational-biology",
-    label: "Computational Biology",
-    color: "#c084fc",
-    keywords: [
-      "affinity",
-      "antibiotic",
-      "bio",
-      "cell",
-      "chem",
-      "ferment",
-      "gene",
-      "klk5",
-      "md",
-      "molecular",
-      "molecule",
-      "protein",
-      "sequence",
-      "spink7",
-      "structure",
-    ],
-  },
-  {
-    id: "data-tooling",
-    label: "Data and Tooling",
-    color: "#4dabf7",
-    keywords: [
-      "api",
-      "automation",
-      "catalog",
-      "cli",
-      "data",
-      "dataset",
-      "dictionary",
-      "parser",
-      "qr",
-      "tooling",
-      "voxel",
-    ],
-  },
-  {
-    id: "web-portfolio",
-    label: "Web and Portfolio",
-    color: "#ffd43b",
-    keywords: [
-      "blog",
-      "github.io",
-      "portfolio",
-      "site",
-      "streamlit",
-      "vercel",
-      "web",
-      "website",
-    ],
-  },
-  {
-    id: "games",
-    label: "Games",
-    color: "#ff8787",
-    keywords: [
-      "brrrdle",
-      "game",
-      "hurdle",
-      "wordle",
-    ],
-  },
-  {
-    id: "interactive",
-    label: "Interactive Experiments",
-    color: "#ffae6d",
-    keywords: [
-      "app",
-      "brrrdle",
-      "canvas",
-      "game",
-      "interactive",
-      "pac",
-      "simulator",
-    ],
-  },
-  {
-    id: "writing-docs",
-    label: "Writing and Docs",
-    color: "#f783ac",
-    keywords: [
-      "article",
-      "cv",
-      "docs",
-      "latex",
-      "notes",
-      "paper",
-      "readme",
-      "tex",
-      "writing",
-    ],
-  },
-  {
-    id: "other",
-    label: "Other / Review",
-    color: "#adb5bd",
-    keywords: [],
-  },
-];
+function scriptDir() {
+  return path.dirname(fileURLToPath(import.meta.url));
+}
+
+function snapshotPath() {
+  return path.resolve(scriptDir(), "../data/repos.snapshot.json");
+}
+
+async function readExistingSnapshot() {
+  try {
+    return JSON.parse(await readFile(snapshotPath(), "utf8"));
+  } catch {
+    return { repos: [] };
+  }
+}
 
 function textFor(repo) {
   return [
@@ -173,51 +38,45 @@ function textFor(repo) {
     .toLowerCase();
 }
 
-function classify(repo) {
+function fallbackCluster(repo) {
   const text = textFor(repo);
-  const tags = [];
-
-  if (repo.fork) tags.push("fork");
-  if (repo.archived) tags.push("archived");
-  if (repo.homepage) tags.push(repo.homepage.includes("streamlit.app") ? "interactive app" : "homepage");
-  if (repo.language) tags.push(repo.language);
-
-  const scores = CLUSTERS.map((cluster) => {
-    let score = 0;
-
-    if (cluster.id === "s26-airp" && (text.includes("s26 airp") || repo.name.startsWith("the-"))) {
-      score += 5;
-    }
-
-    if (cluster.id === "web-portfolio" && /blog|github\.io|website|portfolio/.test(text)) {
-      score += 4;
-    }
-
-    for (const keyword of cluster.keywords) {
-      if (keyword && text.includes(keyword)) score += 1;
-    }
-
-    return { cluster, score };
-  }).sort((a, b) => b.score - a.score);
-
-  const overrideId = PRIMARY_CLUSTER_OVERRIDES.get(repo.name);
-  const overrideCluster = overrideId ? CLUSTERS.find((cluster) => cluster.id === overrideId) : null;
-  const winner = overrideCluster || (scores[0].score > 0 ? scores[0].cluster : CLUSTERS.at(-1));
-  const secondary = scores
-    .filter((item) => item.score > 0 && item.cluster.id !== winner.id)
-    .slice(0, 3)
-    .map((item) => item.cluster.id);
-
-  return {
-    cluster: winner.id,
-    cluster_label: winner.label,
-    cluster_color: winner.color,
-    secondary_clusters: secondary,
-    tags: Array.from(new Set(tags)),
-  };
+  if (repo.name === "brrrdle" || repo.name === "brrrdle-dev") {
+    return { cluster: "games", cluster_label: "Games", cluster_color: "#555555" };
+  }
+  if (text.includes("s26 airp") || repo.name?.startsWith("the-")) {
+    return { cluster: "s26-airp", cluster_label: "S26 AIRP", cluster_color: "#12b886" };
+  }
+  if (/\b(ai|ml|model|neural|transformer|diffusion|llm)\b/.test(text)) {
+    return { cluster: "ai-ml", cluster_label: "AI and ML", cluster_color: "#7c5cff" };
+  }
+  if (/blog|github\.io|portfolio|site|website|web/.test(text)) {
+    return {
+      cluster: "web-portfolio",
+      cluster_label: "Web and Portfolio",
+      cluster_color: "#ffd43b",
+    };
+  }
+  if (/data|dataset|api|automation|parser|cli|tooling/.test(text)) {
+    return { cluster: "data-tooling", cluster_label: "Data and Tooling", cluster_color: "#4dabf7" };
+  }
+  if (/research|experiment|simulation|analysis|pipeline|visualization/.test(text)) {
+    return {
+      cluster: "research-software",
+      cluster_label: "Research Software",
+      cluster_color: "#18c3d7",
+    };
+  }
+  if (/docs|notes|paper|writing|latex|article|capstone/.test(text)) {
+    return { cluster: "writing-docs", cluster_label: "Writing and Docs", cluster_color: "#f783ac" };
+  }
+  return { cluster: "other", cluster_label: "Other / Review", cluster_color: "#adb5bd" };
 }
 
-function normalize(repo) {
+function shouldExclude(repo) {
+  return BLOCKED_PROVIDER_TERMS.some((term) => textFor(repo).includes(term));
+}
+
+function normalize(repo, previous) {
   const normalized = {
     id: repo.id,
     name: repo.name,
@@ -240,70 +99,71 @@ function normalize(repo) {
     default_branch: repo.default_branch || "",
     size: repo.size || 0,
   };
-
-  return { ...normalized, ...classify(normalized) };
+  const cluster = previous
+    ? {
+        cluster: previous.cluster,
+        cluster_label: previous.cluster_label,
+        cluster_color: previous.cluster_color,
+        secondary_clusters: previous.secondary_clusters || [],
+      }
+    : fallbackCluster(normalized);
+  const tags = [...new Set([...(previous?.tags || []), normalized.language].filter(Boolean))];
+  return { ...normalized, ...cluster, tags };
 }
 
 async function fetchPage(page) {
-  const url = `${API_ROOT}?sort=updated&direction=desc&per_page=100&page=${page}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "ryan-kamp-public-repo-graph-prototype",
+  const response = await fetch(
+    `${API_ROOT}?sort=updated&direction=desc&per_page=100&page=${page}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "ryan-kamp-public-repo-snapshot",
+      },
     },
-  });
-
+  );
   if (!response.ok) {
     throw new Error(`GitHub public API request failed: ${response.status} ${response.statusText}`);
   }
-
   return response.json();
 }
 
 async function fetchAllRepos() {
   const repos = [];
-  let page = 1;
-
-  while (true) {
+  for (let page = 1; ; page += 1) {
     const batch = await fetchPage(page);
     repos.push(...batch);
-    if (batch.length < 100) break;
-    page += 1;
+    if (batch.length < 100) {
+      return { repos, pagesFetched: page };
+    }
   }
-
-  return { repos, pageCount: page };
-}
-
-function shouldExclude(repo) {
-  const text = [
-    repo.name,
-    repo.full_name,
-    repo.description,
-    repo.homepage,
-    ...(repo.topics || []),
-  ].filter(Boolean).join(" ").toLowerCase();
-
-  return BLOCKED_PROVIDER_TERMS.some((term) => text.includes(term));
 }
 
 function clusterSummary(repos) {
-  return CLUSTERS.map((cluster) => ({
-    id: cluster.id,
-    label: cluster.label,
-    color: cluster.color,
-    count: repos.filter((repo) => repo.cluster === cluster.id).length,
-  }));
+  const byId = new Map();
+  for (const repo of repos) {
+    if (!byId.has(repo.cluster)) {
+      byId.set(repo.cluster, {
+        id: repo.cluster,
+        label: repo.cluster_label,
+        color: repo.cluster_color,
+        count: 0,
+      });
+    }
+    byId.get(repo.cluster).count += 1;
+  }
+  return [...byId.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
-const { repos, pageCount } = await fetchAllRepos();
-const filteredOut = repos.filter(shouldExclude).map((repo) => ({
-  name: repo.name,
-  reason: "Excluded by prototype provider guardrail.",
-}));
+const existing = await readExistingSnapshot();
+const previousById = new Map((existing.repos || []).map((repo) => [repo.id, repo]));
+const { repos, pagesFetched } = await fetchAllRepos();
+const filteredOut = repos
+  .filter(shouldExclude)
+  .map((repo) => ({ name: repo.name, reason: "Excluded by provider guardrail." }));
 const included = repos
   .filter((repo) => !shouldExclude(repo))
-  .map(normalize)
+  .map((repo) => normalize(repo, previousById.get(repo.id)))
   .sort((a, b) => new Date(b.pushed_at || b.updated_at) - new Date(a.pushed_at || a.updated_at));
 
 const snapshot = {
@@ -312,7 +172,7 @@ const snapshot = {
   source: {
     endpoint: API_ROOT,
     authentication: "none",
-    pages_fetched: pageCount,
+    pages_fetched: pagesFetched,
     repo_count_raw: repos.length,
     repo_count_included: included.length,
     repo_count_filtered_out: filteredOut.length,
@@ -322,12 +182,12 @@ const snapshot = {
   repos: included,
 };
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const outPath = path.resolve(__dirname, "../data/repos.snapshot.json");
-await mkdir(path.dirname(outPath), { recursive: true });
-await writeFile(outPath, `${JSON.stringify(snapshot, null, 2)}\n`);
+await mkdir(path.dirname(snapshotPath()), { recursive: true });
+await writeFile(snapshotPath(), `${JSON.stringify(snapshot, null, 2)}\n`);
 
-console.log(`Wrote ${included.length} public repositories to ${outPath}`);
+console.log(`Wrote ${included.length} public repositories to ${snapshotPath()}`);
 if (filteredOut.length) {
-  console.log(`Filtered ${filteredOut.length} repositories by guardrail: ${filteredOut.map((repo) => repo.name).join(", ")}`);
+  console.log(
+    `Filtered ${filteredOut.length} repositories by guardrail: ${filteredOut.map((repo) => repo.name).join(", ")}`,
+  );
 }
