@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-15T08:24:52.297Z",
+  "generated_at": "2026-08-16T08:24:53.479Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
@@ -67,36 +67,6 @@
   ],
   "repos": [
     {
-      "id": 1278628301,
-      "name": "blog",
-      "full_name": "ryanjosephkamp/blog",
-      "html_url": "https://github.com/ryanjosephkamp/blog",
-      "description": "personal blog 🚀",
-      "homepage": "https://ryanjosephkamp.github.io/blog/",
-      "topics": [],
-      "language": "JavaScript",
-      "created_at": "2026-06-24T01:15:55Z",
-      "updated_at": "2026-07-01T23:18:08Z",
-      "pushed_at": "2026-08-15T08:22:26Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 0,
-      "forks_count": 0,
-      "watchers_count": 0,
-      "open_issues_count": 1,
-      "default_branch": "main",
-      "size": 100,
-      "cluster": "web-portfolio",
-      "cluster_label": "Web and Portfolio",
-      "cluster_color": "#ffd43b",
-      "secondary_clusters": [],
-      "tags": [
-        "CSS",
-        "JavaScript"
-      ]
-    },
-    {
       "id": 1334847596,
       "name": "amordle-updates",
       "full_name": "ryanjosephkamp/amordle-updates",
@@ -104,10 +74,10 @@
       "description": "The Amordle changelog. Published at https://ryanjosephkamp.github.io/amordle-updates/",
       "homepage": "",
       "topics": [],
-      "language": "TypeScript",
+      "language": "HTML",
       "created_at": "2026-08-15T06:26:49Z",
-      "updated_at": "2026-08-15T06:27:00Z",
-      "pushed_at": "2026-08-15T06:26:53Z",
+      "updated_at": "2026-08-16T05:36:22Z",
+      "pushed_at": "2026-08-16T05:36:16Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -116,12 +86,14 @@
       "watchers_count": 0,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 759,
+      "size": 2442,
       "cluster": "web-portfolio",
       "cluster_label": "Web and Portfolio",
       "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
       "tags": [
-        "TypeScript"
+        "TypeScript",
+        "HTML"
       ]
     },
     {
@@ -134,8 +106,8 @@
       "topics": [],
       "language": "Python",
       "created_at": "2026-01-12T19:37:23Z",
-      "updated_at": "2026-08-15T02:07:09Z",
-      "pushed_at": "2026-08-15T02:07:01Z",
+      "updated_at": "2026-08-16T00:17:28Z",
+      "pushed_at": "2026-08-16T00:17:24Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -144,7 +116,7 @@
       "watchers_count": 1,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 1640,
+      "size": 1732,
       "cluster": "data-tooling",
       "cluster_label": "Data and Tooling",
       "cluster_color": "#4dabf7",
@@ -154,6 +126,67 @@
       ],
       "tags": [
         "Python"
+      ]
+    },
+    {
+      "id": 1278628301,
+      "name": "blog",
+      "full_name": "ryanjosephkamp/blog",
+      "html_url": "https://github.com/ryanjosephkamp/blog",
+      "description": "personal blog 🚀",
+      "homepage": "https://ryanjosephkamp.github.io/blog/",
+      "topics": [],
+      "language": "JavaScript",
+      "created_at": "2026-06-24T01:15:55Z",
+      "updated_at": "2026-08-15T22:44:53Z",
+      "pushed_at": "2026-08-15T22:44:50Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "watchers_count": 0,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 21461,
+      "cluster": "web-portfolio",
+      "cluster_label": "Web and Portfolio",
+      "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
+      "tags": [
+        "CSS",
+        "JavaScript"
+      ]
+    },
+    {
+      "id": 1235002638,
+      "name": "ryanjosephkamp.github.io",
+      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
+      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
+      "description": "Personal website 🌐",
+      "homepage": "https://ryanjosephkamp.github.io/",
+      "topics": [],
+      "language": "HTML",
+      "created_at": "2026-05-10T23:04:14Z",
+      "updated_at": "2026-08-15T08:25:18Z",
+      "pushed_at": "2026-08-15T08:24:53Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 8262,
+      "cluster": "web-portfolio",
+      "cluster_label": "Web and Portfolio",
+      "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
+      "tags": [
+        "CSS",
+        "JavaScript",
+        "HTML"
       ]
     },
     {
@@ -183,37 +216,6 @@
       "secondary_clusters": [],
       "tags": [
         "TypeScript"
-      ]
-    },
-    {
-      "id": 1235002638,
-      "name": "ryanjosephkamp.github.io",
-      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
-      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
-      "description": "Personal website 🌐",
-      "homepage": "https://ryanjosephkamp.github.io/",
-      "topics": [],
-      "language": "HTML",
-      "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-08-14T08:41:42Z",
-      "pushed_at": "2026-08-14T08:41:21Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 8260,
-      "cluster": "web-portfolio",
-      "cluster_label": "Web and Portfolio",
-      "cluster_color": "#ffd43b",
-      "secondary_clusters": [],
-      "tags": [
-        "CSS",
-        "JavaScript",
-        "HTML"
       ]
     },
     {
