@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T08:33:21.904Z",
+  "generated_at": "2026-09-03T08:33:39.956Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
@@ -71,8 +71,8 @@
       "topics": [],
       "language": "Python",
       "created_at": "2026-01-12T19:37:23Z",
-      "updated_at": "2026-09-02T05:52:17Z",
-      "pushed_at": "2026-09-02T05:51:39Z",
+      "updated_at": "2026-09-03T05:55:07Z",
+      "pushed_at": "2026-09-03T05:54:29Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -81,13 +81,44 @@
       "watchers_count": 1,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 1955,
+      "size": 1966,
       "cluster": "data-tooling",
       "cluster_label": "Data and Tooling",
       "cluster_color": "#4dabf7",
       "secondary_clusters": [
         "ai-ml",
         "web-portfolio"
+      ],
+      "tags": [
+        "Python"
+      ]
+    },
+    {
+      "id": 1220134913,
+      "name": "resmon",
+      "full_name": "ryanjosephkamp/resmon",
+      "html_url": "https://github.com/ryanjosephkamp/resmon",
+      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
+      "homepage": "",
+      "topics": [],
+      "language": "Python",
+      "created_at": "2026-04-24T15:25:34Z",
+      "updated_at": "2026-09-03T02:40:41Z",
+      "pushed_at": "2026-09-03T02:40:30Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 26134,
+      "cluster": "ai-ml",
+      "cluster_label": "AI and ML",
+      "cluster_color": "#7c5cff",
+      "secondary_clusters": [
+        "interactive"
       ],
       "tags": [
         "Python"
@@ -103,8 +134,8 @@
       "topics": [],
       "language": "HTML",
       "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-09-01T08:40:00Z",
-      "pushed_at": "2026-09-01T08:34:23Z",
+      "updated_at": "2026-09-02T08:36:19Z",
+      "pushed_at": "2026-09-02T08:33:23Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -113,7 +144,7 @@
       "watchers_count": 1,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 8284,
+      "size": 8285,
       "cluster": "web-portfolio",
       "cluster_label": "Web and Portfolio",
       "cluster_color": "#ffd43b",
@@ -122,37 +153,6 @@
         "CSS",
         "JavaScript",
         "HTML"
-      ]
-    },
-    {
-      "id": 1220134913,
-      "name": "resmon",
-      "full_name": "ryanjosephkamp/resmon",
-      "html_url": "https://github.com/ryanjosephkamp/resmon",
-      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
-      "homepage": "",
-      "topics": [],
-      "language": "Python",
-      "created_at": "2026-04-24T15:25:34Z",
-      "updated_at": "2026-08-31T20:38:21Z",
-      "pushed_at": "2026-08-31T20:35:15Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 27367,
-      "cluster": "ai-ml",
-      "cluster_label": "AI and ML",
-      "cluster_color": "#7c5cff",
-      "secondary_clusters": [
-        "interactive"
-      ],
-      "tags": [
-        "Python"
       ]
     },
     {
