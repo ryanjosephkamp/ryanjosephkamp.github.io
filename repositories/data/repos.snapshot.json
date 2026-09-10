@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-09T08:31:58.404Z",
+  "generated_at": "2026-09-10T08:33:01.298Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
     "authentication": "none",
     "pages_fetched": 1,
-    "repo_count_raw": 96,
-    "repo_count_included": 96,
+    "repo_count_raw": 97,
+    "repo_count_included": 97,
     "repo_count_filtered_out": 0,
     "filtered_out": []
   },
@@ -30,16 +30,16 @@
       "count": 5
     },
     {
+      "id": "other",
+      "label": "Other / Review",
+      "color": "#adb5bd",
+      "count": 4
+    },
+    {
       "id": "web-portfolio",
       "label": "Web and Portfolio",
       "color": "#ffd43b",
       "count": 4
-    },
-    {
-      "id": "other",
-      "label": "Other / Review",
-      "color": "#adb5bd",
-      "count": 3
     },
     {
       "id": "research-software",
@@ -62,34 +62,31 @@
   ],
   "repos": [
     {
-      "id": 1220134913,
-      "name": "resmon",
-      "full_name": "ryanjosephkamp/resmon",
-      "html_url": "https://github.com/ryanjosephkamp/resmon",
-      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
+      "id": 1363197144,
+      "name": "tibo-time-monitor",
+      "full_name": "ryanjosephkamp/tibo-time-monitor",
+      "html_url": "https://github.com/ryanjosephkamp/tibo-time-monitor",
+      "description": "⏳",
       "homepage": "",
       "topics": [],
-      "language": "Python",
-      "created_at": "2026-04-24T15:25:34Z",
-      "updated_at": "2026-09-09T02:58:04Z",
-      "pushed_at": "2026-09-09T07:00:06Z",
+      "language": "HTML",
+      "created_at": "2026-09-09T20:39:41Z",
+      "updated_at": "2026-09-10T08:13:37Z",
+      "pushed_at": "2026-09-10T08:13:24Z",
       "fork": false,
       "archived": false,
       "disabled": false,
-      "stargazers_count": 1,
+      "stargazers_count": 0,
       "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 1,
+      "watchers_count": 0,
+      "open_issues_count": 0,
       "default_branch": "main",
-      "size": 35992,
-      "cluster": "ai-ml",
-      "cluster_label": "AI and ML",
-      "cluster_color": "#7c5cff",
-      "secondary_clusters": [
-        "interactive"
-      ],
+      "size": 16,
+      "cluster": "other",
+      "cluster_label": "Other / Review",
+      "cluster_color": "#adb5bd",
       "tags": [
-        "Python"
+        "HTML"
       ]
     },
     {
@@ -102,8 +99,8 @@
       "topics": [],
       "language": "Python",
       "created_at": "2026-01-12T19:37:23Z",
-      "updated_at": "2026-09-09T05:47:45Z",
-      "pushed_at": "2026-09-09T05:47:15Z",
+      "updated_at": "2026-09-10T05:48:13Z",
+      "pushed_at": "2026-09-10T05:48:07Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -112,13 +109,44 @@
       "watchers_count": 2,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 2034,
+      "size": 2046,
       "cluster": "data-tooling",
       "cluster_label": "Data and Tooling",
       "cluster_color": "#4dabf7",
       "secondary_clusters": [
         "ai-ml",
         "web-portfolio"
+      ],
+      "tags": [
+        "Python"
+      ]
+    },
+    {
+      "id": 1220134913,
+      "name": "resmon",
+      "full_name": "ryanjosephkamp/resmon",
+      "html_url": "https://github.com/ryanjosephkamp/resmon",
+      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
+      "homepage": "",
+      "topics": [],
+      "language": "Python",
+      "created_at": "2026-04-24T15:25:34Z",
+      "updated_at": "2026-09-09T16:12:58Z",
+      "pushed_at": "2026-09-09T19:24:42Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 1,
+      "default_branch": "main",
+      "size": 36233,
+      "cluster": "ai-ml",
+      "cluster_label": "AI and ML",
+      "cluster_color": "#7c5cff",
+      "secondary_clusters": [
+        "interactive"
       ],
       "tags": [
         "Python"
@@ -134,8 +162,8 @@
       "topics": [],
       "language": "HTML",
       "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-09-08T08:32:59Z",
-      "pushed_at": "2026-09-08T08:32:36Z",
+      "updated_at": "2026-09-09T08:34:37Z",
+      "pushed_at": "2026-09-09T08:31:59Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -144,7 +172,7 @@
       "watchers_count": 1,
       "open_issues_count": 0,
       "default_branch": "main",
-      "size": 8293,
+      "size": 8295,
       "cluster": "web-portfolio",
       "cluster_label": "Web and Portfolio",
       "cluster_color": "#ffd43b",
