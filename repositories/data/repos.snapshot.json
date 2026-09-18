@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-17T08:33:45.042Z",
+  "generated_at": "2026-09-18T08:32:32.469Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
     "authentication": "none",
     "pages_fetched": 1,
-    "repo_count_raw": 97,
-    "repo_count_included": 97,
+    "repo_count_raw": 98,
+    "repo_count_included": 98,
     "repo_count_filtered_out": 0,
     "filtered_out": []
   },
@@ -33,7 +33,7 @@
       "id": "other",
       "label": "Other / Review",
       "color": "#adb5bd",
-      "count": 4
+      "count": 5
     },
     {
       "id": "web-portfolio",
@@ -71,8 +71,8 @@
       "topics": [],
       "language": "TypeScript",
       "created_at": "2026-08-11T00:55:34Z",
-      "updated_at": "2026-09-17T06:20:43Z",
-      "pushed_at": "2026-09-17T07:14:38Z",
+      "updated_at": "2026-09-18T06:19:33Z",
+      "pushed_at": "2026-09-18T07:41:00Z",
       "fork": false,
       "archived": false,
       "disabled": false,
@@ -81,13 +81,103 @@
       "watchers_count": 0,
       "open_issues_count": 2,
       "default_branch": "main",
-      "size": 20854,
+      "size": 24249,
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
       "secondary_clusters": [],
       "tags": [
         "TypeScript"
+      ]
+    },
+    {
+      "id": 1220134913,
+      "name": "resmon",
+      "full_name": "ryanjosephkamp/resmon",
+      "html_url": "https://github.com/ryanjosephkamp/resmon",
+      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
+      "homepage": "",
+      "topics": [],
+      "language": "Python",
+      "created_at": "2026-04-24T15:25:34Z",
+      "updated_at": "2026-09-17T15:40:24Z",
+      "pushed_at": "2026-09-18T07:40:12Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 1,
+      "default_branch": "main",
+      "size": 38090,
+      "cluster": "ai-ml",
+      "cluster_label": "AI and ML",
+      "cluster_color": "#7c5cff",
+      "secondary_clusters": [
+        "interactive"
+      ],
+      "tags": [
+        "Python"
+      ]
+    },
+    {
+      "id": 1375130763,
+      "name": "grooph",
+      "full_name": "ryanjosephkamp/grooph",
+      "html_url": "https://github.com/ryanjosephkamp/grooph",
+      "description": "💮",
+      "homepage": "",
+      "topics": [],
+      "language": "TypeScript",
+      "created_at": "2026-09-17T22:20:56Z",
+      "updated_at": "2026-09-18T05:08:25Z",
+      "pushed_at": "2026-09-18T05:08:22Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "watchers_count": 0,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 178,
+      "cluster": "other",
+      "cluster_label": "Other / Review",
+      "cluster_color": "#adb5bd",
+      "tags": [
+        "TypeScript"
+      ]
+    },
+    {
+      "id": 1235002638,
+      "name": "ryanjosephkamp.github.io",
+      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
+      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
+      "description": "Personal website 🌐",
+      "homepage": "https://ryanjosephkamp.github.io/",
+      "topics": [],
+      "language": "HTML",
+      "created_at": "2026-05-10T23:04:14Z",
+      "updated_at": "2026-09-17T08:33:49Z",
+      "pushed_at": "2026-09-17T08:33:46Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 8306,
+      "cluster": "web-portfolio",
+      "cluster_label": "Web and Portfolio",
+      "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
+      "tags": [
+        "CSS",
+        "JavaScript",
+        "HTML"
       ]
     },
     {
@@ -120,68 +210,6 @@
       ],
       "tags": [
         "Python"
-      ]
-    },
-    {
-      "id": 1220134913,
-      "name": "resmon",
-      "full_name": "ryanjosephkamp/resmon",
-      "html_url": "https://github.com/ryanjosephkamp/resmon",
-      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
-      "homepage": "",
-      "topics": [],
-      "language": "Python",
-      "created_at": "2026-04-24T15:25:34Z",
-      "updated_at": "2026-09-16T03:35:53Z",
-      "pushed_at": "2026-09-17T03:40:35Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 1,
-      "default_branch": "main",
-      "size": 37799,
-      "cluster": "ai-ml",
-      "cluster_label": "AI and ML",
-      "cluster_color": "#7c5cff",
-      "secondary_clusters": [
-        "interactive"
-      ],
-      "tags": [
-        "Python"
-      ]
-    },
-    {
-      "id": 1235002638,
-      "name": "ryanjosephkamp.github.io",
-      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
-      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
-      "description": "Personal website 🌐",
-      "homepage": "https://ryanjosephkamp.github.io/",
-      "topics": [],
-      "language": "HTML",
-      "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-09-16T08:34:02Z",
-      "pushed_at": "2026-09-16T08:33:58Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 8305,
-      "cluster": "web-portfolio",
-      "cluster_label": "Web and Portfolio",
-      "cluster_color": "#ffd43b",
-      "secondary_clusters": [],
-      "tags": [
-        "CSS",
-        "JavaScript",
-        "HTML"
       ]
     },
     {
