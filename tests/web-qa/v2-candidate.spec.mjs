@@ -167,6 +167,11 @@ test.describe("canonical site QA", () => {
         page.locator("#work").getByRole("link", { name: "LLM evaluation/interpretability" }),
       ).toHaveAttribute("href", "https://ryanjosephkamp.github.io/splashery/");
       await expect(page.locator("#work")).toContainText("software/prompt/context/loop/graph");
+      await expect(page.locator("#work ul")).toHaveCount(3);
+      await expect(page.locator("#work li")).toHaveCount(10);
+      await expect(
+        page.locator("#work").getByRole("link", { name: "even more words" }),
+      ).toHaveAttribute("href", "https://ars-magna.pages.dev/");
       await expect(page.locator(".focus-list")).toHaveCount(0);
       await expect(page.locator("#splashery-slot")).toContainText("Under construction");
       await expect(page.locator("#s26-note")).toHaveCount(0);
