@@ -156,15 +156,19 @@ test.describe("canonical site QA", () => {
       );
       await expect(page.getByRole("link", { name: "Repositories" }).first()).toBeVisible();
       await expect(page.getByRole("heading", { name: "Current focus" })).toBeVisible();
-      await expect(page.locator("#work")).toContainText("agentic AI systems");
+      await expect(page.locator("#work")).toContainText("Research interests:");
       await expect(page.locator(".intro strong", { hasText: "Ryan Kamp" })).toBeVisible();
       await expect(page.locator("#work strong")).toHaveText([
-        "agentic AI systems",
-        "explainable AI",
-        "generative models",
-        "LLMs",
-        "benchmarking/evaluation",
+        "Research interests:",
+        "Professional interests:",
+        "Personal interests:",
       ]);
+      await expect(
+        page.locator("#work").getByRole("link", { name: "LLM evaluation/interpretability" }),
+      ).toHaveAttribute("href", "https://ryanjosephkamp.github.io/splashery/");
+      await expect(page.locator("#work")).toContainText("software/prompt/context/loop/graph");
+      await expect(page.locator(".focus-list")).toHaveCount(0);
+      await expect(page.locator("#splashery-slot")).toContainText("Under construction");
       await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);

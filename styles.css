@@ -287,6 +287,30 @@ main,
   border-bottom: 1px solid var(--line);
 }
 
+.embed-slot {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.35rem;
+  min-height: clamp(220px, 36vw, 400px);
+  border: 1px dashed var(--line-strong);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.embed-slot p {
+  max-width: 40ch;
+  margin-bottom: 0;
+}
+
+.embed-slot-kicker {
+  color: var(--faint);
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .repo-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 290px);
