@@ -173,7 +173,7 @@ test.describe("canonical site QA", () => {
         page.locator("#work").getByRole("link", { name: "even more words" }),
       ).toHaveAttribute("href", "https://ars-magna.pages.dev/");
       await expect(page.locator(".focus-list")).toHaveCount(0);
-      await expect(page.locator("#splashery-slot")).toContainText("Under construction");
+      await expect(page.locator('#splashery-slot iframe[title="Splashery toy"]')).toBeVisible();
       await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
