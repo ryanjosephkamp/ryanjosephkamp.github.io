@@ -148,7 +148,7 @@ test.describe("canonical site QA", () => {
       );
       await expect(page.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
         "href",
-        "https://www.linkedin.com/in/rjk1999",
+        "https://www.linkedin.com/in/ryanjosephkamp",
       );
       await expect(page.getByRole("link", { name: "Hugging Face" })).toHaveAttribute(
         "href",
