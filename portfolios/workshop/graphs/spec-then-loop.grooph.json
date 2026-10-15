@@ -1,0 +1,201 @@
+{
+  "grooph": 0,
+  "id": "workshop-spec-then-loop",
+  "name": "Workshop: spec, then loop",
+  "version": 1,
+  "goal": "Draw the next part on the parts list for the toy on sheet 1, in concepts/workshop/kit.js: 640 Gaussian splats in all, shared between the parts by surface area and spread evenly over each. Done when every line of an approved ACCEPTANCE.md is shown to hold and `node concepts/workshop/tools/measure.mjs` passes.",
+  "target": {
+    "harness": "claude-code"
+  },
+  "lineage": {
+    "pattern": "spec-then-loop",
+    "from": "spec-then-loop@2"
+  },
+  "description": "A frontier planner turns the task into ACCEPTANCE.md, a short list of observable behaviors. A human approves it; rejecting ends the run so the task can be restated. A builder then works and a critic in a fresh context judges the change line by line against the approved file, which is the loop's bar. The loop stops when every line holds, at its round cap, or at its dispatch budget.",
+  "nodes": [
+    {
+      "id": "planner",
+      "kind": "agent",
+      "name": "Planner",
+      "role": "planner",
+      "model": {
+        "tier": "frontier"
+      },
+      "effort": "high",
+      "brief": "Turn the task into ACCEPTANCE.md: the observable behaviors that would make it done, each checkable by reading code or running `node concepts/workshop/tools/measure.mjs`. Name what is out of scope. Keep it short enough to review in a minute, and write no code.",
+      "inputs": [
+        "the task"
+      ],
+      "outputs": [
+        "ACCEPTANCE.md"
+      ],
+      "allow": [
+        "read-files",
+        "write-outputs"
+      ]
+    },
+    {
+      "id": "spec-gate",
+      "kind": "human-gate",
+      "name": "Approve the spec",
+      "prompt": "Is ACCEPTANCE.md the right definition of done? Rejecting ends the run so the task can be restated.",
+      "options": [
+        "approve",
+        "reject"
+      ]
+    },
+    {
+      "id": "builder",
+      "kind": "agent",
+      "name": "Builder",
+      "role": "builder",
+      "model": {
+        "tier": "strong"
+      },
+      "effort": "high",
+      "brief": "Do the task until every line of ACCEPTANCE.md holds. The acceptance file is fixed: if a line is wrong, say so in your report rather than working around it. Run `node concepts/workshop/tools/measure.mjs` before you report; on a later round, start from REVIEW.md.",
+      "inputs": [
+        "the task",
+        "ACCEPTANCE.md",
+        "REVIEW.md (from round 1 on)"
+      ],
+      "outputs": [
+        "the change, with tests",
+        "CHANGES.md: what changed this round"
+      ],
+      "allow": [
+        "read-files",
+        "edit-files",
+        "run-tests"
+      ]
+    },
+    {
+      "id": "critic",
+      "kind": "agent",
+      "name": "Critic",
+      "role": "critic",
+      "model": {
+        "tier": "strong"
+      },
+      "effort": "high",
+      "brief": "Judge the change against ACCEPTANCE.md line by line, citing the file and line or the test that shows each one holds; use the repository only to understand what the change touches. Run `node concepts/workshop/tools/measure.mjs` yourself. You judge; you do not fix, and you do not edit the acceptance file. Verdict pass only when every line holds; invalid-evidence when the diff or the file cannot be read.",
+      "inputs": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "ACCEPTANCE.md"
+      ],
+      "outputs": [
+        "REVIEW.md: one line per acceptance item and a verdict line",
+        "verdict: pass | fail | invalid-evidence"
+      ],
+      "allow": [
+        "read-files",
+        "write-outputs",
+        "run-tests"
+      ],
+      "deny": [
+        "edit-files"
+      ]
+    },
+    {
+      "id": "done",
+      "kind": "stop",
+      "name": "Done",
+      "outcome": "success"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-planner-spec-gate",
+      "from": "planner",
+      "to": "spec-gate"
+    },
+    {
+      "id": "e-spec-gate-builder",
+      "from": "spec-gate",
+      "to": "builder",
+      "when": "pass"
+    },
+    {
+      "id": "e-builder-critic",
+      "from": "builder",
+      "to": "critic",
+      "evidence": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "output of node concepts/workshop/tools/measure.mjs",
+        "ACCEPTANCE.md"
+      ]
+    },
+    {
+      "id": "e-critic-fail",
+      "from": "critic",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "REVIEW.md"
+      ]
+    },
+    {
+      "id": "e-critic-pass",
+      "from": "critic",
+      "to": "done",
+      "when": "pass"
+    }
+  ],
+  "loops": [
+    {
+      "id": "build",
+      "name": "Build",
+      "members": [
+        "builder",
+        "critic"
+      ],
+      "back": [
+        "e-critic-fail"
+      ],
+      "mode": "judgment",
+      "bar": {
+        "name": "ACCEPTANCE.md",
+        "inspects": [
+          {
+            "kind": "answer-key",
+            "ref": "ACCEPTANCE.md"
+          },
+          {
+            "kind": "artifact",
+            "ref": "output of node concepts/workshop/tools/measure.mjs"
+          }
+        ],
+        "acceptance": "Every line of ACCEPTANCE.md is shown to hold, and `node concepts/workshop/tools/measure.mjs` exits 0.",
+        "answerKeyFrom": "planner"
+      },
+      "stops": [
+        {
+          "kind": "bar-passed"
+        },
+        {
+          "kind": "max-iterations",
+          "n": 4
+        },
+        {
+          "kind": "budget",
+          "measure": "dispatches",
+          "limit": 10
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "p-critic-isolation",
+      "kind": "critic-isolation",
+      "scope": "graph"
+    },
+    {
+      "id": "p-no-self-grading",
+      "kind": "no-self-grading",
+      "scope": "graph"
+    }
+  ]
+}

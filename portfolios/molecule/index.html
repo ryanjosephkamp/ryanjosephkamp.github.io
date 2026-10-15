@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ryan Kamp · Molecules you can hold</title>
+    <meta
+      name="description"
+      content="Ryan Kamp, graduate student at the University of Cincinnati. Molecular visualization on a blackboard: a chalk molecule you can turn and measure, and Splashery, his Gaussian splat playground."
+    />
+    <meta name="theme-color" content="#1c2526" />
+    <link rel="preload" href="assets/fonts/shantell-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <filter id="chalk" x="-5%" y="-10%" width="110%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" result="d" />
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.72" result="g" />
+        <feComposite in="d" in2="g" operator="in" />
+      </filter>
+    </svg>
+
+    <a class="skip" href="#splashery">Skip to the projects</a>
+
+    <header class="board hero" id="top">
+      <p class="lamp" aria-hidden="true"></p>
+      <div class="hero-words">
+        <p class="eyebrow">Molecular visualization · Room 1, front row</p>
+        <h1 class="chalk">Ryan Kamp</h1>
+        <p class="tiles" aria-label="Kamp, written in element symbols: potassium, americium, phosphorus">
+          <span class="el" style="--c: #8f40d4"><small>19</small>K<i>potassium</i></span>
+          <span class="el" style="--c: #545cf2"><small>95</small>Am<i>americium</i></span>
+          <span class="el" style="--c: #ff8000"><small>15</small>P<i>phosphorus</i></span>
+          <span class="tiles-note">the one way to write Kamp in elements. Ryan has none: nothing starts with R&nbsp;alone.</span>
+        </p>
+        <p class="lede">
+          Graduate student at the University of Cincinnati. I make scientific pictures you can pick up, and this
+          board is the smallest scale of them: <strong>molecules you can hold.</strong>
+        </p>
+        <p class="how">
+          <span class="yellow">Drag</span> the molecule to turn it. <span class="yellow">Tap two atoms</span> for the
+          distance between them, a third for the angle.
+        </p>
+      </div>
+
+      <figure class="hold">
+        <div class="stage-wrap">
+          <canvas
+            id="hero-stage"
+            class="stage"
+            tabindex="0"
+            role="application"
+            aria-label="A caffeine molecule drawn in chalk. Arrow keys turn it. Square brackets move between atoms, Enter picks one, Escape erases the measurement."
+            aria-describedby="hero-readout"
+          ></canvas>
+          <noscript><p class="nojs">Caffeine, C₈H₁₀N₄O₂: 24 atoms. With scripts on, this molecule turns in your hand.</p></noscript>
+        </div>
+        <figcaption>
+          <p id="hero-readout" class="readout" aria-live="polite">Caffeine. Nothing measured yet.</p>
+          <p id="hero-meta" class="meta">C₈H₁₀N₄O₂ · 194.19 g/mol · PDB chemical component CFF, ideal coordinates</p>
+        </figcaption>
+      </figure>
+
+      <div class="tray" role="group" aria-label="Molecule controls">
+        <div class="pick" role="group" aria-label="Molecule">
+          <span class="tray-label">On the board</span>
+          <button type="button" data-mol="CFF" aria-pressed="true">Caffeine</button>
+          <button type="button" data-mol="LDP" aria-pressed="false">Dopamine</button>
+          <button type="button" data-mol="SRO" aria-pressed="false">Serotonin</button>
+          <button type="button" data-mol="1CRN" aria-pressed="false">Crambin</button>
+          <button type="button" id="hero-extra" aria-pressed="true" hidden></button>
+          <button type="button" class="door" data-open-stockroom hidden>The stockroom: <span data-stock-count>about 150</span> more</button>
+          <button type="button" class="door" data-open-stockroom="own" hidden>Your own</button>
+        </div>
+        <div class="pick" role="group" aria-label="Drawn as">
+          <span class="tray-label">Drawn as</span>
+          <button type="button" data-mode="sticks" aria-pressed="true">Balls and sticks</button>
+          <button type="button" data-mode="fill" aria-pressed="false">Space-filling</button>
+          <button type="button" data-mode="short" aria-pressed="false">Skeletal formula</button>
+        </div>
+        <button type="button" class="eraser" id="hero-erase" aria-label="Erase the measurement"><span aria-hidden="true"></span>Erase</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="board" id="splashery" aria-labelledby="splashery-h">
+        <p class="eyebrow">Project 1 · 2026 to present</p>
+        <h2 class="chalk" id="splashery-h">Splashery</h2>
+        <p class="tiles long" aria-label="Splashery, written in element symbols: sulfur, phosphorus, lanthanum, sulfur, hydrogen, erbium, yttrium">
+          <span class="el" style="--c: #ffff30"><small>16</small>S<i>sulfur</i></span>
+          <span class="el" style="--c: #ff8000"><small>15</small>P<i>phosphorus</i></span>
+          <span class="el" style="--c: #70d4ff"><small>57</small>La<i>lanthanum</i></span>
+          <span class="el" style="--c: #ffff30"><small>16</small>S<i>sulfur</i></span>
+          <span class="el" style="--c: #ffffff"><small>1</small>H<i>hydrogen</i></span>
+          <span class="el" style="--c: #00e675"><small>68</small>Er<i>erbium</i></span>
+          <span class="el" style="--c: #94ffff"><small>39</small>Y<i>yttrium</i></span>
+        </p>
+        <div class="cols">
+          <div>
+            <p class="big">
+              An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy (a real captured
+              object, or one generated from a seed), spin it, poke it, blow on it, splash paint on it, drop it, watch
+              it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.
+            </p>
+            <p>
+              Its molecule viewer is the board above, made of splats in place of chalk. It opens PDB, mmCIF, SDF, MOL
+              and XYZ files from your device, or fetches an entry from the Protein Data Bank by its code, and draws it
+              as balls and sticks, space-filling atoms, a cartoon of its chains or its molecular surface. Tap two atoms
+              and it measures the distance between them; tap a third and it measures the angle. The chalk board reads the
+              same five kinds of file, and fetches by the same codes.
+            </p>
+            <p>
+              Beside the viewer sit crystal unit cells built from published lattice constants, and an atlas of hydrogen
+              orbitals sampled from |ψ|². Both are redrawn in chalk below, so you can hold those too.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/splashery/">Play Splashery</a>
+              <a href="https://ryanjosephkamp.github.io/splashery/?labs=1">Play with the lab toys switched on</a>
+              <a href="https://github.com/ryanjosephkamp/splashery">Code</a>
+              <a href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer's Manual</a>
+            </p>
+            <p class="aside">
+              The molecule viewer, the unit cells and the orbital atlas are lab toys: the second link switches them on.
+              Ryan defined the project's vision and its toy categories, refined the interaction design through hands-on
+              testing, and contributed mathematical recipes.
+            </p>
+          </div>
+          <ul class="facts">
+            <li><b>Toys</b> Captured ones are real scans of up to 450,000 splats. Generated ones are built from seeded recipes, so a saved scene rebuilds the same toy.</li>
+            <li><b>Effects</b> Poke, wind, dissolve, drop, magnet, twist, slice and paint run on the GPU for every splat, every frame.</li>
+            <li><b>Also on its shelves</b> A ripple tank, a light bench, line spectra of sixteen elements, a Chladni plate, a volume viewer for CT and MRI scans, the night sky for any date and place.</li>
+            <li><b>Engineering</b> Static files and ES modules only: no build step, no framework, no server.</li>
+          </ul>
+        </div>
+
+        <div class="pair">
+          <figure class="mini" id="cell">
+            <h3 class="chalk">A unit cell</h3>
+            <div class="stage-wrap">
+              <canvas id="cell-stage" class="stage" tabindex="0" role="application" aria-label="A crystal unit cell drawn in chalk. Arrow keys turn it. Square brackets move between atoms, Enter picks one." aria-describedby="cell-readout"></canvas>
+            </div>
+            <div class="pick" role="group" aria-label="Crystal">
+              <button type="button" data-crystal="diamond" aria-pressed="true">Diamond</button>
+              <button type="button" data-crystal="copper" aria-pressed="false">Copper</button>
+              <button type="button" data-crystal="iron" aria-pressed="false">Iron</button>
+              <button type="button" data-cellmode aria-pressed="false">Touching spheres</button>
+            </div>
+            <figcaption>
+              <p id="cell-readout" class="readout" aria-live="polite">Diamond: a = 3.56679 Å.</p>
+              <p class="meta" id="cell-meta">
+                One conventional cell of diamond, with the lattice constant Splashery uses. Tap two bonded atoms: the
+                distance should come to a√3 ⁄ 4 = 1.544 Å.
+              </p>
+            </figcaption>
+          </figure>
+
+          <figure class="mini" id="orbital">
+            <h3 class="chalk">A hydrogen orbital</h3>
+            <div class="stage-wrap">
+              <canvas id="orbital-stage" class="stage" tabindex="0" role="application" aria-label="A hydrogen orbital as a cloud of chalk dots. Arrow keys turn it."></canvas>
+            </div>
+            <div class="pick" role="group" aria-label="Orbital">
+              <button type="button" data-orb="1,0,0" aria-pressed="false">1s</button>
+              <button type="button" data-orb="2,0,0" aria-pressed="false">2s</button>
+              <button type="button" data-orb="2,1,0" aria-pressed="false">2p</button>
+              <button type="button" data-orb="3,1,0" aria-pressed="false">3p</button>
+              <button type="button" data-orb="3,2,0" aria-pressed="true">3d z²</button>
+              <button type="button" data-orb="3,2,-2" aria-pressed="false">3d xy</button>
+              <button type="button" data-orb="4,3,0" aria-pressed="false">4f z³</button>
+              <button type="button" data-cut aria-pressed="false">Cut it in half</button>
+            </div>
+            <figcaption>
+              <p id="orbital-readout" class="readout">3d z²: n = 3, l = 2, m = 0.</p>
+              <p class="meta">
+                Every dot is one draw from |ψ|² for the hydrogen atom. Blue chalk where ψ is positive, pink where it
+                is negative. Cut it in half to see the nodes.
+              </p>
+            </figcaption>
+          </figure>
+        </div>
+
+        <figure class="real" id="real">
+          <div>
+            <h3 class="chalk">And the real one</h3>
+            <p>
+              Everything above is chalk. This is Splashery's own molecule viewer, drawn in splats. It opens on
+              crambin, the protein in the tray of the first board, as a cartoon. Drag to turn it.
+            </p>
+            <p class="meta">
+              It comes from the Splashery site, about 1 MB, and only when you ask for it. Or
+              <a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=molecule-viewer&amp;theme=dark">open the viewer on its own page</a>.
+            </p>
+          </div>
+          <div class="real-frame" id="real-frame">
+            <a class="real-load" id="real-load" href="https://ryanjosephkamp.github.io/splashery/embed/?toy=molecule-viewer&amp;theme=dark">Put the real viewer on the board</a>
+          </div>
+        </figure>
+      </section>
+
+      <section class="board" id="grooph" aria-labelledby="grooph-h">
+        <p class="eyebrow">Project 2 · 2026 to present</p>
+        <h2 class="chalk" id="grooph-h">grooph</h2>
+        <div class="cols">
+          <div>
+            <p class="big">
+              Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person decides
+              and when the work stops.
+            </p>
+            <p>
+              grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate
+              coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/grooph/">Open grooph</a>
+              <a href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+              <a href="https://github.com/ryanjosephkamp/grooph">Code</a>
+            </p>
+          </div>
+          <figure class="scheme">
+            <svg viewBox="0 0 420 250" role="img" aria-label="A loop graph drawn like a reaction scheme: build, then check; not yet returns to build; a person decides; then stop.">
+              <g class="chalk-line" filter="url(#chalk)">
+                <path id="loop-path" d="M92 92 C 140 30, 232 30, 278 92 C 232 156, 140 156, 92 92" fill="none" />
+                <path d="M262 62 l18 30 l-32 -6" fill="none" />
+                <path d="M108 122 l-18 -30 l32 6" fill="none" />
+                <rect x="34" y="70" width="112" height="46" rx="8" class="slatefill" />
+                <rect x="226" y="70" width="112" height="46" rx="8" class="slatefill" />
+                <path d="M282 118 L282 178" fill="none" />
+                <path d="M274 166 l8 14 l8 -14" fill="none" />
+                <path d="M282 182 l44 24 l-44 24 l-44 -24 z" class="slatefill" />
+                <path d="M330 206 L372 206" fill="none" />
+                <path d="M360 198 l14 8 l-14 8" fill="none" />
+                <circle cx="392" cy="206" r="15" class="stopfill" />
+              </g>
+              <g class="scheme-text">
+                <text x="90" y="100" text-anchor="middle">build</text>
+                <text x="282" y="100" text-anchor="middle">check</text>
+                <text x="185" y="34" text-anchor="middle" class="small">done?</text>
+                <text x="185" y="172" text-anchor="middle" class="small">not yet</text>
+                <text x="282" y="211" text-anchor="middle" class="small">a person</text>
+                <text x="392" y="243" text-anchor="middle" class="small">stop</text>
+              </g>
+              <circle class="runner" r="7" />
+            </svg>
+            <figcaption class="meta">A loop with its stop named, the way grooph wants it. On this board it is drawn as a reaction scheme.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="board" id="words" aria-labelledby="words-h">
+        <p class="eyebrow">Projects 3 and 4</p>
+        <h2 class="chalk" id="words-h">Same atoms, new arrangement</h2>
+        <div class="cols even">
+          <article>
+            <h3 class="chalk">Ars Magna</h3>
+            <p>
+              An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned
+              into real English words, by a deterministic search.
+            </p>
+            <div class="isomer" id="isomer">
+              <p class="letters" aria-live="polite" aria-atomic="true"><span>R</span><span>Y</span><span>A</span><span>N</span><span class="gap"></span><span>K</span><span>A</span><span>M</span><span>P</span></p>
+              <button type="button" id="isomer-next">Rearrange</button>
+            </div>
+            <p class="meta">A chemist would call these isomers: MAY PRANK, PARK MANY, RAMP YANK and ARMY KNAP hold the same eight letters as RYAN KAMP.</p>
+            <p class="links">
+              <a href="https://ars-magna.pages.dev/">Try Ars Magna</a>
+              <a href="https://github.com/ryanjosephkamp/ars-magna">Code</a>
+            </p>
+          </article>
+          <article>
+            <h3 class="chalk">resmon</h3>
+            <p>
+              A local-first literature-monitoring desktop application. It runs scheduled searches across open-access
+              scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.
+            </p>
+            <p class="tiles small-tiles" aria-label="resmon, written in element symbols two ways">
+              <span class="el" style="--c: #267dab"><small>75</small>Re<i>rhenium</i></span>
+              <span class="el" style="--c: #ffff30"><small>16</small>S<i>sulfur</i></span>
+              <span class="el" style="--c: #54b5b5"><small>42</small>Mo<i>molybdenum</i></span>
+              <span class="el" style="--c: #3050f8"><small>7</small>N<i>nitrogen</i></span>
+              <span class="or">or</span>
+              <span class="el" style="--c: #267dab"><small>75</small>Re<i>rhenium</i></span>
+              <span class="el" style="--c: #8fffc7"><small>62</small>Sm<i>samarium</i></span>
+              <span class="el" style="--c: #ff0d0d"><small>8</small>O<i>oxygen</i></span>
+              <span class="el" style="--c: #3050f8"><small>7</small>N<i>nitrogen</i></span>
+            </p>
+            <p class="meta">The one project name here with two spellings in elements, which suits a tool that removes duplicates.</p>
+            <p class="links"><a href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="board" id="more" aria-labelledby="more-h">
+        <p class="eyebrow">Projects 5 to 10</p>
+        <h2 class="chalk" id="more-h">The rest of the syllabus</h2>
+        <ol class="list" start="5">
+          <li>
+            <h3>reword_nerd</h3>
+            <p>
+              A local-first browser workbench that turns a reviewed document, or a set of images, into a portable
+              workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate,
+              explicit step, and the application contacts no model provider itself.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+              <a href="https://github.com/ryanjosephkamp/reword-nerd">Code</a>
+            </p>
+          </li>
+          <li>
+            <h3>Link Meteor</h3>
+            <p>
+              A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing
+              sources and exporting a research collection. No account, ads, telemetry or backend.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+              <a href="https://github.com/ryanjosephkamp/link-meteor">Code</a>
+            </p>
+          </li>
+          <li id="openlist">
+            <h3>English OpenList</h3>
+            <p>
+              A free, open, continuously maintained list of valid English words, about 345,000 of them, with the
+              provenance of every word (which sources attested it, and when), auditable correction records, and a
+              browser explorer.
+            </p>
+            <p class="links">
+              <a href="https://english-openlist.pages.dev/">Explore</a>
+              <a href="https://github.com/ryanjosephkamp/english-openlist">Code</a>
+              <a href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+            </p>
+          </li>
+          <li>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+              <a href="https://github.com/ryanjosephkamp/aqrobat">Code</a>
+            </p>
+          </li>
+          <li>
+            <h3>Amordle</h3>
+            <p>
+              A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked
+              multiplayer with an Elo rating.
+            </p>
+            <p class="links">
+              <a href="https://amordle.vercel.app">Play</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a>
+              <a href="https://github.com/ryanjosephkamp/amordle">Code</a>
+            </p>
+          </li>
+          <li class="last">
+            <h3>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</h3>
+            <p>
+              Undergraduate research capstone, April 2025. It models evidence accumulation as a diffusion process and
+              uses dynamic programming and value iteration to study decision boundaries in a simulated
+              autonomous-vehicle obstacle-avoidance scenario.
+            </p>
+            <p class="links">
+              <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a>
+              <a href="https://youtu.be/LRAP1YHy3g0">Video</a>
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="board" id="spell" aria-labelledby="spell-h">
+        <p class="eyebrow">Extra credit</p>
+        <h2 class="chalk" id="spell-h">Written in elements</h2>
+        <div class="cols even">
+          <div>
+            <p>
+              Some words can be written with nothing but the symbols on the periodic table. Kamp can, one way.
+              Splashery can, one way. Caffeine can: calcium, fluorine, iron, iodine, neon. Chalk and slate both can.
+            </p>
+            <label class="spell-label" for="spell-in">Write a word on the board</label>
+            <input id="spell-in" type="text" value="caffeine" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <p class="meta">
+              The search tries every one-letter and two-letter symbol at every position. It was checked against a
+              brute-force build of every run of the 118 symbols.
+            </p>
+          </div>
+          <div class="spell-out" id="spell-out" aria-live="polite">
+            <p class="tiles">
+              <span class="el" style="--c: #3dff00"><small>20</small>Ca<i>calcium</i></span>
+              <span class="el" style="--c: #90e050"><small>9</small>F<i>fluorine</i></span>
+              <span class="el" style="--c: #e06633"><small>26</small>Fe<i>iron</i></span>
+              <span class="el" style="--c: #940094"><small>53</small>I<i>iodine</i></span>
+              <span class="el" style="--c: #b3e3f5"><small>10</small>Ne<i>neon</i></span>
+            </p>
+            <p class="meta">One way.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="board" id="about" aria-labelledby="about-h">
+        <p class="eyebrow">Office hours</p>
+        <h2 class="chalk" id="about-h">Research interests</h2>
+        <div class="cols even">
+          <div>
+            <p class="big">
+              Scientific visualization, computer graphics, digital media, software engineering, and information
+              retrieval.
+            </p>
+            <p>
+              This page follows the first of them down to its smallest subject. Molecular visualization is an
+              interest: the question of how to draw a thing nobody can see so that a person can turn it over, measure
+              it and trust what they measured.
+            </p>
+            <p>
+              MS in Computer Science, concentration in Artificial Intelligence, University of Cincinnati, August 2025
+              to expected May 2027. Thesis advisor:
+              <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>. BA in Mathematics and BS in
+              Neuroscience, University of Cincinnati, January 2020 to May 2025. Capstone advisor:
+              <a href="https://sites.google.com/view/hkimmathbio/home">Dr. Hyunjoong Kim</a>.
+            </p>
+          </div>
+          <ul class="contact">
+            <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/repositories/">Repositories</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+            <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+            <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+            <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+            <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Coordinates: chemical components from the Protein Data Bank's dictionary, at their ideal coordinates, and
+        eleven PDB entries, all public domain data from the wwPDB, copied here unchanged. Atom colors are the CPK
+        colors; atom sizes are van der Waals radii from Bondi and from Mantina and colleagues.
+        Lattice constants are the ones Splashery's unit cells use. Set in Shantell Sans, under the SIL Open Font
+        License.
+      </p>
+      <p>Ryan Kamp · Cincinnati, Ohio · <a href="#top">Back to the first board</a></p>
+    </footer>
+
+    <dialog id="stockroom" class="stockroom" aria-labelledby="stock-h">
+      <div class="stock-top">
+        <div>
+          <p class="eyebrow">Behind the lecture hall</p>
+          <h2 class="chalk" id="stock-h">The stockroom</h2>
+        </div>
+        <form method="dialog"><button class="stock-close">Close</button></form>
+      </div>
+      <p class="meta">
+        Every small molecule here is a chemical component from the Protein Data Bank, at its ideal coordinates. Every
+        protein and nucleic acid is a PDB entry. Pick one and it goes on the first board.
+      </p>
+      <label class="spell-label" for="stock-find">Find one by name, formula or code</label>
+      <input id="stock-find" type="search" autocomplete="off" spellcheck="false" placeholder="aspirin" />
+      <p id="stock-none" class="meta" hidden>Nothing on the shelf by that name. A Protein Data Bank code, below, may find it.</p>
+      <div id="stock-list"></div>
+
+      <section class="own" aria-labelledby="own-h">
+        <h3 class="chalk" id="own-h">Bring your own</h3>
+        <div class="own-ways">
+          <form id="own-form">
+            <label class="spell-label" for="own-code">A Protein Data Bank code</label>
+            <div class="own-row">
+              <input id="own-code" type="text" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="4HHB" />
+              <button type="submit">Fetch it</button>
+            </div>
+            <p class="meta">
+              Four characters name an entry: 4HHB is human hemoglobin. Up to three name a chemical component: GTP.
+              This asks rcsb.org for that one file.
+            </p>
+          </form>
+          <div>
+            <label class="spell-label" for="own-file">A file of your own</label>
+            <input id="own-file" type="file" accept=".pdb,.ent,.cif,.mmcif,.sdf,.sd,.mol,.xyz" />
+            <p class="meta">
+              PDB, mmCIF, SDF, MOL or XYZ. It is read here, on your device, and sent nowhere. You can also drop a file
+              on the first board.
+            </p>
+          </div>
+        </div>
+        <p id="own-status" class="readout" role="status" aria-live="polite"></p>
+      </section>
+    </dialog>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

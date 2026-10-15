@@ -1,0 +1,413 @@
+/* Overprint — Ryan Kamp's portfolio, concept.
+   Paper, one committed ink (teal), one loud ink (orange), one variable family. */
+
+@font-face {
+  font-family: "Recursive";
+  src: url("assets/fonts/recursive-latin.woff2") format("woff2");
+  font-weight: 300 1000;
+  font-style: oblique 0deg 15deg;
+  font-display: swap;
+}
+
+/* Recursive's axes, registered so they inherit and interpolate. */
+@property --mono { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --casl { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --slnt { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+:root {
+  /* paper and inks: keep in step with PAPER, TEAL and HOT in main.js */
+  --paper: #f4f0e6;
+  --teal: #0f7f86;
+  --hot: #ff5a36;
+  --teal-deep: #0a676d; /* teal, dark enough for small type */
+  --ink: #17232b;
+  --ink-2: #44535b;
+  --rule: #17232b33;
+
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  --step-1: clamp(1.12rem, 1.04rem + 0.45vw, 1.4rem);
+  --step-2: clamp(1.3rem, 1.15rem + 0.8vw, 1.8rem);
+  --step-4: clamp(2.6rem, 1.7rem + 4.2vw, 5rem);
+
+  --gutter: clamp(1.1rem, 4vw, 3rem);
+  --edge: max(var(--gutter), calc((100vw - 86rem) / 2));
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  font-variation-settings: "MONO" var(--mono), "CASL" var(--casl), "slnt" var(--slnt);
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html.is-turning { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+
+body {
+  margin: 0;
+  font-family: "Recursive", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.58;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, p, ul, ol, figure, pre { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+a { color: inherit; }
+i { font-style: normal; --slnt: -12; --casl: 0.6; }
+button, input { font: inherit; color: inherit; }
+
+::selection { background: var(--hot); color: var(--ink); }
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; border-radius: 3px; }
+
+/* the print itself: one fixed sheet behind everything */
+#cloud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
+  pointer-events: none;
+}
+.bar, .hero, main, .contact { position: relative; z-index: 1; }
+
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: -4rem;
+  z-index: 20;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+  text-decoration: none;
+}
+.skip:focus { top: 0.75rem; }
+
+.eyebrow {
+  --mono: 1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+}
+.eyebrow b {
+  display: inline-block;
+  margin-right: 0.6em;
+  padding: 0.05em 0.5em 0.1em;
+  background: var(--hot);
+  color: var(--ink);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Bar ---------- */
+
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(0.7rem, 2vw, 1.1rem) var(--edge) clamp(1.2rem, 3vw, 1.8rem);
+  background: linear-gradient(var(--paper) 68%, rgb(244 240 230 / 0)); /* --paper, fading out below the links */
+  pointer-events: none;
+}
+.bar a {
+  pointer-events: auto;
+  padding: 0.25rem 0.6rem 0.3rem;
+  background: var(--paper);
+  --mono: 1;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s var(--ease-out);
+}
+.bar a:hover { background: var(--hot); }
+.bar ul { display: flex; gap: clamp(0.2rem, 1.5vw, 1rem); }
+.bar__mark { text-transform: uppercase; }
+
+/* ---------- Hero ---------- */
+
+.hero {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: minmax(54svh, 1fr) auto;
+  touch-action: pan-y;
+}
+.hero__stage { display: grid; place-items: center; cursor: grab; }
+/* shown only when the cloud cannot be drawn */
+.hero__name {
+  font-size: clamp(3.2rem, 15vw, 13rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--teal);
+  text-shadow: 0.035em 0.03em 0 var(--hot);
+}
+.gl .hero__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hero__foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+  gap: 1.5rem clamp(2rem, 6vw, 6rem);
+  align-items: end;
+  padding: 0 var(--edge) clamp(1.25rem, 3vw, 2.25rem);
+}
+.hero__lede { max-width: 40rem; }
+.lede { margin-top: 0.7rem; font-size: var(--step-1); line-height: 1.45; font-weight: 450; }
+.lede a { text-decoration-color: var(--hot); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+
+.card {
+  width: 100%;
+  max-width: 27rem;
+  padding: 1rem 1.1rem 0.9rem;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  box-shadow: 6px 6px 0 var(--hot);
+}
+.card__head { font-size: 0.95rem; line-height: 1.4; }
+.card__head b { --mono: 1; font-weight: 800; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.8rem; }
+.chip {
+  padding: 0.22rem 0.7rem 0.3rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  --mono: 1;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+.chip:hover { background: var(--hot); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.recipe {
+  --mono: 1;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.card .recipe { margin-top: 0.8rem; padding-left: 0.8rem; border-left: 3px solid var(--teal); min-height: 4.65em; }
+.controls { margin-top: 0.8rem; display: grid; gap: 0.4rem; }
+.field {
+  display: grid;
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  --mono: 1;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+.field input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0.5rem 0.35rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  background: #fffdf7;
+}
+.field input[type="range"] { width: 100%; margin: 0; accent-color: var(--teal); cursor: pointer; }
+.card__note { margin-top: 0.65rem; min-height: 2.8em; font-size: 0.84rem; line-height: 1.4; color: var(--ink-2); }
+.card__note.is-bad { color: #a3271c; }
+
+/* ---------- Sections: the text keeps to one side, the print has the other ---------- */
+
+.sec {
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  padding: clamp(5rem, 13vh, 9rem) var(--edge);
+  touch-action: pan-y;
+}
+.sec__text { width: min(34rem, 44vw); }
+.sec--right .sec__text { justify-self: start; }
+.sec--left .sec__text { justify-self: end; }
+
+.sec h2 {
+  margin-top: 0.7rem;
+  font-size: var(--step-4);
+  font-weight: 300;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+.tag { margin-top: 0.9rem; font-size: var(--step-1); font-weight: 700; line-height: 1.3; color: var(--teal-deep); }
+.sec__text > p:not([class]) { margin-top: 0.9rem; }
+.sec__text > p:not([class]) a { text-decoration-color: var(--hot); text-decoration-thickness: 2px; text-underline-offset: 0.2em; font-weight: 600; }
+.meta { margin-top: 1rem; --mono: 1; font-size: 0.82rem; font-weight: 500; line-height: 1.5; color: var(--ink-2); }
+
+.links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.3rem; margin-top: 1.1rem; }
+.link {
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+  background: linear-gradient(var(--hot), var(--hot)) left 100% / 100% 2px no-repeat;
+  padding: 0 0.1em 0.12em;
+  transition: background-size 0.25s var(--ease-out);
+}
+.link::after { content: "\2009\2197"; }
+.link--up::after { content: "\2009\2191"; }
+.link:hover { background-size: 100% 100%; }
+
+.fig { margin-top: 1.9rem; padding-top: 0.8rem; border-top: 1.5px solid var(--ink); }
+.fig figcaption {
+  --mono: 1;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.fig .recipe { margin-top: 0.45rem; color: var(--ink-2); }
+
+.shelf { margin-top: 1.2rem; border-top: 1.5px solid var(--ink); }
+.shelf li { padding-block: 0.85rem; border-bottom: 1px solid var(--rule); }
+.shelf h3 { font-size: var(--step-1); font-weight: 750; line-height: 1.2; letter-spacing: -0.01em; }
+.shelf p { margin-top: 0.2rem; color: var(--ink-2); }
+.shelf .links { margin-top: 0.45rem; }
+.sub {
+  margin-top: 2.2rem;
+  --mono: 1;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+}
+.sub + .shelf, .sub + .inside { margin-top: 0.6rem; }
+
+/* a short list inside a project: what else is in there */
+.inside { border-top: 1.5px solid var(--ink); }
+.inside li { padding-block: 0.5rem; border-bottom: 1px solid var(--rule); font-size: 0.95rem; line-height: 1.45; color: var(--ink-2); }
+.inside b { font-weight: 700; color: var(--ink); }
+
+/* the numbered list: the projects that share a plainer entry, in plate order */
+.shelf--numbered { counter-reset: n 4; }
+.shelf--numbered li { counter-increment: n; display: grid; grid-template-columns: 2.3rem minmax(0, 1fr); }
+.shelf--numbered li > * { grid-column: 2; }
+.shelf--numbered li::before {
+  content: counter(n, decimal-leading-zero);
+  grid-row: 1 / span 3;
+  padding-top: 0.3rem;
+  --mono: 1;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  color: var(--teal-deep);
+}
+
+/* A figure that has to be seen whole (the QR code): on a narrow screen its
+   text is cut away above a line and fades in below it, so it passes under
+   the figure and never over it. main.js sets --cut as the page scrolls. */
+.sec__text.is-under {
+  clip-path: inset(var(--cut) 0 0 0);
+  -webkit-mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 1.75rem));
+  mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 1.75rem));
+}
+@media (max-width: 59.99rem) {
+  [data-form="qr"] a { scroll-margin-top: 64svh; } /* a link reached by keyboard lands below the figure */
+}
+
+/* lines that are only true once the cloud is being drawn */
+.live, .fig { display: none; }
+.gl .live, .gl .fig { display: block; }
+.live { margin-top: 0.9rem; }
+
+.interests { margin-top: 1.3rem; counter-reset: n; border-top: 1.5px solid var(--ink); }
+.interests li {
+  counter-increment: n;
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--step-2);
+  font-weight: 350;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.interests li::before { content: counter(n, decimal-leading-zero); --mono: 1; font-size: 0.78rem; font-weight: 650; letter-spacing: 0.05em; color: var(--teal-deep); }
+.interests + p { margin-top: 1.3rem; }
+
+/* ---------- Contact ---------- */
+
+.contact { align-items: end; }
+.contact .sec__text { width: 100%; }
+.elsewhere { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.4rem; }
+.elsewhere a {
+  display: inline-block;
+  padding: 0.4rem 1rem 0.5rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: var(--step-1);
+  font-weight: 650;
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out), translate 0.2s var(--ease-out);
+}
+.elsewhere a:hover { background: var(--hot); box-shadow: 4px 4px 0 var(--ink); translate: -2px -2px; }
+.colophon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 2rem;
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+  padding-top: 1rem;
+  border-top: 1.5px solid var(--ink);
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+/* ---------- Narrow: the print gets a window above each block of text ---------- */
+
+@media (max-width: 59.99rem) {
+  .hero { grid-template-rows: minmax(60svh, 1fr) auto; }
+  .hero__foot { grid-template-columns: minmax(0, 1fr); background: var(--paper); padding-top: 1.25rem; border-top: 1.5px solid var(--ink); }
+  .sec { display: block; min-height: 0; padding: 56svh 0 0; }
+  .sec__text,
+  .contact .sec__text {
+    width: auto;
+    padding: 1.5rem var(--gutter) 3.5rem;
+    background: var(--paper);
+    border-top: 1.5px solid var(--ink);
+  }
+  .contact { padding-top: 48svh; }
+}
+
+/* a phone: the bar's four words have to share one line */
+@media (max-width: 30rem) {
+  .bar { gap: 0.25rem; }
+  .bar ul { gap: 0; }
+  .bar a { padding-inline: 0.4rem; letter-spacing: 0.02em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}

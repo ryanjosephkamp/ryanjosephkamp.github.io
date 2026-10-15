@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — the workshop</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati. This is the drafting table: how Splashery, his Gaussian splat playground, gets built by a builder, a critic and a person who decides.">
+  <meta name="theme-color" content="#f4f0e6">
+  <meta property="og:title" content="Ryan Kamp — the workshop">
+  <meta property="og:description" content="Pick a toy from Splashery's kit and a loop graph from grooph. A builder drafts it in pencil from Gaussian splats, a check measures it, and the graph says where it stops.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f4f0e6'/%3E%3Cellipse cx='32' cy='32' rx='24' ry='15' fill='none' stroke='%232a2927' stroke-width='3'/%3E%3Cellipse cx='32' cy='30' rx='9' ry='4.5' fill='none' stroke='%232a2927' stroke-width='3'/%3E%3Ccircle cx='46' cy='22' r='8' fill='none' stroke='%23c5281c' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#splashery">Skip to the work</a>
+  <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" fill="#2a2927"/></marker>
+      <marker id="ah-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" fill="#c5281c"/></marker>
+    </defs>
+  </svg>
+
+  <header class="sheet sheet--hero" id="top">
+    <nav class="rail" aria-label="Sheets">
+      <a class="rail__mark" href="#top">RK <span>workshop</span></a>
+      <ol>
+        <li><a href="#top">The loop</a></li>
+        <li><a href="#splashery">Splashery</a></li>
+        <li><a href="#grooph">grooph</a></li>
+        <li><a href="#drawer">The drawer</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ol>
+    </nav>
+
+    <div class="hero">
+      <h1 class="lettering hero__head">Ryan Kamp</h1>
+      <p class="lede">I build graphics software by setting the vision, directing coding agents and testing by hand. This sheet is that loop at desk size. Pick a toy from Splashery&rsquo;s kit and a loop graph from grooph: a builder drafts the toy in Gaussian splats, a check measures it, and the graph says where the work stops. Sometimes it stops at you.</p>
+
+      <figure class="board" id="board">
+        <fieldset class="picker" id="pick-toy">
+          <legend>Toy</legend>
+          <label><input type="radio" name="toy" value="donut" checked><span>Donut</span></label>
+          <label><input type="radio" name="toy" value="saturn"><span>Saturn</span></label>
+          <label><input type="radio" name="toy" value="ice-cream"><span>Ice cream</span></label>
+          <label><input type="radio" name="toy" value="torus-knot"><span>Torus knot</span></label>
+        </fieldset>
+        <div class="board__paper">
+          <canvas id="sheet-canvas" tabindex="0" role="img" aria-label="A toy drawn in pencil as several hundred overlapping ellipses, each one a Gaussian splat. Drag or use the arrow keys to turn it. Tap it, or press Enter, to leave a red-pencil note for the builder.">A toy drawn in pencil from Gaussian splats.</canvas>
+          <div class="stamp" id="stamp" aria-hidden="true"><b id="stamp-title">Approved</b><span id="stamp-line">REV A</span></div>
+          <p class="board__dim" aria-hidden="true"><span id="dim-shape">torus(1, 0.42)</span><span>640 splats</span></p>
+          <figcaption class="board__hint">Drag to turn it. Tap it to leave a red-pencil note: <i>more here</i>.</figcaption>
+        </div>
+      </figure>
+
+      <figure class="loop">
+        <fieldset class="picker" id="pick-graph">
+          <legend>Loop graph</legend>
+          <label><input type="radio" name="graph" value="review-gate" checked><span>Review gate</span></label>
+          <label><input type="radio" name="graph" value="grind-loop"><span>Grind loop</span></label>
+          <label><input type="radio" name="graph" value="metric-sandwich"><span>Metric sandwich</span></label>
+          <label><input type="radio" name="graph" value="spec-then-loop"><span>Spec, then loop</span></label>
+          <label><input type="radio" name="graph" value="ralph-loop"><span>Ralph loop</span></label>
+        </fieldset>
+        <div class="loop__scroll">
+          <svg id="loop-graph" viewBox="0 0 400 190" role="img" aria-labelledby="graph-desc">
+            <path class="edge" d="M120 100 H138" marker-end="url(#ah)"/>
+            <path class="edge" d="M236 100 H254" marker-end="url(#ah)"/>
+            <path class="edge" d="M334 100 H352" marker-end="url(#ah)"/>
+            <path class="edge back" d="M188 79 C188 44.3, 72 44.3, 72 77" marker-end="url(#ah)"/>
+            <text class="elabel" x="130" y="48" text-anchor="middle">fail</text>
+            <path class="edge edge--red" d="M295 127 C295 177.7, 72 177.7, 72 123" marker-end="url(#ah-red)"/>
+            <text class="elabel elabel--red" x="183.5" y="179" text-anchor="middle">reject with feedback</text>
+            <text class="elabel elabel--red" x="295" y="67" text-anchor="middle">Merge approval</text>
+            <text class="elabel" x="365" y="126" text-anchor="middle">Done</text>
+            <path class="edge" d="M8 100 H21"/>
+            <g class="node node--agent"><rect x="24" y="79" width="96" height="42" rx="4"/><text x="72" y="104.5">Builder</text></g>
+            <g class="node node--agent"><rect x="140" y="79" width="96" height="42" rx="4"/><text x="188" y="104.5">Critic</text></g>
+            <g class="node node--human-gate"><path d="M295 73 334 100 295 127 256 100z"/><text x="295" y="104.5">You</text></g>
+            <g class="node node--stop"><circle cx="365" cy="100" r="9"/><circle cx="365" cy="100" r="5"/></g>
+          </svg>
+        </div>
+        <p class="sr-only" id="graph-desc">A loop graph. The builder hands work to the critic. A failed check sends it back to the builder. When the bar is met the work stops at a person, who approves it or rejects it with feedback.</p>
+        <ul class="brakes" id="brakes" aria-label="Stops this graph names">
+          <li>the bar is met</li><li>rounds 0 of 4</li><li>dispatches 0 of 10</li><li class="is-person">a person, at Merge approval</li>
+        </ul>
+        <figcaption>Drawn from <a id="graph-file" href="graphs/review-gate.grooph.json">graphs/review-gate.grooph.json</a>: <span id="graph-from">grooph&rsquo;s review-gate template</span>, filled in for this sheet. <a id="graph-open" href="#grooph">Open it in grooph</a>.</figcaption>
+      </figure>
+
+      <div class="gate" id="gate">
+        <p class="gate__status" id="status" role="status">The builder is drafting revision A.</p>
+        <div class="gate__buttons">
+          <button class="btn btn--red" id="answer-no" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.2-4.6L16.6 4a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8 4 20z"/><path d="M14.5 6.2l3.3 3.3"/></svg>
+            <span>Reject with feedback</span>
+          </button>
+          <button class="btn btn--ink" id="answer-yes" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 8h3l2 5H5l2-5h3L9 3z"/><path d="M4 20h16"/></svg>
+            <span>Approve</span>
+          </button>
+          <button class="btn btn--ink" id="next-run" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13"/><path d="M13 6l6 6-6 6"/></svg>
+            <span>Next task</span>
+          </button>
+        </div>
+      </div>
+
+      <section class="log" aria-labelledby="log-title">
+        <h2 class="label" id="log-title">Build log</h2>
+        <ol id="log" role="log" aria-label="Build log">
+          <li><b>A·1</b><i>builder</i><span>640 splats on a torus, placed uniformly in angle.</span></li>
+        </ol>
+      </section>
+
+      <table class="bom" aria-label="Parts list">
+        <thead><tr><th scope="col">Part</th><th scope="col">Kit shape</th><th scope="col">Area</th><th scope="col">Splats</th></tr></thead>
+        <tbody id="bom"><tr><td>body</td><td>torus(1, 0.42)</td><td>16.58</td><td>640</td></tr></tbody>
+        <tfoot>
+          <tr class="bom__total"><th scope="row" colspan="3" id="bom-label">Total</th><td id="bom-total">640 of 640</td></tr>
+          <tr><td colspan="4">The budget is shared by surface area, in whole splats. On every toy here, for every budget from 1 to 300,000, the parts sum to it exactly and none is a splat off its share. <span id="mistake">Uniform angles crowd the inside of the hole by (πR + 2r) / (πR − 2r), about 1.73 here.</span> <a href="https://github.com/ryanjosephkamp/portfolio/blob/main/concepts/workshop/tools/verify.mjs">The check</a>.</td></tr>
+        </tfoot>
+      </table>
+
+      <dl class="titleblock" aria-label="Title block">
+        <div><dt>Title</dt><dd id="tb-title">Donut, from splats</dd></div>
+        <div><dt>Rev</dt><dd id="tb-rev">A</dd></div>
+        <div class="tb--wide"><dt>Graph</dt><dd id="tb-graph">Review gate, from review-gate@1</dd></div>
+        <div><dt>Drawn</dt><dd>builder (a script)</dd></div>
+        <div><dt>Checked</dt><dd id="tb-checked">in progress</dd></div>
+        <div><dt>Approved</dt><dd id="tb-approved" class="is-blank">not yet</dd></div>
+        <div><dt>Sheet</dt><dd>1 of 5, <span id="dim-w">this wide</span></dd></div>
+      </dl>
+
+      <p class="fine">On this sheet the builder and the checks are script, and the builder&rsquo;s first drafts of the first two parts are wrong on purpose, so there is something to catch. The harness that walks the graph is script too. It counts rounds and dispatches the way grooph&rsquo;s documentation describes, and it does not time minutes or judge diminishing returns. In <a href="#splashery">Splashery</a> the builders and critics are coding agents, the harness is Claude Code, and the person at the gate is me.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="sheet" id="splashery">
+      <header class="sheet__head">
+        <p class="sheet__no">Sheet 2 of 5</p>
+        <h2 class="lettering">Splashery</h2>
+        <p class="sheet__tag">Splats you can play with.</p>
+      </header>
+
+      <div class="cols">
+        <div class="prose">
+          <p>An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy, a real captured object or one generated from a seed, then spin it, poke it, blow on it, splash paint on it, drop it, watch it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.</p>
+          <p><b class="mine">My part.</b> I defined the project vision and toy categories, directed multi-agent development, refined interaction design through hands-on testing, and contributed selected mathematical recipes.</p>
+          <p>The building is done by coding agents. Splashery&rsquo;s repository keeps its own loop graph: a worker builds a lane, the full test run and a clip review send it back until the work is right, and anything the public already sees waits behind a human gate. That gate is where I sit.</p>
+          <p class="links">
+            <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play with it</a>
+            <a class="link" href="https://github.com/ryanjosephkamp/splashery">Source</a>
+            <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">The Tinkerer&rsquo;s Manual</a>
+          </p>
+        </div>
+
+        <figure class="embed" id="embed">
+          <div class="embed__frame" id="embed-frame">
+            <svg class="embed__ghost" viewBox="0 0 240 180" aria-hidden="true">
+              <ellipse cx="120" cy="92" rx="78" ry="44"/><ellipse cx="120" cy="84" rx="30" ry="13"/>
+              <path d="M30 92h180M120 30v124" class="cl"/>
+            </svg>
+            <button class="btn btn--ink" id="load-embed" type="button"><span>Put the real <span id="embed-toy">donut</span> on the table</span></button>
+            <p class="embed__note">Loads Splashery&rsquo;s own embed player from its site: the engine, a few megabytes. Nothing loads until you ask.</p>
+          </div>
+          <figcaption>Not a screenshot: the live player its README documents for any page, showing the toy picked on sheet 1. All four are on Splashery&rsquo;s shelf: <a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=donut">Donut</a>, <a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=saturn">Saturn</a>, <a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=ice-cream">Ice cream</a> and <a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=torus-knot">Torus knot</a>.</figcaption>
+        </figure>
+      </div>
+
+      <div class="plates plates--four">
+        <article class="plate">
+          <h3 class="label">One kit, shared by area</h3>
+          <ul class="kitlist" id="kitlist">
+            <li><a href="?toy=donut#top">Donut</a><span>torus, param, cylinder</span></li>
+            <li><a href="?toy=saturn#top">Saturn</a><span>sphere, disc</span></li>
+            <li><a href="?toy=ice-cream#top">Ice cream</a><span>cone, sphere</span></li>
+            <li><a href="?toy=torus-knot#top">Torus knot</a><span>tube</span></li>
+          </ul>
+          <p>Splashery&rsquo;s toy kit builds a toy from shapes and shares the splat budget between them by surface area, so the whole toy has an even density. The four toys on sheet 1 are built from seven of its shapes, and shared out the same way.</p>
+        </article>
+
+        <article class="plate">
+          <h3 class="label">No build step</h3>
+          <svg class="plate__art" viewBox="0 0 320 124" role="img" aria-label="A dimension line between the source files and the browser, measuring the build step. It reads: none.">
+            <g class="pencil">
+              <rect x="10" y="30" width="96" height="46" rx="3"/><rect x="214" y="30" width="96" height="46" rx="3"/>
+              <path d="M106 53H212" marker-end="url(#ah)"/>
+            </g>
+            <text class="ptext" x="58" y="58" text-anchor="middle">files</text>
+            <text class="ptext" x="262" y="58" text-anchor="middle">browser</text>
+            <g class="dimline"><path d="M106 84v22M214 84v22M110 100H210"/><path d="M106 100l8-3v6zM214 100l-8-3v6z" class="fillb"/></g>
+            <text class="dtext" x="160" y="117" text-anchor="middle">build step: none</text>
+          </svg>
+          <p>Static files and ES modules only. No bundler, no framework, no server, no API keys. Rendering is the PlayCanvas engine, vendored, on WebGPU when the browser has it and WebGL2 otherwise.</p>
+        </article>
+
+        <article class="plate">
+          <h3 class="label">Every splat, every frame</h3>
+          <svg class="plate__art" id="fx-art" viewBox="0 0 320 124" role="img" aria-label="A row of pencil ellipses with a ripple running through them.">
+            <g class="pencil" id="fx-row"></g>
+          </svg>
+          <p>Poke, wind, dissolve, drop, magnet, twist, slice and paint all run on the GPU for every splat, every frame. The CPU only sets a few uniforms. Effects stack.</p>
+        </article>
+
+        <article class="plate">
+          <h3 class="label">The record is public</h3>
+          <ul class="drawer-labels">
+            <li><a href="https://github.com/ryanjosephkamp/splashery/blob/main/SPEC.md"><b>SPEC.md</b><span>the v2 specification</span></a></li>
+            <li><a href="https://github.com/ryanjosephkamp/splashery/blob/main/docs/ROADMAP.md"><b>ROADMAP.md</b><span>what comes next</span></a></li>
+            <li><a href="https://github.com/ryanjosephkamp/splashery/blob/main/docs/BACKLOG.md"><b>BACKLOG.md</b><span>what is parked, and why</span></a></li>
+            <li><a href="https://github.com/ryanjosephkamp/splashery/tree/main/tests"><b>tests/</b><span>the Playwright suite; needs no GPU</span></a></li>
+            <li><a href="https://github.com/ryanjosephkamp/splashery/blob/main/docs/SPEC-v1-planet-painter.md"><b>SPEC-v1</b><span>the first version, a planet you could paint, kept</span></a></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="sheet" id="grooph">
+      <header class="sheet__head">
+        <p class="sheet__no">Sheet 3 of 5</p>
+        <h2 class="lettering">grooph</h2>
+        <p class="sheet__tag">Loop graphs for coding agents.</p>
+      </header>
+
+      <div class="cols cols--flip">
+        <figure class="lane">
+          <svg id="lane-graph" viewBox="0 0 560 250" role="img" aria-label="Part of Splashery's lane loop. The Operator briefs a worker; the worker builds; the full test run and the Operator's review each send failing work back to the worker; public changes wait for the owner's marks, which can also send it back; then it reaches the public site.">
+            <path class="edge" d="M92 150H112" marker-end="url(#ah)"/>
+            <path class="edge" d="M200 150H220" marker-end="url(#ah)"/>
+            <path class="edge" d="M308 150H328" marker-end="url(#ah)"/>
+            <path class="edge" d="M416 150H436" marker-end="url(#ah)"/>
+            <path class="edge" d="M512 150H530" marker-end="url(#ah)"/>
+            <path class="edge back" d="M264 128C264 92,170 92,160 126" marker-end="url(#ah)"/>
+            <path class="edge back" d="M372 128C372 60,160 60,152 126" marker-end="url(#ah)"/>
+            <path class="edge back" d="M474 122C474 26,150 26,144 126" marker-end="url(#ah)"/>
+            <g class="node"><rect x="8" y="128" width="84" height="44" rx="4"/><text x="50" y="146">Operator</text><text x="50" y="161" class="sub">briefs</text></g>
+            <g class="node"><rect x="114" y="128" width="86" height="44" rx="4"/><text x="157" y="146">Worker</text><text x="157" y="161" class="sub">builds</text></g>
+            <g class="node"><rect x="222" y="128" width="86" height="44" rx="4"/><text x="265" y="146">Test run</text><text x="265" y="161" class="sub">check</text></g>
+            <g class="node"><rect x="330" y="128" width="86" height="44" rx="4"/><text x="373" y="146">Operator</text><text x="373" y="161" class="sub">reviews</text></g>
+            <g class="node node--you"><path d="M474 122 512 150 474 178 436 150z"/><text x="474" y="154">Owner</text></g>
+            <g class="node node--stop"><circle cx="542" cy="150" r="10"/><circle cx="542" cy="150" r="5.5"/></g>
+            <text class="elabel" x="542" y="178" text-anchor="middle">public</text>
+            <text class="elabel" x="300" y="20" text-anchor="middle">fail: back to the worker</text>
+            <g id="stops">
+              <text class="elabel" x="8" y="212">Stops: bar passed · 4 rounds · 24 dispatches · a person</text>
+              <path class="strike" d="M6 208H330"/>
+              <text class="elabel elabel--red" id="stop-note" x="8" y="234">This loop names no stop. grooph&rsquo;s check fails it.</text>
+            </g>
+          </svg>
+          <figcaption>
+            Part of the lane loop Splashery keeps in its repository, <a href="https://github.com/ryanjosephkamp/splashery/blob/main/docs/lane-loop.grooph.json">docs/lane-loop.grooph.json</a>. The branch for work that stays in labs is left off this drawing.
+            <button class="btn btn--small btn--red" id="erase-stop" type="button" aria-pressed="false">Erase the stops</button>
+          </figcaption>
+        </figure>
+
+        <div class="prose">
+          <p>Visual loop graphs for coding-agent workflows. You, or an agent working with you, draw who builds, who checks, where a person decides and when the work stops. grooph checks that every loop names a stop and every bar names what a critic can inspect, then compiles the graph into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.</p>
+          <p><b class="mine">My part.</b> I implemented a multi-agent pipeline and refined a visual tool for expressing builder/checker roles, human decision points and stopping conditions in coding-agent workflows.</p>
+          <blockquote class="limits">
+            <p class="label">Limits, from its own README</p>
+            <p>&ldquo;No round cap or budget is on record as firing, so it is not shown that one holds a run that would otherwise go on. In a paired comparison on four small tasks the package showed no quality advantage over a prompt derived from it.&rdquo;</p>
+          </blockquote>
+          <p class="links">
+            <a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open the app</a>
+            <a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+            <a class="link" href="https://github.com/ryanjosephkamp/grooph">Source</a>
+            <a class="link" href="https://github.com/ryanjosephkamp/grooph/blob/main/docs/claims.md">Every claim and its evidence</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="graphs">
+        <h3 class="label">The five graphs on sheet 1</h3>
+        <p class="graphs__lede">Each is one of grooph&rsquo;s built-in templates with its blanks filled in for the drawing, saved here as a graph document. <code>grooph validate --for-export</code> finds no errors in any of them; the two warnings are printed below as it gave them. The round cap in the review gate is one a visitor can make fire: keep rejecting the drawing, and the run halts at four rounds.</p>
+        <div class="graphs__scroll">
+          <table id="graphs-table">
+            <thead><tr><th scope="col">Graph</th><th scope="col">Use it when</th><th scope="col">Stops it names</th><th scope="col">grooph validate</th><th scope="col">Open</th></tr></thead>
+            <tbody>
+              <tr data-graph="review-gate" data-from="review-gate@1">
+                <th scope="row"><a href="?graph=review-gate#top">Review gate</a></th>
+                <td>The work needs a second pair of eyes against a checklist that already exists, and a person signs it off.</td>
+                <td>bar met · 4 rounds · 10 dispatches · a person</td>
+                <td>0 errors, 1 warning <small>W_HOMOGENEOUS_CRITICS: the critic judges the builder on the same model tier</small></td>
+                <td><a href="graphs/review-gate.grooph.json">file</a> <a data-open="review-gate" href="https://ryanjosephkamp.github.io/grooph/#/open?d=rVfbbtw2EP0VQi9tAWltA0UfNg9t4hhJegWSIHkoDIQrjVa0JVEgKa8Xqf-9Z4ZcSevajVP0yStyOJczZy7-nN1k67M8uzZ9la2zrdNDk-VZZcts_Rmf1uJ7fZpnhq931l37xg6FoxtDu2KrA0G61x3h9mO6Xat4rdL1DTlvbC92tla3EH3p9E6FhlRPt0EN2gVlezng3161xgdVWydHwe751jdEQZ3lyvSqtH1JQ_AnB49Ork1YXfm1-uH7U_VKj94bjSdDq6END3Tb5tCgHVVqQ2FHtDS32Ss_ulqXpCChle4rvMWvStEN9S3sIwhFumxW6qXtSe0aKMCd2ysTqHvYJ0HTn5y_vjj_5dc3796vukoZDzfsDtatamxb5epTbyt64HWwtvUnHWm4Rqvuyn-Ct96Tz8U_rZqxQ4x6GBy88xJOR25LK2AeNH4EziFi7sl7gF62eqyoKGEuu8uz1vSkt8Qygw6BHDKUHSe2drY7PvzpjJ9W5EtnhiBZzZ6rzWjaCgCZbmipoz5Eb4L21yv1XEE2mFLSoGpHvuFoA2e-bKi8jsKVqWsJLBByb8cwjEHprTY9PrXaQUcA5vKC6fFM1dq0gMaDbmF0gigrOjizM6FRby8-vLn4COAPoDGEamsZLzthKLAJXXNk1nqCyisqOT4wx9tkwd8zsVLv8dGiRpQPdvCRFSKg3ZysAIrASTvCgVIPuQKv02FlPLAvG2iskK-VepGcZ2cTbMJauBoMOXbPQJxt3OjWVDpAWd3qrX-mGkIS7ZZ6sqMvDqBHdD1KlDUNFHHhsyTBMfYWB05MMHuYkWDMn59j2adws6lNgDZ9mAv_xXTvbEtHDzpoaplirBo3Pjjbb5lDVKO-wdCsMVtuORtnqObWYCfuMGPEUSjJk98gh1-pP5hKqG34LLjmSop1yraqjWPacMqrChzxUrw47ivTbyUFXu-BJtevqpgPwICLqd2v1NsxGhYqlrbrWNGG4DCpvR1hbIDvkVKVlZep5eHWKS5vLmM82VtmdKMDw2p6cJpxzQ4R4vBJbQNyc2zfclkmPp0hfd9ll3kWC2ZSXja63x6BBhXnr5___uriHXSsEbkOSYodNAeCckiRYwkrzwAlEEEKmEIvtTs2xJgXtWmJlVNlwvThxr6IVi_v8sSiSLdHSXR-uE4cmsS_nkI_czGpGYapjcSj1EBAAjRy7oJq4N6FNp6rEkb7rQhyLAKHiHAOQZlgfG1IMIkUYml8AL-x7whdafTRNHPEG5QnDy9MELQO4ItRGCLEOiw9DHaEY_4R6jGrPLW1cjrWKR6p4EYvzurEx2fCzSsOPpefiZq1uV2pD-QqU4bY_8Sh-yOMp5GPHTjZ9yL9DGUovaYAxSsCW-c-J00bQEygosH1bHNDUpHHrI_S9SJunlTHWGm_hKUlfSNoxwIv2PEn18xxVUz1sz7O--y6oBCnxE1Ci6XiBsOf64jeXzJ58Oc-Lo8XB08vKg7eHNUHT9N-zy8WFTRXjYymwzxOlSND697y9ZuMsLgMYMXKM_zoBi6O93Orl5FUfbEyVipqM-FHKLIy5wXDtGtwADIfY3upiaqNLq8XXle2X_jLw3H29GW8AxigNx_4sSx5Q7m75C6yXU4eKtIoKaZ2kHaSecQEu-wWUy7-T76lbQSqnrqrPZ2kE2aUYiyYXXOgU2QS5xw21yAOkvAy7InpDylnCjym_IhrSb_IL9TMMkVKclJ19FjUpfsvK4pk-jdVTwmb0yiV8Y1fUhKk4g1tQao4qmdCvj18d9Rt0KBZ2WxwnkOzV9Ap2rlo72XtocAu4xCDKW7OXRx7WBF5qB35MJeg9E0_4HV0PFXS8t7JrHsayxj3w9h1weA_nVnDfyA3g6pLFtMCfnYhY-ReK8VMxDhFv0GNHSZnFVuGPp6ucZP6in-E6Ja359MVbwGyei9BArJF7HTLuDt9W8AbTFDpZsh-tv5-cR83cMmzGGICp-1cWnhrOoN2enZ6J5wabGtKs-xVw4EJxttWrMwd8IEbX9qBpn-5p8IYit4WPOsLXPD-NSv558U9HZd3d38D">in grooph</a></td>
+              </tr>
+              <tr data-graph="grind-loop" data-from="grind-loop@1">
+                <th scope="row"><a href="?graph=grind-loop#top">Grind loop</a></th>
+                <td>Done and good are the same thing: a passing test is the finish line, and nobody is asked.</td>
+                <td>5 rounds · 30 minutes</td>
+                <td>no issues</td>
+                <td><a href="graphs/grind-loop.grooph.json">file</a> <a data-open="grind-loop" href="https://ryanjosephkamp.github.io/grooph/#/open?d=jVVNb-M2EP0rA566gOwk6MfBvTTdFOmlLdAu0MPCwNLiSOJaIgWRimIE_u99Q-rDAfZQ-CJyvt68eUO_qRd1eCjU2TqjDqoedN-oQhlfqsMbjt7jfLgvlBXz5IdzaHy_qwf471pY4ex0xzD-OxsPlKw0W194CNa7VKX2uoXn06Anig2T49dIvR4ieZcu5DtQa0Okyg_pKvqLWEPDHOmhIOuo9K7kPoa7Bc_d2cb913Cgn364p2c9hmA1QvpWIxsCdNsWyKAHNnTiODHfljtdKIxDpUsmeGjSAB96fBniF3Yt6qMJYl02e3ryjmlqkOCL84a_gSV634a7jjWS8r77Gr6gTggc9mAj6qHmKNwCjeMQQEfZ6tHwrkQ6dS1Uax3rmsWn1zHy4NJgbgivBt-9u_vlQQINh3KwfUxsq0c6jbY1AF422tUcUsdSJDWocc3lmYbRZUvkEMOeHqnStgVyqj1iTho-0SePJd9kY7OGkB9jP8afkVC6JHYm50PiPX2SkqmOzbcnPWASKR9K4NJ5Auhoy-ws3VCIvg-kI1lMZ_Aj4Ja6JwhCLqLtBIsBj2SrDTvUJGMSFMK0TAfsfn7L0p3Bq1XqoNjFTb2_rvbBt_wuoEOmVsYRLc4HVekQhW-uoFHMUnVs7NjB8zRYrnDxhz5zBqYD6BtGFpGlOVhXr4MoSBuTLhL-KXEC40V0SJ2FjF0tkgNLkcLZ9gVNjNxOuAAojhhmHgNmJITkKezpL4ieIH8QkggE6VH2TKST6suUpXQeH138mIoComGzp7-5R2-ApLMta8gk6UyNLZuFcz-tjFuHTEK5WloXrc51brRC3yUUebAPWO4P6liobFvDc0Ek-Pj745_Pv_2z78whw1mgxMYu6sioLpIGq-4nSSL7u6tsCxFgVMbG9QBl7hJ6dbwWszzyeRVH0uwmjk-zNV9DCbPbEoWMOP3f9wABQhki-NXGvJL3qQcsQ-JJRt2zUdcVn8Gzs8GTBdnQPWUbCCx9ughjWcrTcj1K5_XtGvBu1vVuwT4_Jpvco187W8tzdt_JNLeYJUWK2BLI65jWJPnyizUMTtJgNxHccL8kT6R8O_nc_pw5OUpz8lrcNJcexI2X5_nYcXfCn5AAuOkyCwA7q2Wkn9-3eMxbf5MzvUmp1DyDTr_uLPZLy3srQIHsR-lptucXKpVPk5cQ68aYJNjazuLl-P7-esTv-h8">in grooph</a></td>
+              </tr>
+              <tr data-graph="metric-sandwich" data-from="metric-sandwich@1">
+                <th scope="row"><a href="?graph=metric-sandwich#top">Metric sandwich</a></th>
+                <td>Cheap deterministic checks come first, so the critic spends its round only on what those cannot see.</td>
+                <td>bar met · 5 rounds · 16 dispatches</td>
+                <td>no issues</td>
+                <td><a href="graphs/metric-sandwich.grooph.json">file</a> <a data-open="metric-sandwich" href="https://ryanjosephkamp.github.io/grooph/#/open?d=vVdNj9s2EP0rhE4tIHl3gTYH59J0s0jSFi3QFMmhMBBaGtnMSqRAUvYuUv_3vhnqaz9SOJee1iKHw5k3b95wv2SHbH2VZ7fGVtk623nd7bM8q1yZrb_g0zl8ry_zzPD20fnbsHdd0VL0piyCttXRlHzC6pZg8XGwWKtkohYmB_LBOCv37ZxuYP7a66OKe1KW7qLqtI_KWVng30E1JkRVOy9L0d3zbtgTRXWVK2NV6WxJXQwXY2QXtyauPoe1evHDpXqj-xCMxpGu0fCGA7ppcnjQniq1pXgkWl63vVeh97UuScFCK8SOs_hVKTqQbXA_klCky_1KvXaW1HEPB5-sq-iZWKJzTbhoScMprdrP4RPuCYGCONaq9CYCohrYB2Vd3Bu7U70Fcs_nJtUJF9dvb65__e3d-79WbbUCrlH7HUWuF_KyFAKALRvdV1SUCCw75VljLOkdsU2nYySPKmRPi1h71z7d-OmKXVQUEG8XpYLZK7XtTVMBDInuJWezp_JW-d4GQRSfulMV4bLWWNSRydCbSCv1ByOpBQvOuNxruyPlGVZKhxGIjQbeE0Q5cEYg6nNf7WBx3OsoZuJPldoCPBUIVdtpY0GZIRqmz0rdGNh6VWvT8HWeYu85SCc-hjzACqe4og0or_Ya-0enthopEV-6Uu9wRXRdSDWXFFP9Uk1zhaAMSORdj-qWussViDssViYAeKSw5RQil41Jg1L9_SX11hBHNvUi6mXj3Fk_T_veNfTgQAtPDdeWIcNOiIBvx0WjGs0DamR7s-MCb72hmvsu5R51uGWqSTJwApyBlYoUYuAyAUc0DrBLOd27XiF4RQlQKdQAaiq-62PXR077z5sP724-gqBgRlV5kDJVzUTF-cD7n_03Nc6WkAlJCJ46JMUQGovrGMNszAaLZ_UN230tZPUd98GQ8xVI8X22ybNkOF2WSLsEDC6v3776_c3Ne_hYp3STVQWozEAMdgURckd2xMpS1KYhPkyVidMH2qhIXjenfGCIBBxmgsj3TJBrabjJKO2CFKO1a1s0dPKN73OhxwEmOE7QHarHNFGX2WmOSprgq7S9HrcH1k7mj0k7tvx_0fYXbh4UBPIh8H4Df2aRyIW4EI42TNwfxSKXYaNHSYp8iW64TPejdJv4UvWB5BwzMZjo_H0KCpKCEmPMRRb4SaZGb65ngePJwWqP06gEMw_tEdFmcyiwuTbDAjNC5gVruITHOilDA433UjpCdDGXn1XyXZu7lfpAvjJllMiTalk35yoQKPBSJs7DdqpMXStXL6LnOfMwYx2WyTWkD4JOroTVjMfZzfiwvaZGXI9ZymR-FHgaoYchRQYnPTH4c51S_kfkCX-MPejGVAUdTEUI6OtNeAQ9qRiD2fDYs_dstejOuSMrJ7cOzOfpMBP_ddqDK3QeL4S-LHk4nzbc67ul9lMxiHkxte8wimeRj26WgCkAGg4UnOh8avIih2YfzAFutWQ8oYH0lmK4SHDyP7XtszdMu8MFIhgPL_i_GbVMQaJ7DNEY8tkQTbR8zvmQ8bPOB5YssWEO8ENjwYGnb-n380pL7RaywmHMoc5Sn66DT36vCFsf8eIhCJukvriChaNNer3VntV4HiY4LlJp584TjQgdlTEFPkq-jwaPZt72otPjUK3V2VOGIV3OteG65O-8mjOoumRDLSXLvmE88GwL6lJUZfG0G5_m46tcFPPspzkmmbwYl1gBZiELVcuUW31XwLnX_LzmkoIpPy7206tRiCBBM6uGF6XIVmNag3l59eK0YRQ615jSLBWmGwlggmvklsU74ulOKF1H0_-DE927wroiUFMX2GBhnp083XjkY3M6_Qs">in grooph</a></td>
+              </tr>
+              <tr data-graph="spec-then-loop" data-from="spec-then-loop@2">
+                <th scope="row"><a href="?graph=spec-then-loop#top">Spec, then loop</a></th>
+                <td>Nothing exists to compare against, so a planner writes the answer key first and a person approves it.</td>
+                <td>a person, before the build · bar met · 4 rounds · 10 dispatches</td>
+                <td>0 errors, 1 warning <small>W_HOMOGENEOUS_CRITICS: the critic judges the builder on the same model tier</small></td>
+                <td><a href="graphs/spec-then-loop.grooph.json">file</a> <a data-open="spec-then-loop" href="https://ryanjosephkamp.github.io/grooph/#/open?d=rVjfb9s2EP5XCL1sAyQ3GYo9OA9blmRdV6AYuqLFMAQoLZ1sxhIpkJQdo83_vu9I_bSTohn2FEs8Hu_u--7jKZ-TXbI8T5Ot0kWyTNZWNpskTQqTJ8vPeDQGz8uzNFG8vDd26zamyVxDeeY3pLMKFtigZU0w-NgZLAVbpIJNRGeyI-uU0eG4tZEVzK-t3LON0HTvRSOtF0aHF_zbiUo5L0pjwytvDrzqNkRenKdCaZEbnVPj3Ys-sBdb5Rd3bil-enkmXsnWOSWxpakkvGGDrKoUHqSlQqzI74mmx60OwrW2lDkJWEghdYG9-FUI2pGucD6SECTzzUJcG01iz_lhzR4QK55NiU1CNo2FZSEur65u_nx_-fbqZlEXQjkcbfY40YiNqYrg_5M2BT2SiDemci9qkoiIFvWd-4QgnSO3QCm9tGvyjBBS0eQcaplXsi0oy-EueUgTDkeuiW0a6T1ZFD45ga20pj55_8uP7KAgl1vV-ABZcilgqr1C-iim1vjrW6tdREa6LaqLtGYJp0JywgA14IjamJUju5OrilD9jdwpY91CXIpNW49lA1D-Qli6o9wrvRaki3iMbQGlGU_MsWeF1-S89FSwo1WrqoJs5F2oZSiyFEjFqzxQAJmQ23DJPbPuri3WFA_IN1KvKSK56hCVa6k0ouf1AddSVZQCfJVvGFVe48J9BwpJuxDvu2fhvGncCUkYe4fieCTqhDUtIsxlkwoQvXtZKAfU4H3F0XnGnHkCnP_5HFuxQyEZWhdgaz924p_DujUVzTbU8FQxMRhOrPTIMupUot3ArGSj1iwEK6uoxON7gP01rJdh8TF8sYCk9qYF4Wu5JeQnCvROGvoINad8G3ccBLcaQ84k5moAcc3P394kC_EW-aPkXEgnTBt453LT0EK8IWr4-EhK0qZdb7gZLe0U7SM5aqVbj-CYNnuQBtpkQjyMgdJN6xmEpC9FcpsmOKR_PasJr0FwzJ5XOLWMeePgJzjO-n23D2kHaujDNcg8whpao3_XYXsZeRhKzluwghd1w7i9dkeqEzoHYKLqVCqtuKG5JozBz-Ld89sMp5kgCyHjrieYZ8HVJJuuGZ-k6K_DekfRccMxRZ0HR9dfI-j1JOIWdK6OZHlelNCCsVFlzqSSoFZoa2ZNqe4JjFYQ87gf7_YcAO4OeeDigCoH04Kg1DCVrMTZrDoyqg7XU8bGxn0k3qGiz9D5FSFF4gM6_xd87yEUlN9GvUAgnm9L1m_x7ubD65uPSOsJiqZHtEyTYYf4PniIoZ7jmB-OCD3KIvROebQLaMAUvvr98u2rm79C64dui1bMN9WJ2tP8p0L54QF8y6LXkTpRrp9kzlW_3BFnMH8-b_5ggZ2qfy_4c8JM74RU5Cq0DO8KnGGxiETrRhUKN4YMUrN3UelML_0XonXxSIbXKW8sTzYYL6BFqBvmJB_khx1MIvOmhVq6Z_OJmeqoKhfib1Aq3HcXgV2Fgbh5pnvUu8k7RijeefP2WIgPZAuV-zCNxKgfvd8u0CM7Wakig7gWxPuDHfssVFn2pQr1g8TwoUFl5BGNo3E5KQQPQPPiyfn9TTJOEWlwl3GQJ00wp_nQEMsAU0ijQbNNsodi190wsetKwGZxsOXHZSzJF1FKqM-Xk_y_9TqYdQTPYfrAOyY9M_YJi_jYJTxujE1yHdfgNjfhhWuRDWbFh1vuwPV0mqCsGw-y6RXUTYfj5ODN7JIawqBxWzaK-HS47DwGB6MFM4IPkBzV6KwzyIa27jyNG4OfYXmo8P9JlwgHu_rWTjvl2CSnGGzG3BgTGjJ4vC6d8TS9gaiPOQ91fMJ5x5RZxcEDHlMnPAghHN3QLKtUr6BKHMAYZOcfTlYy3waKzrK8jXIMNyw5dRRwzMcsz_0gc3QvQXhBFh8D6qVfuz24sKVDmDHKk21ch97WeoXPNz9Y_gcQuSpj28PHzVfmiONPuvS533R0z-P-GUteTPQNHX6btx0ur_AdMS0KyhjQpln6tbzPoCSYRsJ0BhiT5cvJevyYCHiGEJgW3YdG0KFK1QpX5PnZwy1XoTGVytXso6MHWDlThVNG8XlkJYzdw38VBr42mTYZX0gZFnjeH52cLhz5uH14-Bc">in grooph</a></td>
+              </tr>
+              <tr data-graph="ralph-loop" data-from="ralph-loop@1">
+                <th scope="row"><a href="?graph=ralph-loop#top">Ralph loop</a></th>
+                <td>The work is already a list of small items a test can check one at a time. The template credits Geoffrey Huntley&rsquo;s ralph loop.</td>
+                <td>no progress for 2 rounds · 5 rounds · 17 dispatches</td>
+                <td>no issues</td>
+                <td><a href="graphs/ralph-loop.grooph.json">file</a> <a data-open="ralph-loop" href="https://ryanjosephkamp.github.io/grooph/#/open?d=lVffb9s2EP5XCL10A2QlGfYD8B62bin2snVFUGAPbYbS0tliLJECScX1ivzv--5I2XLqpRmSAJJ4d_zuu--OzKfivlhelcXW2KZYFhuvh7Yoi8bVxfITXp3D-_KyLAwv75zfhtYNC6-7oV10WIWx1T1h8a-8uFQ3vKry6j35YJyVXTZOd7C89nqnCAt7NWgflbMqtiTPQXUmRLV2Xj5Ft-fV0BJFdVUqY1XtbE1DDBcTmIutidVdKGGYYiiNXxVNT0v1_beX6jc9hmA0wgydxg4IoruuRFTtqVErijuiOYTVXoXRr3VNChZaadvAF08No7YdMAG8Il23lbrmbXctAqSMTKT-PE4hN1y8-f3l66pvlAmq134LBA2H4E0-WNfQGc_oXBcuetKARVV_Fz4AaQgUKhActd9Q5HIhH0shgOG602NDixrhioey6IwlvSG2GXSM5FGO4qSGa-_6k28_X7FjQ6H2ZohSwOItM9SByLXpiPEzZaM1qOBaMdhKvQInyrsRyWi19hRatRpN14CuqLcUclUHuNUt1Zw9E1aCCl5FqOhHKpUfbbalEFFbZgdC2HiuFNMmtkxcCb763qBsbKOHgWwTUBCIABYdMScNtpRoIMFGgV-plxJbCQxV64gHjpEKGNl_5d2WVHA9xdbYzY9ISdJPLkE24qhThiuNz5N0LX2MKdauZbq03StPvTY2VIqZZJZVABchySdO7IJY6oe4L4_fA1pMrbXpUH9EGUgLKbxByHTXelDYOn9rTBg4JWBroI5liiKb8ZPzZmOs7hIIkHTPpUkctWOvLQuLxQgxvfuUmj9nWRyGhZB57P9fDuvedXTi0CNSx-qLBu_LYq1DZHnRGmxBukVPjRl7WK68oTU-3HCzfd4IN69eXv_xirtnbXyIJQO2oiyoA315Xl0szy-141IUOAmQG5hjcQOpnYntpEPo8n906RndSlgBlcSbBJv0unfjXLBPpc9xk-4r9ZoHD4orow-yhN_UVWxm0_LWDBAUIUnLOkFBKBLPSW4C7AaVsL4xVir1JyakwqyEn4irzNF5SkgCLEV0hHJjHMYEHJNStdiPGtatgfR6vWeMdHSTvNn4bsSms-lXqRsaIIVTKxC6LRM1NUJvKOWNroCZP46HNAwb1qyxwMOiLb5UcBg_QTDPVe5H7-6oZpFPGQtdOe2vJLHUflco89fFbVmkNYEgChLgh6mQynJU1FkUjw6KZD0RM2Pt6RSSn7C30-EgrCQ44gx1ltBBoYwfR6PbMXo-7xY8Khkk-jMeXtAEiwk9P3MUFCYUtw9lHhbTch4V0o3HUfF2Sl0-Yy5ks1lQvD23zeDAAoAHfUQy0rOXSfou1YvFPyDlhwM-HrSLCdV5kG94Fssg_ql4fBL-iprH6fybjxrmeR2n8cG7VEztACWZyaNmZ8HHeAOkI3Me0DH5_yHv0G5pFIsTNdkjH7g4VMcOo8-61C6HpKszjObSHDgVLItavfh7od6_f4e_2xfqGa2SCT4L6nLJRD8aufmoe85NaFaWrOoMns-rYz2u0xr6i4cKL491zdedh1vW52Z-VtEiHz4HneYLzvFMiu4guMP2lMwX3OxHnymEeBwDcNHkLBNbujcNIU_p--OMmLXEFPxEeue2ODHIuwj_s1BHm0dgT5yfjfiLJQLFnV7xIV4cLjb_gUegPoEn1_gkMQ6Pm8isgnITPRb_Jr_21K_wDwVjnpUyszfbCwH5NsZ2j4r6OXe36YIi3WGkV-SiJFiyEhvTG2sC3wIXnuLorYwpnvyw-4ZxRW_q3CFyWxMR5CubMJVD9frjAux5zaOEo4CF72br6cImqcqEk93TZU6GbwcouDJd_fBwi5-HfwE">in grooph</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="graphs__note">The test command they name is real: <a href="https://github.com/ryanjosephkamp/portfolio/blob/main/concepts/workshop/tools/measure.mjs">tools/measure.mjs</a> measures what the critic on sheet 1 measures. So is the checklist, <a href="graphs/CHECKLIST.md">graphs/CHECKLIST.md</a>.</p>
+      </div>
+    </section>
+
+    <section class="sheet" id="drawer">
+      <header class="sheet__head">
+        <p class="sheet__no">Sheet 4 of 5</p>
+        <h2 class="lettering">The drawer</h2>
+        <p class="sheet__tag">Other things I have built, filed flat.</p>
+      </header>
+
+      <div class="features">
+        <article class="feature" id="reword">
+          <div class="feature__text">
+            <h3>reword_nerd</h3>
+            <p>A local-first browser workbench that turns a reviewed document, or a set of images, into a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate, explicit step, and the application contacts no model provider itself.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Source</a></p>
+          </div>
+          <div class="feature__art">
+            <ol class="stages" id="stages" aria-label="The four stages of the Manual workflow">
+              <li><button type="button" data-stage="0"><b>Decompose</b><i>current</i></button></li>
+              <li><button type="button" data-stage="1"><b>Rewrite</b><i>current</i></button></li>
+              <li><button type="button" data-stage="2"><b>Verify</b><i>current</i></button></li>
+              <li><button type="button" data-stage="3"><b>Final</b><i>current</i></button></li>
+            </ol>
+            <p class="feature__caption" id="stages-caption" role="status">Its Manual workflow runs four stages, each response feeding the next prompt. Change a response upstream and the prompts you edited downstream are kept and marked stale until you reapply or reset them. Tap a stage to change its response.</p>
+          </div>
+        </article>
+
+        <article class="feature" id="meteor">
+          <div class="feature__text">
+            <h3>Link Meteor</h3>
+            <p>A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing sources and exporting a research collection. No account, ads, telemetry or backend.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a><a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Source</a></p>
+          </div>
+          <div class="feature__art">
+            <dl class="fields" id="fields">
+              <div><dt>Anchor text</dt><dd id="lm-text">Website</dd></div>
+              <div><dt>URL</dt><dd id="lm-url">https://ryanjosephkamp.github.io/link-meteor/</dd></div>
+            </dl>
+            <p class="feature__caption"><button class="btn btn--small" id="lm-next" type="button">Next link</button> <span id="lm-count">Point at any link on these sheets, or step through them.</span></p>
+          </div>
+        </article>
+      </div>
+
+      <ul class="cards">
+        <li>
+          <h3>resmon</h3>
+          <p>A local-first literature-monitoring desktop application. It runs scheduled searches across open-access scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.</p>
+          <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Source</a></p>
+        </li>
+        <li>
+          <h3>English OpenList</h3>
+          <p>A free, open, continuously maintained list of valid English words, about 345,000 of them, with the provenance of every word, auditable correction records, and a browser explorer.</p>
+          <p class="links"><a class="link" href="https://english-openlist.pages.dev/">Explore</a><a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a><a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Source</a></p>
+        </li>
+        <li>
+          <h3>Ars Magna</h3>
+          <p>An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned into real English words, by a deterministic search.</p>
+          <p class="links"><a class="link" href="https://ars-magna.pages.dev/">Try it</a><a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Source</a></p>
+        </li>
+        <li>
+          <h3>aqrobat</h3>
+          <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+          <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a><a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Source</a></p>
+        </li>
+        <li>
+          <h3>Amordle</h3>
+          <p>A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer with an Elo rating.</p>
+          <p class="links"><a class="link" href="https://amordle.vercel.app">Play</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/amordle">Source</a></p>
+        </li>
+      </ul>
+
+      <p class="capstone"><b>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</b> (April 2025). My undergraduate research capstone. It models evidence accumulation as a diffusion process and uses dynamic programming and value iteration to study decision boundaries in a simulated autonomous-vehicle obstacle-avoidance scenario. <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a> · <a href="https://youtu.be/LRAP1YHy3g0">video</a></p>
+    </section>
+  </main>
+
+  <footer class="sheet sheet--last" id="contact">
+    <header class="sheet__head">
+      <p class="sheet__no">Sheet 5 of 5</p>
+      <h2 class="lettering">Who drew this</h2>
+      <p class="sheet__tag">And where to find him.</p>
+    </header>
+    <div class="cols">
+      <div class="prose">
+        <p>I&rsquo;m an MS student in computer science at the University of Cincinnati, in the artificial intelligence concentration, expecting to finish in May 2027. My thesis advisor is <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>. Before that, a BA in mathematics and a BS in neuroscience, both at UC, 2025.</p>
+        <p>My research interests are software engineering, scientific visualization, computer graphics, digital media, and information retrieval. Those are interests. The results so far are the tools on these sheets and the records they keep.</p>
+        <p class="links"><a class="link" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Read the CV</a></p>
+      </div>
+      <dl class="titleblock titleblock--links" aria-label="Links">
+        <div><dt>GitHub</dt><dd><a href="https://github.com/ryanjosephkamp">ryanjosephkamp</a></dd></div>
+        <div><dt>Blog</dt><dd><a href="https://ryanjosephkamp.github.io/blog/">posts</a></dd></div>
+        <div><dt>Homepage</dt><dd><a href="https://ryanjosephkamp.github.io/">ryanjosephkamp.github.io</a></dd></div>
+        <div><dt>LinkedIn</dt><dd><a href="https://www.linkedin.com/in/ryanjosephkamp">ryanjosephkamp</a></dd></div>
+        <div><dt>X</dt><dd><a href="https://x.com/ryanjosephkamp">@ryanjosephkamp</a></dd></div>
+        <div><dt>YouTube</dt><dd><a href="https://m.youtube.com/@RyanJosephKamp">@RyanJosephKamp</a></dd></div>
+        <div><dt>Hugging Face</dt><dd><a href="https://huggingface.co/ryanjosephkamp">ryanjosephkamp</a></dd></div>
+        <div><dt>CV</dt><dd><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">PDF</a></dd></div>
+      </dl>
+    </div>
+    <p class="colophon">&copy; 2026 Ryan Kamp. Lettered in National Park. Pencil by canvas, one ellipse per splat. No frameworks, no trackers, no build step.</p>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — one splat</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati, interested in computer graphics and scientific visualization. His name, drawn here from one Gaussian splat to sixteen thousand.">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta property="og:title" content="Ryan Kamp — one splat">
+  <meta property="og:description" content="A name drawn with Gaussian splats: turn the dial from one to sixteen thousand.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ryanjosephkamp.github.io/portfolios/one-splat/">
+  <meta property="og:image" content="https://ryanjosephkamp.github.io/portfolios/one-splat/assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23ffd9a0'/%3E%3Cstop offset='.35' stop-color='%23ff6a3a'/%3E%3Cstop offset='1' stop-color='%23ff6a3a' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='12' fill='%230a0a0b'/%3E%3Cellipse cx='32' cy='32' rx='27' ry='15' fill='url(%23g)' transform='rotate(-28 32 32)'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/b612-normal-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/b612-normal-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#definition">Skip to content</a>
+
+  <header class="hero" id="top">
+    <nav class="bar wrap" aria-label="Primary">
+      <a class="bar__mark" href="#top">Ryan Kamp <span>one splat</span></a>
+      <ul>
+        <li><a href="#definition">Definition</a></li>
+        <li><a href="#splashery">Splashery</a></li>
+        <li><a href="#work">Work</a></li>
+        <li><a href="#author">Author</a></li>
+      </ul>
+    </nav>
+
+    <h1 class="name">Ryan Kamp</h1>
+
+    <div class="stage needs-js" id="stage">
+      <canvas id="beam" aria-hidden="true"></canvas>
+      <canvas id="probe" aria-hidden="true"></canvas>
+    </div>
+
+    <div class="dial needs-js wrap">
+      <label for="dial">Splats</label>
+      <div class="dial__scale">
+        <input type="range" id="dial" min="0" max="14" step="0.01" value="0">
+        <div class="ticks" id="ticks" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="hero__foot wrap">
+      <div class="hero__say">
+        <p class="lede needs-js">This is <span id="subject">my name</span>, drawn with <span id="count">1</span> <span id="count-noun">Gaussian splat</span>.</p>
+        <p>I&rsquo;m Ryan Kamp, a master&rsquo;s student in computer science at the University of Cincinnati. My interests are computer graphics and scientific visualization, and the centerpiece of my work is <a href="#splashery">Splashery</a>, a playground of Gaussian splats.</p>
+        <p class="how needs-js">Turn the dial: each notch splits every splat in two. Point at one to measure it. Or fit your own words:
+          <label class="sr-only" for="fit-text">Text to fit with splats</label>
+          <input id="fit-text" type="text" value="RYAN KAMP" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button class="switch" id="tint" type="button" aria-pressed="false">Color by angle</button>
+        </p>
+      </div>
+
+      <dl class="readout needs-js">
+        <div><dt>splats</dt><dd id="r-splats">1 of 16,384</dd></div>
+        <div><dt>level</dt><dd id="r-level">0 of 14</dd></div>
+        <div class="readout__probe"><dt>probe</dt><dd id="r-id">1 of 1</dd></div>
+        <div><dt><i>μ</i></dt><dd id="r-mu">(0.0, 0.0)</dd></div>
+        <div><dt><i>Σ</i></dt><dd><span class="mat"><span id="r-a">0</span><span id="r-b">0</span><span id="r-b2">0</span><span id="r-c">0</span></span></dd></div>
+        <div><dt><i>σ</i><sub>1</sub>, <i>σ</i><sub>2</sub></dt><dd id="r-sigma">0, 0</dd></div>
+        <div><dt><i>θ</i></dt><dd id="r-theta">0°</dd></div>
+        <div><dt>stands for</dt><dd><span id="r-n">0</span> px of ink</dd></div>
+      </dl>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="definition">
+      <div class="wrap">
+        <h2><b>Definition.</b> <i>One splat</i></h2>
+        <div class="anatomy">
+          <figure>
+            <div class="pane needs-js">
+              <canvas id="anatomy" role="img" aria-label="One Gaussian splat with a handle on each of its two axes. The sliders beside it change the same three numbers."></canvas>
+              <span class="grip" id="a-major" aria-hidden="true"></span>
+              <span class="grip" id="a-minor" aria-hidden="true"></span>
+            </div>
+            <figcaption class="needs-js">Drag a handle. Solid line: one standard deviation. Dashed: two.</figcaption>
+          </figure>
+          <div class="anatomy__math">
+            <p class="statement">A splat is a Gaussian: a center <i>μ</i> and a covariance <i>Σ</i>. It is a soft ellipse with no edge, brightest in the middle and fading as <span class="nowrap">exp(−½ <i>d</i><sup>2</sup>)</span>, where <i>d</i> counts standard deviations from the center.</p>
+
+            <p class="eq needs-js" aria-live="off">
+              <span><i>Σ</i> = <i>R S S</i><sup>T</sup><i>R</i><sup>T</sup> =</span>
+              <span class="mat"><span id="a-a">2.01</span><span id="a-b">0.72</span><span id="a-b2">0.72</span><span id="a-c">0.60</span></span>
+            </p>
+            <p class="eq eq--small needs-js" aria-live="off">
+              <span><i>R</i> =</span>
+              <span class="mat"><span id="a-cos">0.91</span><span id="a-nsin">−0.42</span><span id="a-sin">0.42</span><span id="a-cos2">0.91</span></span>
+              <span><i>S</i> =</span>
+              <span class="mat"><span id="a-s1v">1.50</span><span>0</span><span>0</span><span id="a-s2v">0.60</span></span>
+              <span>det <i>Σ</i> = <span id="a-det">0.810</span></span>
+            </p>
+
+            <div class="knobs needs-js">
+              <label for="a-s1"><i>σ</i><sub>1</sub></label>
+              <input id="a-s1" type="range" min="0.2" max="2" step="0.01" value="1.5">
+              <output id="a-o1" for="a-s1">1.50</output>
+              <label for="a-s2"><i>σ</i><sub>2</sub></label>
+              <input id="a-s2" type="range" min="0.1" max="2" step="0.01" value="0.6">
+              <output id="a-o2" for="a-s2">0.60</output>
+              <label for="a-theta"><i>θ</i></label>
+              <input id="a-theta" type="range" min="-89" max="90" step="1" value="25">
+              <output id="a-o3" for="a-theta">25°</output>
+            </div>
+
+            <p>Renderers store <i>Σ</i> as a rotation <i>R</i> and a scale <i>S</i> because any pair of them gives a valid covariance, so an optimizer can move them freely. In three dimensions a splat gains a third axis, an opacity and a color; the renderer projects each one onto the screen, sorts them by depth and blends (<a href="https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/">Kerbl et al., 2023</a>).</p>
+            <p>Splashery&rsquo;s <a href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer&rsquo;s Manual</a> teaches this level by level: what one splat is, how a recipe is built, and a splat equation language.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--lemma" id="lemma">
+      <div class="wrap lemma">
+        <h2><b>Lemma.</b> <i>Splitting loses nothing</i></h2>
+        <div class="lemma__body">
+          <p class="statement">However a splat&rsquo;s pixels are divided, the two halves carry the parent&rsquo;s mass, mean and covariance between them.</p>
+          <p class="eq"><span><i>Σ</i> = <i>w</i><sub>1</sub>(<i>Σ</i><sub>1</sub> + <i>δ</i><sub>1</sub><i>δ</i><sub>1</sub><sup>T</sup>) + <i>w</i><sub>2</sub>(<i>Σ</i><sub>2</sub> + <i>δ</i><sub>2</sub><i>δ</i><sub>2</sub><sup>T</sup>),</span> <span><i>δ</i><sub><i>k</i></sub> = <i>μ</i><sub><i>k</i></sub> − <i>μ</i></span></p>
+          <p>Each half brings two things: its own spread, <i>Σ</i><sub><i>k</i></sub>, and the offset of its center from the parent&rsquo;s, <i>δ</i><sub><i>k</i></sub>. Weighted by its share of the pixels, <i>w</i><sub><i>k</i></sub>, they add up to the parent again.</p>
+        </div>
+
+        <div class="split needs-js">
+          <figure>
+            <div class="pane">
+              <canvas id="split" role="img" aria-label="One splat of the picture at the top of the page and the pixels it stands for, divided in two by a straight cut. Each half has its own ellipse, and the ellipse rebuilt from the two halves lies on the splat&rsquo;s own. The numbers beside the figure give both."></canvas>
+              <button class="grip" id="s-a" type="button" aria-label="One end of the cut. Arrow keys move it."></button>
+              <button class="grip" id="s-b" type="button" aria-label="The other end of the cut. Arrow keys move it."></button>
+            </div>
+            <figcaption>One splat of the picture at the top of the page, with its pixels, cut in two. The wide band is the splat measured from all of its pixels at once; the white dashes inside it are rebuilt from the two halves. Drag either handle to cut it another way. <span id="s-sample"></span></figcaption>
+          </figure>
+          <div class="split__side">
+            <div class="picker">
+              <label for="s-pick">Splat</label>
+              <output id="s-id" for="s-pick">1 of 16,383</output>
+              <input id="s-pick" type="range" min="0" max="14" step="any" value="0">
+              <p>
+                <button class="switch" id="s-reset" type="button">Median cut</button>
+                <button class="switch" id="s-worst" type="button">Worst split</button>
+              </p>
+            </div>
+            <div class="ledger">
+              <p>The two halves, put together</p>
+              <dl>
+                <div><dt>pixels</dt><dd id="s-n2">0 + 0</dd></div>
+                <div><dt>mean</dt><dd id="s-mu2">(0.0, 0.0)</dd></div>
+                <div><dt>inside</dt><dd><span class="mat" id="s-in"><span>0</span><span>0</span><span>0</span><span>0</span></span></dd></div>
+                <div><dt>between</dt><dd><span class="mat" id="s-btw"><span>0</span><span>0</span><span>0</span><span>0</span></span></dd></div>
+                <div class="ledger__sum"><dt>sum</dt><dd><span class="mat" id="s-sum"><span>0</span><span>0</span><span>0</span><span>0</span></span></dd></div>
+              </dl>
+              <p>The splat, measured whole</p>
+              <dl>
+                <div><dt>pixels</dt><dd id="s-n">0</dd></div>
+                <div><dt>mean</dt><dd id="s-mu">(0.0, 0.0)</dd></div>
+                <div class="ledger__own"><dt><i>Σ</i></dt><dd><span class="mat" id="s-own"><span>0</span><span>0</span><span>0</span><span>0</span></span></dd></div>
+              </dl>
+              <p class="ledger__error">Relative error: <span id="s-err">0</span></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lemma__body">
+          <p><b>Proof.</b> By checking. <span class="needs-js">All <span id="l-splits">16,383</span> splits behind the picture at the top of this page hold, with a worst relative error of <span id="l-worst">0</span>.</span> A <a href="verify.mjs">test suite</a> checks 169,544 more on bars, rings, diagonals and dust, recomputes every node from its raw points, and tries 11,200 divisions that are not at the median: straight cuts at any angle, and divisions with no shape at all. <span class="qed" aria-label="End of proof">∎</span></p>
+          <p class="aside">The name is fitted by moment matching: each splat is the exact mean and covariance of the pixels it stands for, and each split falls at the median along the long axis. Real Gaussian splatting fits by gradient descent. Splashery has a toy that shows it, next.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="splashery">
+      <div class="wrap">
+        <h2><b>Example.</b> <i>Splashery</i></h2>
+        <div class="example">
+          <div class="example__text">
+            <p class="statement">Splats you can play with.</p>
+            <p>A playground of 3D Gaussian splats that runs entirely in the browser: captured objects of up to 450,000 splats, and generated ones built from seeded recipes. Every effect (poke, wind, dissolve, drop, magnet, twist, slice, paint) runs on the GPU for every splat, every frame; the CPU only sets a few uniforms.</p>
+            <p>My part: I defined the project&rsquo;s vision and its toy categories, refined the interaction design through hands-on testing, and contributed mathematical recipes.</p>
+            <p class="meta">PlayCanvas engine · WebGPU, with WebGL2 fallback · static files, no build step</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/splashery">Code</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer&rsquo;s Manual</a>
+            </p>
+          </div>
+          <figure class="example__live">
+            <div class="embed">
+              <iframe src="https://ryanjosephkamp.github.io/splashery/embed/?toy=gaussian-splatting&amp;theme=dark" title="Splashery: the Gaussian splatting toy" loading="lazy"></iframe>
+            </div>
+            <figcaption>Live from Splashery: its Gaussian splatting toy, which fits 2D Gaussians to a picture by gradient descent. <a href="https://ryanjosephkamp.github.io/splashery/">Open Splashery</a> if it does not load here.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="work">
+      <div class="wrap">
+        <h2><b>Further examples.</b> <i>Other work</i></h2>
+        <ul class="works">
+          <li data-splat="grooph">
+            <canvas aria-hidden="true"></canvas>
+            <h3>grooph</h3>
+            <p>Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person decides and when the work stops. grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open</a><a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a><a class="link" href="https://github.com/ryanjosephkamp/grooph">Code</a></p>
+          </li>
+          <li data-splat="aqrobat">
+            <canvas aria-hidden="true"></canvas>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab. Give it a link or a little text and it builds QR artwork from letters, symbols or emoji, in the browser.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a><a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Code</a></p>
+          </li>
+          <li data-splat="Ars Magna">
+            <canvas aria-hidden="true"></canvas>
+            <h3>Ars Magna</h3>
+            <p>An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned into real English words, by a deterministic search.</p>
+            <p class="links"><a class="link" href="https://ars-magna.pages.dev/">Try</a><a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Code</a></p>
+          </li>
+          <li data-splat="Amordle">
+            <canvas aria-hidden="true"></canvas>
+            <h3>Amordle</h3>
+            <p>A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer with an Elo rating.</p>
+            <p class="links"><a class="link" href="https://amordle.vercel.app">Play</a><a class="link" href="https://github.com/ryanjosephkamp/amordle">Code</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a></p>
+          </li>
+        </ul>
+
+        <p class="also">See also</p>
+        <ul class="works works--plain">
+          <li>
+            <h3>reword_nerd</h3>
+            <p>A local-first browser workbench that turns a reviewed document, or a set of images, into a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate, explicit step, and the application contacts no model provider itself.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Code</a></p>
+          </li>
+          <li>
+            <h3>resmon</h3>
+            <p>A local-first literature-monitoring desktop application. It runs scheduled searches across open-access scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.</p>
+            <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+          </li>
+          <li>
+            <h3>Link Meteor</h3>
+            <p>A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing sources and exporting a research collection. No account, ads, telemetry or backend.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a><a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Code</a></p>
+          </li>
+          <li>
+            <h3>English OpenList</h3>
+            <p>A free, open, continuously maintained list of valid English words, about 345,000 of them, with the provenance of every word (which sources attested it, and when), auditable correction records, and a browser explorer.</p>
+            <p class="links"><a class="link" href="https://english-openlist.pages.dev/">Explore</a><a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Code</a><a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a></p>
+          </li>
+          <li>
+            <h3>The <span class="nowrap">Speed-Accuracy</span> <span class="nowrap">Trade-Off</span> in Perceptual <span class="nowrap">Decision-Making</span></h3>
+            <p>Evidence accumulation modeled as a diffusion process, with dynamic programming and value iteration to study decision boundaries in a simulated obstacle-avoidance scenario. My undergraduate research capstone, April 2025.</p>
+            <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a><a class="link" href="https://youtu.be/LRAP1YHy3g0">Video</a></p>
+          </li>
+        </ul>
+        <p class="more">Everything public is on <a href="https://ryanjosephkamp.github.io/repositories/">the repository map</a>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="author">
+      <div class="wrap">
+        <h2><b>Remark.</b> <i>On the author</i></h2>
+        <div class="author">
+          <dl>
+            <div>
+              <dt>Now</dt>
+              <dd>MS in Computer Science, concentration in Artificial Intelligence, at the <a href="https://www.uc.edu/">University of Cincinnati</a>. August 2025 to an expected May 2027. Thesis advisor: <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.</dd>
+            </div>
+            <div>
+              <dt>Before</dt>
+              <dd>BA in Mathematics and BS in Neuroscience, University of Cincinnati, 2025. Capstone advisor: <a href="https://sites.google.com/view/hkimmathbio/home">Dr. Hyunjoong Kim</a>.</dd>
+            </div>
+          </dl>
+          <div class="interests">
+            <p>Research interests</p>
+            <ul>
+              <li><mark>computer graphics</mark></li>
+              <li>scientific visualization</li>
+              <li>digital media</li>
+              <li>software engineering</li>
+              <li>information retrieval</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="section refs" id="references">
+    <div class="wrap">
+      <h2><b>References.</b></h2>
+      <ol>
+        <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Curriculum vitae</a>, October 2026.</li>
+        <li><a href="https://github.com/ryanjosephkamp">GitHub</a>, ryanjosephkamp.</li>
+        <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a>, longer write-ups.</li>
+        <li><a href="https://ryanjosephkamp.github.io/">Homepage</a>.</li>
+        <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a>.</li>
+        <li><a href="https://x.com/ryanjosephkamp">X</a>, @ryanjosephkamp.</li>
+        <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a>, @RyanJosephKamp.</li>
+        <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a>, datasets.</li>
+      </ol>
+      <p class="colophon">&copy; 2026 Ryan Kamp. Set in B612, the typeface Airbus commissioned for cockpit displays, and STIX Two. <span class="needs-js">The picture at the top is <span id="c-drawn">1 splat</span> right now.</span> No frameworks, no trackers.</p>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

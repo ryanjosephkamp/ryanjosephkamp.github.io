@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — splats, recipes, and forms you can turn over</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati, with research interests in digital media, computer graphics and scientific visualization. This page is printed live in two inks: one cloud of Gaussian splats, re-formed by recipe.">
+  <meta name="theme-color" content="#f4f0e6">
+  <meta property="og:title" content="Ryan Kamp">
+  <meta property="og:description" content="A portfolio printed live in two inks: one cloud of Gaussian splats, re-formed by recipe.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f4f0e6'/%3E%3Ccircle cx='25' cy='32' r='17' fill='%230f7f86'/%3E%3Ccircle cx='40' cy='32' r='17' fill='%23ff5a36' style='mix-blend-mode:multiply'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/recursive-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="cloud" aria-hidden="true"></canvas>
+  <a class="skip" href="#work">Skip to work</a>
+
+  <nav class="bar" aria-label="Primary">
+    <a class="bar__mark" href="#top">Ryan Kamp</a>
+    <ul>
+      <li><a href="#work">Work</a></li>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero" id="top" data-form="hero" data-at="hero">
+    <div class="hero__stage">
+      <h1 class="hero__name">Ryan Kamp</h1>
+    </div>
+    <div class="hero__foot">
+      <div class="hero__lede">
+        <p class="eyebrow">Portfolio · printed live, in two inks</p>
+        <p class="lede">I&rsquo;m a graduate student in computer science at the <a href="https://www.uc.edu/">University of Cincinnati</a>. My research interests are digital media, computer graphics and scientific visualization, along with software engineering and information retrieval.</p>
+      </div>
+      <aside class="card" id="recipe" aria-label="The recipe for the form above" hidden>
+        <p class="card__head"><b data-count>96,000</b> Gaussian splats and two inks. Push through them, drag to turn them, or change the recipe.</p>
+        <div class="chips" id="chips" role="group" aria-label="Form"></div>
+        <pre class="recipe" id="recipe-text"></pre>
+        <div class="controls" id="controls"></div>
+        <p class="card__note" id="recipe-note" aria-live="polite"></p>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section class="sec sec--right" id="work" data-form="lorenz" data-at="right">
+      <div class="sec__text">
+        <p class="eyebrow"><b>01</b> Gaussian splats</p>
+        <h2>Splashery</h2>
+        <p class="tag">An interactive Gaussian splat playground.</p>
+        <p>It runs entirely in the browser. Pick a toy, a real captured object or one generated from a seed, then spin it, poke it, blow on it, splash paint on it, drop it, and watch it fall apart and come back. Make your own, and share it as a link, an embed, a GIF or a video.</p>
+        <p class="live">On this page, the cloud beside this text is a small cousin of those toys: <span data-count>96,000</span> splats, drawn by a renderer written for the page. Push the pointer through it, or drag to turn it.</p>
+        <p>I defined the project&rsquo;s vision and its toy categories, refined the interaction design through hands-on testing, and contributed mathematical recipes.</p>
+        <h3 class="sub">On its shelves</h3>
+        <ul class="inside">
+          <li><b>Waves and optics.</b> A ripple tank that solves the 2D wave equation, and a light bench that traces rays with Snell&rsquo;s law through lenses, mirrors, a prism, a glass block and a fiber.</li>
+          <li><b>Sound.</b> A Chladni plate whose sand moves live with the sound, and a song landscape drawn from measured features.</li>
+          <li><b>Molecules and crystals.</b> A viewer that opens PDB, mmCIF, SDF, MOL and XYZ files or fetches an entry from the Protein Data Bank, and hydrogen orbitals sampled from |&psi;|&sup2;.</li>
+          <li><b>Volumes and imaging.</b> CT, MRI and microscope scans opened on the device, with window and level, a transfer function and cut planes.</li>
+          <li><b>Scale and sky.</b> One continuous zoom from a galaxy down to a single molecular machine, and the night sky for any date, time and place.</li>
+          <li><b>Earth and data.</b> Real landscapes from public data, and a CSV turned into a scatter, bars or a surface.</li>
+          <li><b>Math.</b> A Lorenz attractor, a Klein bottle and a gyroid among them. Those three are redrawn on this page.</li>
+        </ul>
+        <p class="meta">PlayCanvas engine · WebGPU with a WebGL2 fallback · static files and ES modules: no build step, no framework, no server</p>
+        <p class="links">
+          <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+          <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer&rsquo;s Manual</a>
+          <a class="link" href="https://github.com/ryanjosephkamp/splashery">Source</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 1 · Lorenz attractor, one splat to a step, one ink to a wing</figcaption>
+          <pre class="recipe">dx = 10 (y − x)
+dy = x (28 − z) − y
+dz = x y − 8⁄3 z</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--left" data-form="gyroid" data-at="left">
+      <div class="sec__text">
+        <p class="eyebrow"><b>01</b> Splashery, continued</p>
+        <h2>Recipes</h2>
+        <p class="tag">A toy that is written, not scanned.</p>
+        <p>Splashery&rsquo;s captured toys are real scans of up to 450,000 splats. Its generated ones are built from seeded recipes, so a saved scene rebuilds the same toy. A splat equation toy goes further and places every splat from equations in u, v and t.</p>
+        <p>Its Tinkerer&rsquo;s Manual explains what one splat is (the Gaussian and its covariance), how a recipe is built, and the equation language. Another toy fits 2D Gaussians to a picture by gradient descent, step by step.</p>
+        <p class="live">On this page, every form is made the same way in miniature. A seeded recipe a few lines long says where each splat goes, which way its stroke runs, and which ink it takes. The card at the top of the page lets you change one, or write your own in u and v.</p>
+        <p class="links">
+          <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">Read the manual</a>
+          <a class="link link--up" href="#top">Write a recipe</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 2 · Gyroid, a ball of it; the two inks are its two faces</figcaption>
+          <pre class="recipe">sin x cos y + sin y cos z + sin z cos x = 0
+scatter points, then walk each one onto the surface</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--right" data-form="loop" data-at="right">
+      <div class="sec__text">
+        <p class="eyebrow"><b>02</b> Graphs for agents</p>
+        <h2>grooph</h2>
+        <p class="tag">Visual loop graphs for coding-agent workflows.</p>
+        <p>You draw who builds, who checks, where a person decides and when the work stops. grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.</p>
+        <p class="live">On this page, the figure is about the smallest such graph: a builder, a critic, one loop back, and a person at the stop.</p>
+        <p class="links">
+          <a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open the app</a>
+          <a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+          <a class="link" href="https://github.com/ryanjosephkamp/grooph">Source</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 3 · A builder, a critic, and the person who decides</figcaption>
+          <pre class="recipe">three nodes, two edges, one loop back
+the node printed solid is a person</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--left" data-form="anagram" data-at="left">
+      <div class="sec__text">
+        <p class="eyebrow"><b>03</b> Words, rearranged</p>
+        <h2>Ars Magna</h2>
+        <p class="tag">An anagram of &ldquo;anagrams.&rdquo;</p>
+        <p>An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned into real English words, by a deterministic search.</p>
+        <p class="live">On this page, the figure spells the proof of its name: ANAGRAMS and ARS MAGNA.</p>
+        <p class="links">
+          <a class="link" href="https://ars-magna.pages.dev/">Try it</a>
+          <a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Source</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 4 · ARS MAGNA and ANAGRAMS, the same eight letters</figcaption>
+          <pre class="recipe">draw the word; keep every pixel the ink reached;
+drop a splat on each</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--right" data-form="qr" data-at="right">
+      <div class="sec__text">
+        <p class="eyebrow"><b>04</b> Words, as pictures</p>
+        <h2>aqrobat</h2>
+        <p class="tag">QR codes, in character.</p>
+        <p>A local text and emoji QR lab. It builds QR artwork from letters, symbols or emoji, right in the browser.</p>
+        <p class="live">On this page, the figure is a QR code built from splats instead. It is a real one, and it holds aqrobat&rsquo;s address. Try a phone camera on it.</p>
+        <p class="links">
+          <a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+          <a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Source</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 5 · A QR code, 29 modules a side, holding aqrobat&rsquo;s address</figcaption>
+          <pre class="recipe">encode the address; add the check words;
+fill every dark module with splats;
+the hearts of the eyes take both inks</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--left" data-form="also" data-at="left">
+      <div class="sec__text">
+        <p class="eyebrow"><b>05&ndash;10</b> Also on the shelf</p>
+        <h2>And six more</h2>
+        <ol class="shelf shelf--numbered" start="5">
+          <li>
+            <h3>reword_nerd</h3>
+            <p>A local-first browser workbench that turns a reviewed document, or a set of images, into a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate, explicit step, and the application contacts no model provider itself.</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Source</a>
+            </p>
+          </li>
+          <li>
+            <h3>resmon</h3>
+            <p>A local-first literature-monitoring desktop application. It runs scheduled searches across open-access scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.</p>
+            <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Source</a></p>
+          </li>
+          <li>
+            <h3>Link Meteor</h3>
+            <p>A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing sources and exporting a research collection. No account, ads, telemetry or backend.</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Source</a>
+            </p>
+          </li>
+          <li>
+            <h3>English OpenList</h3>
+            <p>A free, open, continuously maintained list of valid English words, about 345,000 of them, with the provenance of every word (which sources attested it, and when), auditable correction records, and a browser explorer.</p>
+            <p class="links">
+              <a class="link" href="https://english-openlist.pages.dev/">Explore</a>
+              <a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Source</a>
+            </p>
+          </li>
+          <li>
+            <h3>Amordle</h3>
+            <p>A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer with an Elo rating.</p>
+            <p class="links">
+              <a class="link" href="https://amordle.vercel.app">Play</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/amordle">Source</a>
+            </p>
+          </li>
+          <li>
+            <h3>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</h3>
+            <p>My undergraduate research capstone, April 2025. It models evidence accumulation as a diffusion process to study decision boundaries in a simulated autonomous-vehicle obstacle-avoidance scenario.</p>
+            <p class="links">
+              <a class="link" href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a>
+              <a class="link" href="https://youtu.be/LRAP1YHy3g0">Video</a>
+            </p>
+          </li>
+        </ol>
+        <figure class="fig">
+          <figcaption>Fig. 6 · An ampersand, for everything else</figcaption>
+          <pre class="recipe">draw the character; keep every pixel the ink reached;
+drop a splat on each</pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="sec sec--right" id="research" data-form="klein" data-at="right">
+      <div class="sec__text">
+        <p class="eyebrow">Research</p>
+        <h2>Interests</h2>
+        <ol class="interests">
+          <li>Digital media</li>
+          <li>Computer graphics</li>
+          <li>Scientific visualization</li>
+          <li>Software engineering</li>
+          <li>Information retrieval</li>
+        </ol>
+        <p>I&rsquo;m in the MS program in computer science at the University of Cincinnati, concentrating in artificial intelligence. I started in August 2025 and expect to finish in May 2027. My thesis advisor is <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.</p>
+        <p>Before that I took a BA in mathematics and a BS in neuroscience, also at the University of Cincinnati.</p>
+        <p class="links">
+          <a class="link" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Read the CV</a>
+          <a class="link" href="https://ryanjosephkamp.github.io/blog/">Blog</a>
+        </p>
+        <figure class="fig">
+          <figcaption>Fig. 7 · Klein bottle, figure-eight immersion, drawn as threads</figcaption>
+          <pre class="recipe">r = 2 + cos ½u sin v − sin ½u sin 2v
+x = r cos u,  z = r sin u
+y = sin ½u sin v + cos ½u sin 2v</pre>
+        </figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="sec contact" id="contact" data-form="name" data-at="center">
+    <div class="sec__text">
+      <p class="eyebrow">Contact</p>
+      <h2>Elsewhere</h2>
+      <ul class="elsewhere">
+        <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+        <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+        <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+        <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+        <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+        <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+        <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+        <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+      </ul>
+      <div class="colophon">
+        <p>&copy; 2026 Ryan Kamp. Set in Recursive. Drawn with WebGL2 in one file, with no frameworks and no trackers.</p>
+        <p><a href="../../">An earlier version of this site, in letter tiles</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
