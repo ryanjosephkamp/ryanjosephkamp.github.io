@@ -1,0 +1,563 @@
+<!doctype html>
+<!-- data-plate is the plate a first-time visitor sees: copper, brass, steel, titanium or bronze.
+     To change it, change it here, the theme-color below (that plate's ground color), and the two
+     words marked data-plate-word and data-sand-word. -->
+<html lang="en-US" data-plate="copper">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ryan Kamp · Resonance</title>
+    <meta
+      name="description"
+      content="Ryan Kamp's work, shown as sound you can see: a metal plate you bow, and sand that runs to the still lines of the note."
+    />
+    <meta name="theme-color" content="#cf9173" />
+    <meta property="og:title" content="Ryan Kamp · Resonance" />
+    <meta property="og:description" content="A metal plate you bow, and sand that runs to the still lines of the note." />
+    <script>
+      // Before the first paint: the plate named in the address (?plate=steel, for one
+      // visit), or else the one this visitor picked last time, or else the one above.
+      (function (root) {
+        root.dataset.plateFirst = root.dataset.plate;
+        try {
+          var plate = new URLSearchParams(location.search).get('plate') || localStorage.getItem('resonance:plate');
+          if (/^(copper|brass|steel|titanium|bronze)$/.test(plate)) root.dataset.plate = plate;
+        } catch (e) {}
+      })(document.documentElement);
+    </script>
+    <link rel="preload" href="assets/fonts/archivo-variable-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#splashery">Skip to the projects</a>
+
+    <div class="topbar">
+      <div class="plates" id="plates" role="radiogroup" aria-labelledby="plates-label" hidden>
+        <span class="plates-label" id="plates-label">Plate</span>
+        <label class="plate-pick" style="--a: #f8d9c7; --b: #c58565; --c: #190d08">
+          <input type="radio" name="plate" value="copper" aria-label="Copper" /><span class="sw" aria-hidden="true"></span><span class="nm">Copper</span>
+        </label>
+        <label class="plate-pick" style="--a: #f0dc9c; --b: #bf9c47; --c: #16120a">
+          <input type="radio" name="plate" value="brass" aria-label="Brass" /><span class="sw" aria-hidden="true"></span><span class="nm">Brass</span>
+        </label>
+        <label class="plate-pick" style="--a: #f1f4f6; --b: #a0a9b1; --c: #0e1216">
+          <input type="radio" name="plate" value="steel" aria-label="Steel" /><span class="sw" aria-hidden="true"></span><span class="nm">Steel</span>
+        </label>
+        <label class="plate-pick" style="--a: #e9e4ff; --b: #9285d8; --c: #110c20">
+          <input type="radio" name="plate" value="titanium" aria-label="Titanium" /><span class="sw" aria-hidden="true"></span><span class="nm">Titanium</span>
+        </label>
+        <label class="plate-pick" style="--a: #63543a; --b: #2a2317; --c: #f1e7cf">
+          <input type="radio" name="plate" value="bronze" aria-label="Bronze" /><span class="sw" aria-hidden="true"></span><span class="nm">Bronze</span>
+        </label>
+      </div>
+    </div>
+
+    <header class="hero" id="top">
+      <div class="hero-text">
+        <p class="stamp">Sound and audio-visual media</p>
+        <h1 class="name" id="name">Ryan <span>Kamp</span></h1>
+        <p class="lede">
+          Sound you can see. This is a <span data-plate-word>copper</span> plate with
+          <span data-sand-word>black</span> sand on it. Bow its edge and the sand runs to the lines where the plate
+          stays still.
+        </p>
+        <p class="lede-2">
+          The same rule moves the sand on the Chladni plate in
+          <a href="#splashery">Splashery</a>, my Gaussian splat playground. I'm a graduate student at the University
+          of Cincinnati, and audio-visual media is one of my interests.
+        </p>
+        <ul class="how">
+          <li><b>Drag</b> the bow up or down the edge to change the note, and saw it to play.</li>
+          <li><b>Keys:</b> arrows pick a figure, Space bows it, S scatters the sand.</li>
+          <li><b>Sing:</b> tap Sing to it and hold a steady note. Your voice stays in this page.</li>
+          <li><b>Again:</b> Play it back repeats your last notes, as you played them.</li>
+          <li>Sound starts with your first touch, never before.</li>
+        </ul>
+      </div>
+
+      <div class="bench">
+        <div
+          class="stage"
+          id="stage"
+          tabindex="0"
+          role="slider"
+          aria-label="The plate. Arrow keys pick a figure, Space bows it."
+          aria-valuemin="1"
+          aria-valuemax="24"
+          aria-valuenow="12"
+          aria-valuetext="Figure 12 of 24"
+        >
+          <div class="plate">
+            <canvas id="sand" aria-hidden="true"></canvas>
+            <span class="clamp" aria-hidden="true"></span>
+            <span class="maker" aria-hidden="true">Ryan Kamp · Cincinnati, Ohio</span>
+            <div class="rail" id="rail" aria-hidden="true"></div>
+          </div>
+          <svg class="bow" id="bow" viewBox="0 0 640 44" aria-hidden="true" focusable="false">
+            <path class="bow-stick" d="M6 13 C 160 4, 430 4, 600 12 L 632 14 L 632 19 L 600 17 C 430 10, 160 10, 6 18 Z" />
+            <path class="bow-tip" d="M4 12 L 16 12 L 22 30 L 8 30 Z" />
+            <rect class="bow-hair" x="12" y="27" width="560" height="4.5" rx="1" />
+            <path class="bow-frog" d="M560 17 L 606 17 L 606 36 L 566 36 Q 556 30 560 17 Z" />
+            <circle class="bow-eye" cx="586" cy="26.5" r="4.2" />
+            <rect class="bow-screw" x="632" y="12.5" width="8" height="8" rx="1.5" />
+          </svg>
+          <span class="hint" id="hint" aria-hidden="true">Drag the bow ↑↓</span>
+        </div>
+
+        <div class="readout" aria-live="off">
+          <p class="fig"><span class="fig-label">Fig.</span> <b id="fig-no">12</b> <span class="of">of 24</span></p>
+          <dl>
+            <div>
+              <dt>Mode</dt>
+              <dd id="fig-mode">n 1 · m 3 · −</dd>
+            </div>
+            <div>
+              <dt>Pitch</dt>
+              <dd><span id="fig-hz">654 Hz</span> <small id="fig-times">10 × the lowest</small></dd>
+            </div>
+            <div>
+              <dt>Sand on a still line</dt>
+              <dd><span id="fig-share">0</span>%</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="controls">
+          <button type="button" class="key key-loud" id="bow-btn">Bow it</button>
+          <button type="button" class="key" id="scatter-btn">Scatter</button>
+          <button type="button" class="key" id="sound-btn" aria-pressed="true">Sound: on</button>
+          <button type="button" class="key" id="mic-btn" aria-pressed="false" hidden>Sing to it</button>
+          <button type="button" class="key" data-replay hidden disabled>Play it back</button>
+        </div>
+        <p class="mic-say" id="mic-say" role="status"></p>
+      </div>
+    </header>
+
+    <main>
+      <section class="sec splashery" id="splashery" aria-labelledby="splashery-h">
+        <div class="sec-head">
+          <p class="stamp">Fig. 12 · the centerpiece</p>
+          <h2 id="splashery-h">Splashery</h2>
+          <button type="button" class="thumb" data-ring="1,3,-1" aria-label="Ring Splashery's figure on the plate">
+            <canvas data-figure="1,3,-1" width="220" height="220"></canvas>
+          </button>
+        </div>
+        <div class="sec-body">
+          <p class="big">
+            An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy (a real captured
+            object, or one generated from a seed), spin it, poke it, blow on it, splash paint on it, drop it, watch
+            it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.
+          </p>
+          <p class="links">
+            <a href="https://ryanjosephkamp.github.io/splashery/">Play Splashery</a>
+            <a href="https://github.com/ryanjosephkamp/splashery">Code</a>
+            <a href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer's Manual</a>
+          </p>
+          <p class="part">
+            My part: I defined the project's vision and its toy categories, refined the interaction design through
+            hands-on testing, and contributed mathematical recipes.
+          </p>
+        </div>
+
+        <div class="ways">
+          <h3 class="ways-h">Four ways Splashery lets you see sound</h3>
+
+          <article class="way" id="way-plate">
+            <div class="way-text">
+              <p class="stamp">One</p>
+              <h4>A Chladni plate whose sand moves live</h4>
+              <p>
+                Every grain moves on every frame: it hops more where the plate swings more, and slides toward the
+                plate's still lines. The swing is a live mix of the plate's modes, each as strong as the sound
+                drives it. Change the note and the sand sets off for the new figure from where it lies. Hold a note
+                and it settles into a crisp figure. Silence leaves it where it is. Turn on the microphone and the
+                note you sing drives the plate: the mode nearest your note rings, as strongly as you sing.
+              </p>
+              <p>
+                A second toy does it in three dimensions: beads in a small cell of water gather on the still
+                surfaces of a standing wave, pushed there by the acoustic radiation force.
+              </p>
+              <p class="formula" aria-label="w of x and y equals cosine n pi x times cosine m pi y, plus or minus cosine m pi x times cosine n pi y">
+                w(x, y) = cos(nπx)·cos(mπy) ± cos(mπx)·cos(nπy)
+              </p>
+              <p class="note">
+                On this page: the plate at the top follows that model, and a figure's pitch follows n² + m², so
+                every note is a whole multiple of the lowest. With n and m up to 4 it can make exactly 24 figures on
+                14 pitches. Here is every one, lowest note first. Tap any to ring it.
+              </p>
+            </div>
+            <div class="way-art">
+              <div class="sheet" id="sheet" role="group" aria-label="All 24 figures"></div>
+              <div class="real" id="real">
+                <p class="stamp">The real one</p>
+                <p class="real-say">
+                  This page draws its own plate. The one in Splashery is made of Gaussian splats, and it is one tap
+                  away: load it here, then tap the plate to hear its note and watch the sand find its figure.
+                </p>
+                <p class="real-keys">
+                  <button type="button" class="key key-loud" id="real-btn" hidden>Load the real plate</button>
+                  <a
+                    class="real-link"
+                    href="https://ryanjosephkamp.github.io/splashery/embed/?toy=chladni-plate&amp;sound=on&amp;turntable=off"
+                    >Open the real plate on its own page</a
+                  >
+                </p>
+                <p class="real-status" id="real-status" role="status"></p>
+                <div class="real-frame" id="real-frame" hidden></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="way" id="way-lab">
+            <div class="way-text">
+              <p class="stamp">Two</p>
+              <h4>A sound lab</h4>
+              <p>
+                A bench instrument with a scrolling spectrogram, the spectrum with its loudest frequency, and an
+                oscilloscope. It shows the microphone once you tap "Use my microphone", and otherwise its own tone
+                generator: sine, square, saw or noise, one tone or two that beat. Everything on its screens is
+                measured from samples.
+              </p>
+              <p class="note">
+                On this page: three screens, drawn in sand, that read this page's own sound. Loudest now:
+                <b id="lab-peak">nothing yet</b>.
+              </p>
+              <p class="take-keys">
+                <button type="button" class="key key-loud" data-replay disabled>Play it back</button>
+                <button type="button" class="key" data-phrase>Play an example</button>
+              </p>
+              <p class="take-say" data-take-say role="status">
+                Nothing of yours yet. Bow the plate or sing to it, then play it back.
+              </p>
+              <p class="real-keys">
+                <a
+                  class="real-link"
+                  href="https://ryanjosephkamp.github.io/splashery/embed/?toy=sound-lab&amp;sound=on&amp;turntable=off"
+                  >Open the real sound lab on its own page</a
+                >
+              </p>
+            </div>
+            <div class="screens">
+              <figure class="screen screen-wide">
+                <div class="glass">
+                  <canvas id="spectrogram" width="640" height="220"></canvas>
+                  <span class="mark" style="--p: 59.9" aria-hidden="true">1 kHz</span>
+                  <span class="mark" style="--p: 12.3" aria-hidden="true">100 Hz</span>
+                </div>
+                <figcaption>Spectrogram · time runs left, pitch runs up</figcaption>
+              </figure>
+              <figure class="screen">
+                <div class="glass">
+                  <canvas id="spectrum" width="320" height="180"></canvas>
+                  <span class="mark mark-x" style="--p: 12.3" aria-hidden="true">100 Hz</span>
+                  <span class="mark mark-x" style="--p: 59.9" aria-hidden="true">1 kHz</span>
+                  <span class="mark mark-x mark-end" style="--p: 93.1" aria-hidden="true">5 kHz</span>
+                </div>
+                <figcaption>Spectrum</figcaption>
+              </figure>
+              <figure class="screen">
+                <div class="glass">
+                  <canvas id="scope" width="320" height="180"></canvas>
+                  <span class="mark" style="--p: 50" aria-hidden="true"></span>
+                </div>
+                <figcaption>Oscilloscope</figcaption>
+              </figure>
+            </div>
+          </article>
+
+          <article class="way" id="way-song">
+            <div class="way-text">
+              <p class="stamp">Three</p>
+              <h4>A song landscape</h4>
+              <p>
+                Open a song and Splashery cuts it into frames 40 milliseconds apart. Every shape it draws is a
+                measured feature of the sound at that moment: its bands, its loudness, its spectral centroid (the
+                brightness) and its pitch. The song plays as soon as it opens, and the picture fills in as the
+                frames are measured.
+              </p>
+              <p class="note">
+                On this page: a landscape of what you have played. One ridge per 40 millisecond frame, newest in
+                front; a heavier line is a louder frame, the dot marks the measured pitch and the tick the centroid.
+                The page keeps your last notes (which figure, how hard and when, never the sound), so Play it back
+                draws them again.
+              </p>
+              <p class="take-keys">
+                <button type="button" class="key key-loud" data-replay disabled>Play it back</button>
+                <button type="button" class="key" data-phrase>Play an example</button>
+              </p>
+              <p class="take-say" data-take-say role="status">
+                Nothing of yours yet. Bow the plate or sing to it, then play it back.
+              </p>
+            </div>
+            <figure class="screen screen-tall">
+              <canvas id="landscape" width="640" height="420"></canvas>
+              <figcaption id="land-cap">Nothing played yet. Bow the plate, or play a phrase.</figcaption>
+            </figure>
+          </article>
+
+          <article class="way way-last" id="way-voice">
+            <div class="way-text">
+              <p class="stamp">Four</p>
+              <h4>A synthesized sound for every toy</h4>
+              <p>
+                Every toy has its own tap sound, synthesized from a library of about 80 voices: plucked strings,
+                bells, xylophone bars, drums, creature voices, wind, engines, horns. The guitar strums a chord
+                progression, Big Ben plays the Westminster quarters, and the music box plays a melody. Sound is off
+                until you turn it on.
+              </p>
+              <p class="note">
+                On this page: every project below has a figure of its own and the note that makes it. Tap a small
+                plate to ring it.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="sec" id="grooph" aria-labelledby="grooph-h">
+        <div class="sec-head">
+          <p class="stamp">Fig. 6 · 327 Hz</p>
+          <h2 id="grooph-h">grooph</h2>
+          <button type="button" class="thumb" data-ring="1,2,1" aria-label="Ring grooph's figure on the plate">
+            <canvas data-figure="1,2,1" width="220" height="220"></canvas>
+          </button>
+        </div>
+        <div class="sec-body">
+          <p class="big">
+            Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person decides
+            and when the work stops.
+          </p>
+          <p>
+            grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate
+            coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.
+          </p>
+          <p class="links">
+            <a href="https://ryanjosephkamp.github.io/grooph/">Open grooph</a>
+            <a href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+            <a href="https://github.com/ryanjosephkamp/grooph">Code</a>
+          </p>
+        </div>
+        <div class="loop" id="loop">
+          <div class="loop-art">
+          <svg viewBox="0 0 600 220" aria-hidden="true" focusable="false">
+            <path class="edge" d="M110 96 H 236" />
+            <path class="edge" d="M292 96 H 418" />
+            <path class="edge" d="M474 96 H 548" />
+            <path class="edge edge-back" d="M264 124 C 264 190, 82 190, 82 124" />
+            <path class="arrow" d="M170 89 l12 7 l-12 7 Z M352 89 l12 7 l-12 7 Z M508 89 l12 7 l-12 7 Z M166 183 l12 -7 l0 14 Z" />
+          </svg>
+          <ol class="loop-nodes">
+            <li data-node="build" style="--x: 13.7%">Build</li>
+            <li data-node="check" style="--x: 44%">Check</li>
+            <li data-node="decide" style="--x: 74.3%">A person decides</li>
+            <li data-node="stop" class="loop-stop" style="--x: 95%">Stop</li>
+          </ol>
+          <p class="loop-back">not yet: go round again</p>
+          </div>
+          <p class="loop-status">
+            <button type="button" class="key key-loud" id="loop-btn">Run the loop</button>
+            <span id="loop-say">A loop that names its stop: two checks, one decision, then silence.</span>
+          </p>
+        </div>
+      </section>
+
+      <section class="sec" id="more" aria-labelledby="more-h">
+        <div class="sec-head">
+          <p class="stamp">The other figures</p>
+          <h2 id="more-h">Eight more</h2>
+        </div>
+        <ol class="works" start="3">
+          <li class="work">
+            <button type="button" class="thumb" data-ring="0,2,1" aria-label="Ring reword_nerd's figure on the plate">
+              <canvas data-figure="0,2,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 4 · 262 Hz</p>
+              <h3>reword_nerd</h3>
+              <p>
+                A local-first browser workbench that turns a reviewed document, or a set of images, into a portable
+                workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a
+                separate, explicit step, and the application contacts no model provider itself.
+              </p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+                <a href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+                <a href="https://github.com/ryanjosephkamp/reword-nerd">Code</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work">
+            <button type="button" class="thumb" data-ring="2,3,1" aria-label="Ring resmon's figure on the plate">
+              <canvas data-figure="2,3,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 13 · 850 Hz</p>
+              <h3>resmon</h3>
+              <p>
+                A local-first literature-monitoring desktop application. It runs scheduled searches across
+                open-access scholarly sources, removes duplicates, and compiles reading reports, with optional
+                summaries.
+              </p>
+              <p class="links"><a href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+            </div>
+          </li>
+
+          <li class="work">
+            <button type="button" class="thumb" data-ring="0,3,-1" aria-label="Ring Link Meteor's figure on the plate">
+              <canvas data-figure="0,3,-1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 10 · 589 Hz</p>
+              <h3>Link Meteor</h3>
+              <p>
+                A Chrome extension that collects links with their anchor text and URL in separate fields, for
+                reviewing sources and exporting a research collection. No account, ads, telemetry or backend.
+              </p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+                <a href="https://github.com/ryanjosephkamp/link-meteor">Code</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work" id="openlist">
+            <button type="button" class="thumb" data-ring="4,4,1" aria-label="Ring English OpenList's figure on the plate">
+              <canvas data-figure="4,4,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 24 · 2,093 Hz</p>
+              <h3>English OpenList</h3>
+              <p>
+                A free, open, continuously maintained list of valid English words, about 345,000 of them, with the
+                provenance of every word (which sources attested it, and when), auditable correction records, and a
+                browser explorer.
+              </p>
+              <p class="links">
+                <a href="https://english-openlist.pages.dev/">Explore</a>
+                <a href="https://github.com/ryanjosephkamp/english-openlist">Code</a>
+                <a href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work work-art">
+            <button type="button" class="thumb" id="ars-thumb" data-ring="1,4,1" aria-label="Ring Ars Magna's figure on the plate">
+              <canvas id="ars-canvas" data-figure="1,4,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp" id="ars-stamp">Fig. 17 · 1,112 Hz</p>
+              <h3>Ars Magna</h3>
+              <p>
+                An anagram finder. Give it any text and it returns every way those exact letters can be
+                re-partitioned into real English words, by a deterministic search.
+              </p>
+              <p class="art-line">
+                <button type="button" class="key" id="ars-btn" aria-pressed="false">Rearrange: + to −</button>
+                <span>The plate's anagram: the same two waves and the same note, put together the other way.</span>
+              </p>
+              <p class="links">
+                <a href="https://ars-magna.pages.dev/">Try it</a>
+                <a href="https://github.com/ryanjosephkamp/ars-magna">Code</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work">
+            <button type="button" class="thumb" data-ring="2,2,1" aria-label="Ring aqrobat's figure on the plate">
+              <canvas data-figure="2,2,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 8 · 523 Hz</p>
+              <h3>aqrobat</h3>
+              <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+                <a href="https://github.com/ryanjosephkamp/aqrobat">Code</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work work-art">
+            <button type="button" class="thumb" data-ring="0,4,1" aria-label="Ring Amordle's figure on the plate">
+              <canvas data-figure="0,4,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 15 · 1,046 Hz</p>
+              <h3>Amordle</h3>
+              <p>
+                A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and
+                ranked multiplayer with an Elo rating.
+              </p>
+              <div class="bars-wrap">
+                <div class="bars" id="bars" role="group" aria-label="A bar for every word length, 2 to 35 letters. Arrow keys move along them."></div>
+                <p class="bars-say"><span id="bars-say">One bar for every word length, 2 to 35. Tap or drag across them.</span></p>
+              </div>
+              <p class="links">
+                <a href="https://amordle.vercel.app">Play</a>
+                <a href="https://github.com/ryanjosephkamp/amordle">Code</a>
+                <a href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a>
+              </p>
+            </div>
+          </li>
+
+          <li class="work work-last">
+            <button type="button" class="thumb" data-ring="1,1,1" aria-label="Ring the capstone's figure on the plate">
+              <canvas data-figure="1,1,1" width="220" height="220"></canvas>
+            </button>
+            <div>
+              <p class="stamp">Fig. 3 · 131 Hz</p>
+              <h3>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</h3>
+              <p>
+                My undergraduate research capstone, April 2025. It models evidence accumulation as a diffusion
+                process and uses dynamic programming and value iteration to study decision boundaries in a simulated
+                autonomous-vehicle obstacle-avoidance scenario.
+              </p>
+              <p class="links">
+                <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a>
+                <a href="https://youtu.be/LRAP1YHy3g0">Video</a>
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="sec about" id="about" aria-labelledby="about-h">
+        <div class="sec-head">
+          <p class="stamp">The maker's mark</p>
+          <h2 id="about-h">Ryan Kamp</h2>
+        </div>
+        <div class="sec-body">
+          <p class="big">
+            Research interests: digital media, scientific visualization, computer graphics, software engineering,
+            and information retrieval.
+          </p>
+          <p>
+            Graduate student at the University of Cincinnati, Cincinnati, Ohio. MS in Computer Science,
+            concentration in Artificial Intelligence, August 2025 to expected May 2027; thesis advisor
+            <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>. BA in Mathematics and BS in
+            Neuroscience, University of Cincinnati, January 2020 to May 2025; capstone advisor
+            <a href="https://sites.google.com/view/hkimmathbio/home">Dr. Hyunjoong Kim</a>.
+          </p>
+          <ul class="tags">
+            <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/repositories/">Repositories</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+            <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+            <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+            <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+            <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>Ryan Kamp · Resonance. A concept site: one plate, 24 figures, ten projects.</p>
+      <p><a href="#top">Back to the plate</a></p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — Toy Box</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati, interested in digital media. His name, here, is a toy made of Gaussian splats: spin it, poke it, paint it, drop it, blow on it.">
+  <meta name="theme-color" content="#ffd60a">
+  <meta property="og:title" content="Ryan Kamp — Toy Box">
+  <meta property="og:description" content="A name made of splats. Spin it, poke it, paint it, drop it, blow on it, and send someone the mess as a link.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ryanjosephkamp.github.io/portfolios/toybox/">
+  <meta property="og:image" content="https://ryanjosephkamp.github.io/portfolios/toybox/assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23ffd60a'/%3E%3Ccircle cx='24' cy='27' r='15' fill='%23ff3d8b'/%3E%3Ccircle cx='42' cy='40' r='13' fill='%2300b8bd'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/fredoka-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#box">Skip to what&rsquo;s in the box</a>
+
+  <header class="hero" id="top">
+    <nav class="nav wrap" aria-label="Primary">
+      <a class="nav__mark" href="#top" aria-label="Ryan Kamp, top of page">RK</a>
+      <ul>
+        <li><a href="#box">Splashery</a></li>
+        <li><a href="#shelf">Shelf</a></li>
+        <li><a href="#research">Research</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="wrap">
+      <div class="pack">
+        <span class="pack__hole" aria-hidden="true"></span>
+        <div class="pack__top">
+          <p class="pack__brand"><b>Ryan Kamp</b></p>
+          <button class="chip" id="sound" type="button" aria-pressed="false">Sound <span>off</span></button>
+        </div>
+
+        <div class="stage" id="stage" tabindex="0" role="group" aria-label="The toy: Ryan Kamp's name made of splats. Arrow keys spin it, Enter uses the picked tool on a random spot, 1 to 5 pick a tool.">
+          <h1 class="stage__name">Ryan<br>Kamp</h1>
+          <canvas id="toy" aria-hidden="true"></canvas>
+          <p class="stage__hint" id="hint">Drag to spin it. Tap a spot to poke it.</p>
+        </div>
+
+        <div class="tools" role="group" aria-label="Things to do to the toy">
+          <button class="st st--pink" type="button" data-tool="spin" aria-pressed="true"><kbd>1</kbd>Spin</button>
+          <button class="st st--yellow" type="button" data-tool="poke" aria-pressed="false"><kbd>2</kbd>Poke</button>
+          <button class="st st--orange" type="button" data-tool="paint" aria-pressed="false"><kbd>3</kbd>Paint</button>
+          <button class="st st--violet" type="button" id="drop" aria-pressed="false"><kbd>4</kbd>Drop</button>
+          <button class="st st--sky" type="button" data-tool="blow" aria-pressed="false"><kbd>5</kbd>Blow</button>
+        </div>
+        <div class="swatches" id="swatches" role="group" aria-label="Paint color" hidden>
+          <button type="button" aria-pressed="true"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button><button type="button" aria-pressed="false"></button>
+          <button class="chip" id="clear" type="button">Wash it off</button>
+        </div>
+
+        <div class="pack__foot">
+          <div class="shelf" role="group" aria-label="Pick a toy">
+            <span class="shelf__label">Swap the toy</span>
+            <button class="chip" type="button" data-toy="name" aria-pressed="true">The name</button>
+            <button class="chip" type="button" data-toy="donut" aria-pressed="false">Donut</button>
+            <button class="chip" type="button" data-toy="knot" aria-pressed="false">Knot</button>
+            <button class="chip" type="button" data-toy="planet" aria-pressed="false">Tiny planet</button>
+            <button class="chip chip--dash" type="button" data-toy="photo" aria-pressed="false">Your picture&hellip;</button>
+            <input type="file" id="photo-file" accept="image/*" hidden>
+          </div>
+          <div class="share" role="group" aria-label="Share this scene">
+            <span class="shelf__label">Take it home</span>
+            <button class="chip" type="button" id="share-link">Copy link</button>
+            <button class="chip" type="button" id="share-png">Save PNG</button>
+            <button class="chip" type="button" id="share-video">Save video</button>
+          </div>
+        </div>
+
+        <div class="contents">
+          <div class="contents__head">
+            <span>Contents</span>
+            <span class="detail" id="detail" role="group" aria-label="How many splats the toy is built from" hidden>
+              <span class="detail__label">Splats</span>
+              <button class="chip" id="fewer" type="button">Fewer</button>
+              <button class="chip" id="more" type="button">More</button>
+            </span>
+          </div>
+          <p id="contents">One name, in splats. Turn on JavaScript to tip them out.</p>
+          <p class="contents__status" id="status" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div class="hero__foot">
+        <p class="hero__intro">I&rsquo;m Ryan Kamp, a master&rsquo;s student in computer science at the <a href="https://www.uc.edu/">University of Cincinnati</a>. I&rsquo;m interested in digital media, and lately in Gaussian splats as something to play with: a toy you can spin, poke, paint, drop and blow on. That one up there is my name. The full toy box is <a href="#box">Splashery</a>.</p>
+        <p class="hero__aside">Every letter rings its own note once the sound is on. Whatever you do to it, <b>Copy link</b> packs the toy, its paint and the way it&rsquo;s turned into the address. <b>More</b>, on the label, builds it from more splats.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="band band--teal" id="box">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__tag">What&rsquo;s in the box</p>
+          <h2>Splashery</h2>
+          <p class="head__lede">Splats you can play with. A toy box of 3D Gaussian splats that runs entirely in the browser: pick a toy (a real captured object, or one generated from a seed), spin it, poke it, blow on it, splash paint on it, drop it, watch it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.</p>
+        </header>
+
+        <div class="box">
+          <div class="box__embed">
+            <div class="embed" id="embed-frame">
+              <p>The real thing, live: a captured cactus from Splashery&rsquo;s shelf.</p>
+              <button class="st st--yellow" type="button" id="embed-load">Unwrap it here</button>
+              <p class="embed__note">About 8&nbsp;MB (the engine plus one scan), so it waits until you ask. Or <a href="https://ryanjosephkamp.github.io/splashery/">open Splashery in its own tab</a>.</p>
+            </div>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play Splashery</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/splashery">Source</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">The Tinkerer&rsquo;s Manual</a>
+            </p>
+          </div>
+          <div class="box__role">
+            <h3>My part</h3>
+            <p>I defined the project&rsquo;s vision and its toy categories, refined the interaction design through hands-on testing, and contributed mathematical recipes.</p>
+            <p class="small">It is built on the PlayCanvas engine, with WebGPU when the browser has it and WebGL2 otherwise. Static files and ES modules only: no build step, no framework, no server.</p>
+          </div>
+        </div>
+
+        <ul class="cards cards--facts">
+          <li class="card" style="--c:var(--pink);--tilt:-1.2deg">
+            <h3>Toys</h3>
+            <p>Real scans of up to 450,000 splats, and generated toys built in the browser from seeded recipes: sports balls, planets, food, a neuron that fires, a chess set that plays Morphy&rsquo;s Opera Game.</p>
+          </li>
+          <li class="card" style="--c:var(--yellow);--tilt:.9deg">
+            <h3>Eight effects</h3>
+            <p>Poke, wind, dissolve, drop, magnet, twist, slice and paint. Each runs on the GPU for every splat, every frame, and they stack.</p>
+          </li>
+          <li class="card" style="--c:var(--paper);--tilt:-.6deg">
+            <h3>A sound for every toy</h3>
+            <p>Synthesized from a library of about 80 voices. The guitar strums a chord progression; Big Ben plays the Westminster quarters. Off until you turn it on.</p>
+          </li>
+          <li class="card" style="--c:var(--orange);--tilt:1.3deg">
+            <h3>Pictures and pages</h3>
+            <p>In the labs: open a PDF, a picture, a GIF or a video and see it made of splats. Photos get one splat per pixel; GIFs and videos recolor their splats every frame.</p>
+          </li>
+          <li class="card" style="--c:var(--sky);--tilt:-1deg">
+            <h3>Six ways out</h3>
+            <p>A link with the whole scene compressed into it, a JSON file, a PNG, a GIF, a WebM video, or an embed: an iframe or a <code>&lt;splashery-toy&gt;</code> element.</p>
+          </li>
+          <li class="card" style="--c:var(--violet);--tilt:.7deg;--fg:var(--paper)">
+            <h3>A manual</h3>
+            <p>The Tinkerer&rsquo;s Manual explains how to program splats, level by level, starting with what one splat is: the Gaussian and its covariance.</p>
+          </li>
+        </ul>
+
+        <div class="one">
+          <div class="one__art">
+            <canvas id="one" role="img" aria-label="One pink splat: a soft ellipse that fades from its middle and stops at three sigma."></canvas>
+          </div>
+          <div class="one__text">
+            <h3>One splat, up close</h3>
+            <p>The toy above is thousands of these: a flat Gaussian, brightest in the middle, switched off three sigmas out. Stretch it and turn it, and its covariance follows.</p>
+            <div class="sliders">
+              <label>Wide <input type="range" id="one-w" min="20" max="100" value="92"></label>
+              <label>Tall <input type="range" id="one-h" min="20" max="100" value="46"></label>
+              <label>Turn <input type="range" id="one-t" min="0" max="180" value="24"></label>
+            </div>
+            <p class="one__cov" id="one-cov" aria-live="off">&Sigma; = R S S&#7488; R&#7488;</p>
+            <p class="small">Cutting at 3&sigma; keeps <b>98.9%</b> of a splat&rsquo;s paint: 1 &minus; e<sup>&minus;4.5</sup>. I didn&rsquo;t take the formula&rsquo;s word for it; a script adds up 16,777,216 samples and gets 98.889%.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band--paper" id="shelf">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__tag">Also on the shelf</p>
+          <h2>Other things I&rsquo;ve made</h2>
+          <p class="head__lede">Not toys, strictly. Tools for words, for collecting and reading, and for work with coding agents.</p>
+        </header>
+
+        <ul class="cards cards--shelf">
+          <li class="card card--art card--wide" style="--c:var(--yellow);--tilt:-.5deg">
+            <div class="art art--grooph" aria-hidden="true">
+              <i class="node" style="--x:14%;--y:62%;--n:var(--pink)"></i><i class="node" style="--x:50%;--y:62%;--n:var(--teal)"></i><i class="node" style="--x:86%;--y:62%;--n:var(--violet)"></i>
+              <i class="token"></i>
+            </div>
+            <h3>grooph</h3>
+            <p>Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person decides and when the work stops. grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and graphs stay on your device.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open the app</a><a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a><a class="link" href="https://github.com/ryanjosephkamp/grooph">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--teal);--tilt:.9deg">
+            <div class="art art--qr" id="qr" aria-hidden="true"></div>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a><a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--violet);--tilt:-1deg;--fg:var(--paper)">
+            <div class="art art--amordle" aria-hidden="true"><b style="--i:0">S</b><b style="--i:1">P</b><b style="--i:2">L</b><b style="--i:3">A</b><b style="--i:4">T</b></div>
+            <h3>Amordle</h3>
+            <p>A free word game with any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer with an Elo rating. By its own sum: Wordle + Hurdle + Lichess &minus; ads.</p>
+            <p class="links"><a class="link" href="https://amordle.vercel.app">Play</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/amordle">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--orange);--tilt:1deg">
+            <div class="art art--ars" id="ars" aria-hidden="true">
+              <b style="--a:0;--b:0">A</b><b style="--a:1;--b:4">R</b><b style="--a:2;--b:7">S</b><b style="--a:3;--b:6">M</b><b style="--a:4;--b:2">A</b><b style="--a:5;--b:3">G</b><b style="--a:6;--b:1">N</b><b style="--a:7;--b:5">A</b>
+            </div>
+            <h3>Ars Magna</h3>
+            <p>An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned into real English words, by a deterministic search. Its name is an anagram of &ldquo;Anagrams.&rdquo;</p>
+            <p class="links"><a class="link" href="https://ars-magna.pages.dev/">Try it</a><a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--sky);--tilt:.8deg">
+            <div class="art art--list" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            <h3>English OpenList</h3>
+            <p>A free, open, continuously maintained list of valid English words, about 345,000 of them, with the provenance of every word: which sources attested it, and when. It keeps auditable correction records and has a browser explorer.</p>
+            <p class="links"><a class="link" href="https://english-openlist.pages.dev/">Explore</a><a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a><a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--yellow);--tilt:-.9deg">
+            <div class="art art--meteor" aria-hidden="true"><i class="meteor"></i><b class="field field--text">anchor text</b><b class="field field--url">URL</b></div>
+            <h3>Link Meteor</h3>
+            <p>A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing sources and exporting a research collection. No account, ads, telemetry or backend.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a><a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--pink);--tilt:.6deg">
+            <div class="art art--resmon" aria-hidden="true"><i class="sweep"></i><i class="blip" style="--x:30%;--y:34%;--d:0s"></i><i class="blip" style="--x:66%;--y:44%;--d:1.2s"></i><i class="blip" style="--x:44%;--y:70%;--d:2.3s"></i></div>
+            <h3>resmon</h3>
+            <p>A local-first literature-monitoring desktop application. It runs scheduled searches across open-access scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.</p>
+            <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Source</a></p>
+          </li>
+          <li class="card card--art" style="--c:var(--paper);--tilt:-.7deg">
+            <div class="art art--reword" aria-hidden="true"><span class="doc"><i></i><i></i><i></i><i></i></span><span class="arrow"></span><span class="book"><i></i><i></i><i></i></span></div>
+            <h3>reword_nerd</h3>
+            <p>A local-first browser workbench that turns a reviewed document, or a set of images, into a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate, explicit step, and it contacts no model provider itself.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Source</a></p>
+          </li>
+        </ul>
+
+        <p class="last"><b>And at the back of the shelf:</b> The Speed-Accuracy Trade-Off in Perceptual Decision-Making (April 2025), my undergraduate research capstone. It models evidence accumulation as a diffusion process and uses dynamic programming and value iteration to study decision boundaries in a simulated autonomous-vehicle obstacle-avoidance scenario. <a class="link" href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a> <a class="link" href="https://youtu.be/LRAP1YHy3g0">Video</a></p>
+      </div>
+    </section>
+
+    <section class="band band--pink" id="research">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__tag">The serious sticker</p>
+          <h2>Research</h2>
+        </header>
+        <div class="study">
+          <div class="study__prose">
+            <p>I&rsquo;m in the MS program in computer science at the University of Cincinnati, with a concentration in artificial intelligence, and expect to finish in May 2027. My thesis advisor is <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>. Before that, also at UC: a BA in mathematics and a BS in neuroscience, 2025.</p>
+            <p>What I&rsquo;d like to work on in digital media starts where Splashery leaves off: a splat is usually a way to look at a captured scene, and I&rsquo;m interested in what it becomes when it is a material instead, something a person can push around, recolor, hear and hand to a friend.</p>
+            <p class="links"><a class="link" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Read the CV</a></p>
+          </div>
+          <ul class="interests" aria-label="Research interests">
+            <li style="--c:var(--yellow);--tilt:-3deg">digital media</li>
+            <li style="--c:var(--paper);--tilt:2deg">computer graphics</li>
+            <li style="--c:var(--sky);--tilt:-1.5deg">scientific visualization</li>
+            <li style="--c:var(--orange);--tilt:2.5deg">software engineering</li>
+            <li style="--c:var(--violet);--fg:var(--paper);--tilt:-2deg">information retrieval</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="band band--ink" id="contact">
+    <div class="wrap">
+      <header class="head">
+        <p class="head__tag">Peel one off</p>
+        <h2>Contact</h2>
+      </header>
+      <ul class="elsewhere">
+        <li><a style="--c:var(--yellow);--tilt:-2deg" href="https://github.com/ryanjosephkamp">GitHub</a></li>
+        <li><a style="--c:var(--pink);--tilt:1.5deg" href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+        <li><a style="--c:var(--sky);--tilt:-1deg" href="https://x.com/ryanjosephkamp">X</a></li>
+        <li><a style="--c:var(--orange);--tilt:2deg" href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+        <li><a style="--c:var(--paper);--tilt:-2.5deg" href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+        <li><a style="--c:var(--teal);--tilt:1deg" href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+        <li><a style="--c:var(--yellow);--tilt:-1.5deg" href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+        <li><a style="--c:var(--pink);--tilt:2.5deg" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+      </ul>
+      <div class="colophon">
+        <p>&copy; 2026 Ryan Kamp. Set in Fredoka, whose strokes all end in half a splat.</p>
+        <p>The toy at the top is this page&rsquo;s own small renderer, written for it; Splashery&rsquo;s engine is PlayCanvas. No frameworks, no trackers, no batteries.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

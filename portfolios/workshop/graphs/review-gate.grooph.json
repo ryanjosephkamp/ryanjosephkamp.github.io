@@ -1,0 +1,185 @@
+{
+  "grooph": 0,
+  "id": "workshop-review-gate",
+  "name": "Workshop: review gate",
+  "version": 1,
+  "goal": "Draw the next part on the parts list for the toy on sheet 1, in concepts/workshop/kit.js: 640 Gaussian splats in all, shared between the parts by surface area and spread evenly over each. Done when every item in concepts/workshop/graphs/CHECKLIST.md is shown to hold, `node concepts/workshop/tools/measure.mjs` passes, and a human approves the merge.",
+  "target": {
+    "harness": "claude-code"
+  },
+  "lineage": {
+    "pattern": "review-gate",
+    "from": "review-gate@1"
+  },
+  "description": "A builder implements the task. A critic in a fresh context checks the diff and test output against a written checklist; failures return to the builder with REVIEW.md, and a pass goes to a human merge gate, whose rejection also returns to the builder. The loop stops when the bar passes, at its round cap, or at its dispatch budget. Builder and critic share a tier, which the validator flags; heterogeneous-critic is the same shape with the critic on another tier.",
+  "nodes": [
+    {
+      "id": "builder",
+      "kind": "agent",
+      "name": "Builder",
+      "role": "builder",
+      "model": {
+        "tier": "strong"
+      },
+      "effort": "high",
+      "brief": "Do the task in the code, with tests. On a later round, read REVIEW.md first and address each finding, or say why it does not apply. Run the test command before you report, and do not review your own work beyond that.",
+      "inputs": [
+        "the task",
+        "concepts/workshop/graphs/CHECKLIST.md",
+        "REVIEW.md (from round 1 on)"
+      ],
+      "outputs": [
+        "the change, with tests",
+        "CHANGES.md: what changed this round and which findings it addresses"
+      ],
+      "allow": [
+        "read-files",
+        "edit-files",
+        "run-tests"
+      ]
+    },
+    {
+      "id": "critic",
+      "kind": "agent",
+      "name": "Critic",
+      "role": "critic",
+      "model": {
+        "tier": "strong"
+      },
+      "effort": "high",
+      "brief": "Judge the change against the checklist, one line per item, citing the file and line that satisfies it or saying it is unmet; use the repository only to understand what the change touches. Run the test command yourself rather than trusting a report; you judge, you do not fix. Verdict pass only when every item holds and the tests pass; invalid-evidence when the diff or checklist cannot be read.",
+      "inputs": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "concepts/workshop/graphs/CHECKLIST.md"
+      ],
+      "outputs": [
+        "REVIEW.md: one line per checklist item and a verdict line",
+        "verdict: pass | fail | invalid-evidence"
+      ],
+      "allow": [
+        "read-files",
+        "write-outputs",
+        "run-tests"
+      ],
+      "deny": [
+        "edit-files"
+      ]
+    },
+    {
+      "id": "merge-gate",
+      "kind": "human-gate",
+      "name": "Merge approval",
+      "prompt": "The critic passed the change against the checklist. Merge it?",
+      "options": [
+        "approve",
+        "reject with feedback"
+      ]
+    },
+    {
+      "id": "done",
+      "kind": "stop",
+      "name": "Done",
+      "outcome": "success"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-builder-critic",
+      "from": "builder",
+      "to": "critic",
+      "evidence": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "output of node concepts/workshop/tools/measure.mjs",
+        "concepts/workshop/graphs/CHECKLIST.md"
+      ]
+    },
+    {
+      "id": "e-critic-fail",
+      "from": "critic",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "REVIEW.md"
+      ]
+    },
+    {
+      "id": "e-critic-pass",
+      "from": "critic",
+      "to": "merge-gate",
+      "when": "pass"
+    },
+    {
+      "id": "e-merge-gate-done",
+      "from": "merge-gate",
+      "to": "done",
+      "when": "pass"
+    },
+    {
+      "id": "e-merge-gate-reject",
+      "from": "merge-gate",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "the human's feedback"
+      ]
+    }
+  ],
+  "loops": [
+    {
+      "id": "review",
+      "name": "Review",
+      "members": [
+        "builder",
+        "critic",
+        "merge-gate"
+      ],
+      "back": [
+        "e-critic-fail",
+        "e-merge-gate-reject"
+      ],
+      "mode": "judgment",
+      "bar": {
+        "name": "Review checklist",
+        "inspects": [
+          {
+            "kind": "checklist",
+            "ref": "concepts/workshop/graphs/CHECKLIST.md"
+          },
+          {
+            "kind": "artifact",
+            "ref": "output of node concepts/workshop/tools/measure.mjs"
+          }
+        ],
+        "acceptance": "Every checklist item is cited as satisfied with a file and line, and `node concepts/workshop/tools/measure.mjs` exits 0."
+      },
+      "stops": [
+        {
+          "kind": "bar-passed"
+        },
+        {
+          "kind": "max-iterations",
+          "n": 4
+        },
+        {
+          "kind": "budget",
+          "measure": "dispatches",
+          "limit": 10
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "p-critic-isolation",
+      "kind": "critic-isolation",
+      "scope": "graph"
+    },
+    {
+      "id": "p-no-self-grading",
+      "kind": "no-self-grading",
+      "scope": "graph"
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+/*
+  Portfolios: a screening room. The header and footer keep the site's paper-minimal style
+  (../styles.css); everything between them is a dark stage lit by whichever poster the visitor
+  is looking at. One family, Archivo, set condensed for the billing and normal for reading;
+  each poster's title is set in its own site's typeface.
+*/
+
+@font-face {
+  font-family: "Archivo Stage";
+  src: url("assets/fonts/archivo-variable-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+
+/* Each poster's title, in the typeface its own site uses. */
+@font-face { font-family: "PF Recursive"; src: url("anagram-tiles/assets/fonts/recursive-latin.woff2") format("woff2"); font-weight: 300 1000; font-display: swap; }
+@font-face { font-family: "PF B612"; src: url("one-splat/assets/fonts/b612-normal-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "PF Newsreader"; src: url("specimen/assets/fonts/newsreader-latin.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "PF Fredoka"; src: url("toybox/assets/fonts/fredoka-latin.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "PF National Park"; src: url("workshop/assets/fonts/national-park-latin.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "PF Shantell"; src: url("molecule/assets/fonts/shantell-sans-latin.woff2") format("woff2"); font-weight: 300 800; font-display: swap; }
+@font-face { font-family: "PF Atkinson"; src: url("slice/assets/fonts/atkinson-hyperlegible-next-latin.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "PF Fell"; src: url("atlas/assets/fonts/im-fell-english-roman.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "PF Martian"; src: url("arcade/assets/fonts/martian-mono-latin.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+@property --stage-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(0.62 0.12 260);
+}
+
+:root {
+  /* The stage commits to one look in both site themes: a dark room lit by the posters. */
+  --stage: oklch(0.135 0.008 265);
+  --stage-deep: oklch(0.1 0.006 265);
+  --stage-ink: oklch(0.965 0.004 265);
+  --stage-dim: oklch(0.79 0.01 265);
+  --stage-faint: oklch(0.66 0.012 265);
+  --stage-line: oklch(0.32 0.012 265);
+  --stage-font: "Archivo Stage", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+main.stage {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  isolation: isolate;
+  color: var(--stage-ink);
+  background: var(--stage);
+  font-family: var(--stage-font);
+  font-stretch: 100%;
+  overflow: clip;
+  transition: --stage-glow 1.4s var(--ease-out);
+}
+
+/* The light from the active poster, spilling down from above and pooling under the wall. */
+main.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(110% 60% at 50% -8%, color-mix(in oklch, var(--stage-glow) 34%, transparent), transparent 68%),
+    radial-gradient(70% 40% at 50% 46%, color-mix(in oklch, var(--stage-glow) 12%, transparent), transparent 72%),
+    linear-gradient(to bottom, transparent 70%, var(--stage-deep));
+}
+
+.stage-inner {
+  width: min(100% - 32px, 1240px);
+  margin: 0 auto;
+}
+
+.stage a {
+  color: var(--stage-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+}
+
+.stage a:focus-visible,
+.stage button:focus-visible {
+  outline: 2px solid var(--stage-ink);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ---------- The marquee ---------- */
+
+.marquee {
+  display: grid;
+  gap: 1.4rem;
+  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(2.5rem, 6vw, 4.5rem);
+  text-align: center;
+  justify-items: center;
+}
+
+.marquee h1 {
+  max-width: none;
+  margin: 0;
+  color: var(--stage-ink);
+  font-family: var(--stage-font);
+  font-size: clamp(3.4rem, 11vw, 6rem);
+  font-stretch: 62%;
+  font-weight: 820;
+  letter-spacing: 0.01em;
+  line-height: 0.9;
+  text-transform: uppercase;
+  text-shadow: 0 0 60px color-mix(in oklch, var(--stage-glow) 45%, transparent);
+  transition: text-shadow 1.4s var(--ease-out);
+}
+
+.marquee .deck {
+  max-width: 46ch;
+  margin: 0;
+  color: var(--stage-dim);
+  font-size: clamp(1.05rem, 0.95rem + 0.5vw, 1.3rem);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.billing {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 1.1rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--stage-faint);
+  font-size: 0.86rem;
+  font-stretch: 70%;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.billing li + li::before {
+  content: "·";
+  margin-right: 1.1rem;
+  color: var(--stage-line);
+}
+
+.billing a {
+  color: var(--stage-dim);
+}
+
+@media (max-width: 520px) {
+  .billing {
+    flex-direction: column;
+    align-items: center;
+  }
+  .billing li + li::before {
+    content: none;
+  }
+}
+
+/* ---------- The wall ---------- */
+
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 248px), 1fr));
+  gap: clamp(2.6rem, 5vw, 4rem) clamp(1.4rem, 2.6vw, 2.2rem);
+  margin: 0;
+  padding: 0 0 clamp(4rem, 9vw, 7rem);
+  list-style: none;
+}
+
+.poster {
+  --glow: oklch(0.7 0.13 260);
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+  animation: poster-arrive 0.9s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes poster-arrive {
+  from {
+    transform: translateY(18px);
+  }
+}
+
+.poster__frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--stage-deep);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--stage-ink) 10%, transparent),
+    0 22px 48px -26px oklch(0 0 0 / 0.9);
+  transform: translateY(0);
+  transition:
+    transform 0.6s var(--ease-out),
+    box-shadow 0.6s var(--ease-out);
+}
+
+.poster__frame img,
+.poster__frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.poster__frame video {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease-out);
+}
+
+.poster.is-playing .poster__frame video.is-ready {
+  opacity: 1;
+}
+
+/* A thin lip of the poster's own color along the bottom, like light on the frame. */
+.poster__frame::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 38%;
+  pointer-events: none;
+  background: linear-gradient(to top, color-mix(in oklch, var(--glow) 22%, transparent), transparent);
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+}
+
+.poster.is-playing .poster__frame {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--glow) 55%, transparent),
+    0 34px 90px -30px color-mix(in oklch, var(--glow) 70%, transparent),
+    0 22px 48px -26px oklch(0 0 0 / 0.9);
+}
+
+.poster.is-playing .poster__frame::after {
+  opacity: 1;
+}
+
+.poster__credits {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0 0.15rem;
+}
+
+.poster__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.poster__title a {
+  text-decoration: none;
+}
+
+.poster__title a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--glow);
+}
+
+.poster__line {
+  max-width: 40ch;
+  margin: 0;
+  color: var(--stage-dim);
+  font-size: 0.97rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.poster__genre {
+  margin: 0.1rem 0 0;
+  color: var(--stage-faint);
+  font-size: 0.8rem;
+  font-stretch: 70%;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.poster__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.poster__actions a {
+  text-decoration-color: color-mix(in oklch, var(--glow) 70%, transparent);
+}
+
+.poster__actions a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Per-poster light and type. */
+.poster[data-slug="anagram-tiles"] { --glow: #4a68ff; }
+.poster[data-slug="anagram-tiles"] .poster__title { font-family: "PF Recursive", var(--stage-font); font-weight: 800; }
+.poster[data-slug="one-splat"] { --glow: #ff6a3a; }
+.poster[data-slug="one-splat"] .poster__title { font-family: "PF B612", var(--stage-font); text-transform: uppercase; letter-spacing: 0.02em; }
+.poster[data-slug="specimen"] { --glow: #e0476f; }
+.poster[data-slug="specimen"] .poster__title { font-family: "PF Newsreader", var(--stage-font); font-weight: 500; font-size: 1.65rem; }
+.poster[data-slug="toybox"] { --glow: #ffd23f; }
+.poster[data-slug="toybox"] .poster__title { font-family: "PF Fredoka", var(--stage-font); font-weight: 650; }
+.poster[data-slug="workshop"] { --glow: #e2493c; }
+.poster[data-slug="workshop"] .poster__title { font-family: "PF National Park", var(--stage-font); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+.poster[data-slug="overprint"] { --glow: #3fb3a8; }
+.poster[data-slug="overprint"] .poster__title { font-family: "PF Recursive", var(--stage-font); font-weight: 900; }
+.poster[data-slug="molecule"] { --glow: #ffe45c; }
+.poster[data-slug="molecule"] .poster__title { font-family: "PF Shantell", var(--stage-font); font-weight: 600; }
+.poster[data-slug="resonance"] { --glow: #d98d66; }
+.poster[data-slug="resonance"] .poster__title { font-family: var(--stage-font); font-weight: 900; font-stretch: 112%; text-transform: uppercase; }
+.poster[data-slug="slice"] { --glow: #ff4fae; }
+.poster[data-slug="slice"] .poster__title { font-family: "PF Atkinson", var(--stage-font); font-weight: 800; }
+.poster[data-slug="atlas"] { --glow: #51c9ad; }
+.poster[data-slug="atlas"] .poster__title { font-family: "PF Fell", var(--stage-font); font-weight: 400; font-size: 1.7rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.poster[data-slug="arcade"] { --glow: #7dffc6; }
+.poster[data-slug="arcade"] .poster__title { font-family: "PF Martian", var(--stage-font); font-weight: 400; text-transform: uppercase; font-size: 1.3rem; }
+
+/* ---------- Take one home ---------- */
+
+.take {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+  gap: clamp(2rem, 5vw, 5rem);
+  padding: clamp(3.5rem, 8vw, 6rem) 0 clamp(4rem, 9vw, 7rem);
+  border-top: 1px solid var(--stage-line);
+}
+
+@media (max-width: 760px) {
+  .take {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.take h2 {
+  max-width: 10ch;
+  margin: 0 0 1rem;
+  color: var(--stage-ink);
+  font-family: var(--stage-font);
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  font-stretch: 62%;
+  font-weight: 820;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.take p {
+  max-width: 44ch;
+  color: var(--stage-dim);
+  line-height: 1.65;
+}
+
+.steps {
+  display: grid;
+  gap: 1.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+  gap: 0 1.1rem;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  grid-row: span 2;
+  color: var(--stage-glow);
+  font-size: 3.2rem;
+  font-stretch: 62%;
+  font-weight: 820;
+  line-height: 0.9;
+  transition: color 1.4s var(--ease-out);
+}
+
+.steps h3 {
+  margin: 0 0 0.3rem;
+  color: var(--stage-ink);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.steps p {
+  margin: 0;
+}
+
+.steps code,
+.take code {
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  background: color-mix(in oklch, var(--stage-ink) 9%, transparent);
+  color: var(--stage-ink);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+.take .fine {
+  margin-top: 1.4rem;
+  color: var(--stage-faint);
+  font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main.stage,
+  .marquee h1,
+  .steps li::before,
+  .poster__frame,
+  .poster__frame video,
+  .poster__frame::after {
+    transition: none;
+  }
+  .poster {
+    animation: none;
+  }
+  .poster.is-playing .poster__frame {
+    transform: none;
+  }
+}

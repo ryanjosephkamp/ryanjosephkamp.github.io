@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ryan Kamp · Atlas</title>
+    <meta
+      name="description"
+      content="Ryan Kamp's portfolio as an engraved star atlas: one plate that zooms from the Milky Way to a ribosome, with the planets where they are today."
+    />
+    <meta name="theme-color" content="#0c0c0b" />
+    <script>
+      // The edition chosen on an earlier visit, set before the first paint (atlas.js sets the hue).
+      try {
+        var kept = localStorage.getItem('atlas:scheme');
+        if (kept && kept !== 'field-color') document.documentElement.dataset.scheme = kept;
+      } catch (e) {}
+    </script>
+    <link rel="preload" href="assets/fonts/im-fell-english-roman.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#plates">Skip to the projects</a>
+
+    <header class="top">
+      <p class="top-mark"><span class="sc">Atlas</span> <i>of the work of</i> <span class="sc">Ryan Kamp</span></p>
+      <nav aria-label="Sections">
+        <a href="#splashery">Splashery</a>
+        <a href="#plates">Plates</a>
+        <a href="#interests">Interests</a>
+        <a href="#links">Links</a>
+      </nav>
+      <details class="press" id="press" hidden>
+        <summary>
+          <i>Printed as</i> <span class="swatch s-field-color" id="press-swatch" aria-hidden="true"></span>
+          <span id="edition-name">Field, in color</span>
+        </summary>
+        <div class="press-panel">
+          <div class="press-list" role="group" aria-label="Edition: how the atlas is printed">
+            <button type="button" data-scheme="field-color" data-name="Field, in color" aria-pressed="true">
+              <span class="swatch s-field-color" aria-hidden="true"></span><span class="press-name">Field, in color</span>
+              <span class="press-note">White line on black, its marks in one color</span>
+            </button>
+            <button type="button" data-scheme="field" data-name="Field edition" aria-pressed="false">
+              <span class="swatch s-field" aria-hidden="true"></span><span class="press-name">Field edition</span>
+              <span class="press-note">White line on black, and nothing else</span>
+            </button>
+            <button type="button" data-scheme="one-color" data-name="Black and one color" aria-pressed="false">
+              <span class="swatch s-one-color" aria-hidden="true"></span><span class="press-name">Black and one color</span>
+              <span class="press-note">Black ink on laid paper, its marks in one color</span>
+            </button>
+            <button type="button" data-scheme="plain" data-name="Plain" aria-pressed="false">
+              <span class="swatch s-plain" aria-hidden="true"></span><span class="press-name">Plain</span>
+              <span class="press-note">Black ink on laid paper</span>
+            </button>
+            <button type="button" data-scheme="colored" data-name="Hand-colored" aria-pressed="false">
+              <span class="swatch s-colored" aria-hidden="true"></span><span class="press-name">Hand-colored</span>
+              <span class="press-note">Each sheet washed in its own color</span>
+            </button>
+            <button type="button" data-scheme="gilt" data-name="Indigo and gilt" aria-pressed="false">
+              <span class="swatch s-gilt" aria-hidden="true"></span><span class="press-name">Indigo and gilt</span>
+              <span class="press-note">White line on indigo, heightened with gold</span>
+            </button>
+          </div>
+          <div class="dial" id="dial">
+            <label for="hue"><i>Its color:</i> <span id="hue-name">green</span></label>
+            <input id="hue" type="range" min="0" max="359" step="1" value="175" />
+            <button type="button" id="hue-reset">As printed</button>
+            <p class="press-fine" id="dial-note">
+              Only the hue turns. Its lightness and strength stay where the edition sets them, so every position
+              reads as clearly as the first.
+            </p>
+          </div>
+        </div>
+      </details>
+    </header>
+
+    <main>
+      <!-- Plate I: the signature -->
+      <section class="hero" aria-labelledby="name">
+        <div class="cartouche">
+          <p class="plate-no">Plate I. <i>The measure of things</i></p>
+          <h1 id="name">Ryan Kamp</h1>
+          <p class="sub"><i>One plate, drawn at every size from a galaxy to a ribosome.</i></p>
+          <p>
+            Ryan Kamp is a graduate student in computer science at the University of Cincinnati. His research
+            interests are scientific visualization, computer graphics, digital media, software engineering, and
+            information retrieval. This atlas follows the first of them across twenty-nine powers of ten.
+          </p>
+          <p>
+            The plate is one continuous zoom. It takes the same journey as Powers of ten in
+            <a href="#splashery">Splashery</a>, his Gaussian splat playground: from the Milky Way down to a single
+            ribosome, by way of a garden bed beside the Smithsonian Castle. Here the journey is cut in line. The
+            planets and the Moon stand where they are at this minute, the Earth is turned as it is turned now, each
+            star sits at its cataloged distance, and the scale bar is true at every step.
+          </p>
+          <p class="how" id="how">Turn the wheel over the plate, drag it, slide the rule, or press the arrow keys.</p>
+        </div>
+
+        <div class="plate-wrap">
+          <canvas
+            id="plate"
+            class="plate"
+            tabindex="0"
+            role="img"
+            aria-label="An engraved plate that zooms from the Milky Way to a ribosome. Use the arrow keys to zoom, Page Up and Page Down to move between stops."
+          ></canvas>
+          <p class="plate-hint" id="plate-hint" hidden>Click the plate, then the wheel zooms it.</p>
+
+          <div class="readout" aria-live="polite">
+            <p class="stop-name" id="stop-name">The planets, out to Neptune</p>
+            <p class="stop-measure">
+              <span id="plate-size">The plate is about 84 AU across.</span>
+              <span id="plate-light">Light crosses it in 11 h 40 min.</span>
+            </p>
+            <p class="stop-source" id="plate-source"></p>
+          </div>
+
+          <div class="rule">
+            <button type="button" id="out" class="step" aria-label="Zoom out to the next stop">&#8592; <i>out</i></button>
+            <div class="rule-track">
+              <label class="visually-hidden" for="zoom">Scale of the plate, from the Milky Way to a ribosome</label>
+              <input id="zoom" type="range" min="0" max="2920" step="5" value="830" />
+              <div class="ticks" id="ticks" aria-hidden="true"></div>
+            </div>
+            <button type="button" id="in" class="step" aria-label="Zoom in to the next stop"><i>in</i> &#8594;</button>
+          </div>
+        </div>
+
+        <div class="stops-wrap">
+          <h2 class="minor">The stops, largest first</h2>
+          <ol class="stops" id="stops">
+            <li data-z="21.2" data-d="9.4607e20">
+              <b>The Milky Way</b>, about 100,000 light-years across. No one can draw it from outside: the spiral
+              is a diagram, set at the galaxy's true size and tilt, with the Sun 26,700 light-years from the center.
+            </li>
+            <li data-z="19.6" data-d="3.028e19">
+              <b>The naked-eye stars</b>, each where it really is. The ring is 1,600 light-years from the Sun.
+            </li>
+            <li data-z="18.2" data-d="1.23e18">
+              <b>The Sun's neighbors</b>. The ring is 65 light-years out; the bright ones are named.
+            </li>
+            <li data-z="16.1" data-d="9.4607e15"><b>One light-year</b>: the Sun alone.</li>
+            <li data-z="13.1" data-d="9.0e12">
+              <b>The planets, out to Neptune</b>. The orbits are about 60 AU (9 billion km) across, and every planet
+              stands where it is today.
+            </li>
+            <li data-z="11.95" data-d="4.56e11">
+              <b>Mercury, Venus, the Earth and Mars</b>. Mars's orbit is about 3 AU (456 million km) across.
+            </li>
+            <li data-z="9.05" data-d="7.688e8">
+              <b>The Earth and the Moon</b>, about 384,400 km apart on average, with the Moon's path for the coming
+              month.
+            </li>
+            <li data-z="7.3" data-d="1.2742e7">
+              <b>The Earth</b>, about 12,700 km across, its coasts turned as they are at this minute. The hatched
+              half is night.
+            </li>
+            <li data-z="5.7" data-d="3.22e5"><b>The Chesapeake Bay</b>, about 320 km long, and the Mid-Atlantic coast.</li>
+            <li data-z="4.5" data-d="2.27e4" data-layer="city" data-source="The District's boundary, its rivers and its motorways, from OpenStreetMap.">
+              <b>Washington, D.C.</b>, on the Potomac: a square whose sides are about 16 km, less the corner across
+              the river.
+            </li>
+            <li data-z="3.7" data-d="3.58e3" data-layer="mall" data-source="Water, streets and the larger buildings, from OpenStreetMap.">
+              <b>The National Mall</b>: 3.6 km from the Lincoln Memorial to the Capitol, center to center.
+            </li>
+            <li data-z="2.3" data-d="168" data-layer="garden" data-source="Every footprint, path, hedge, bed and tree, from OpenStreetMap.">
+              <b>The Enid A. Haupt Garden</b> beside the Smithsonian Castle, about 170 m long and 100 m deep, with
+              its parterre, its paths and its trees.
+            </li>
+            <li data-z="0.5" data-d="2" data-layer="bed" data-source="Contour lines of height, one every 10 cm, from the 3D capture Splashery uses. It was made elsewhere.">
+              <b>A garden bed</b> with a young full-moon maple, about 2 m long, drawn as contour lines of its height.
+            </li>
+            <li data-z="-0.8" data-d="0.09" data-layer="leaf" data-source="Traced from the photograph Splashery uses, by susteph.">
+              <b>One maple leaf</b>, about 9 cm across, its edge and its veins traced from a photograph.
+            </li>
+            <li data-z="-3.5" data-d="2e-4" data-layer="cells" data-source="Traced from a confocal picture by Fernán Federici: cells of Arabidopsis thaliana.">
+              <b>Cells inside a leaf</b>. The picture is 200 µm wide, and each small ring is a chloroplast.
+            </li>
+            <li data-z="-5.3" data-d="3.8e-6" data-layer="chloroplast" data-source="Traced from an electron micrograph by Kevin Mackenzie: a chloroplast in a bean leaf.">
+              <b>A chloroplast</b>, where a leaf turns light into food, about 3.8 µm long in this trace, with the
+              membranes inside it.
+            </li>
+            <li data-z="-7.45" data-d="2.2e-8" data-layer="ribosome" data-source="The outline of cryo-EM map EMD-48329 at its recommended level, and the backbone of its model, PDB 9MKK.">
+              <b>A ribosome</b>, the machine that builds proteins, about 22 nm across: the outline of its cryo-EM
+              map, with its chains of RNA and protein inside.
+            </li>
+          </ol>
+          <p class="fine">
+            Down to the Earth, every plate looks from the north of the ecliptic. Closing in on Washington, the view
+            swings round to look straight down on the garden, north up. From the city inward, every outline is the
+            true shape of the thing at its true size: the city from OpenStreetMap, and the rest traced from the
+            capture, the pictures and the cryo-EM map that Splashery shows at each scale. The leaf, the cells, the
+            chloroplast and the ribosome each come from a different plant or cell, as they do in Splashery.
+          </p>
+        </div>
+      </section>
+
+      <!-- Plate II: Splashery -->
+      <section class="sheet" id="splashery" aria-labelledby="h-splashery">
+        <header class="sheet-head">
+          <p class="plate-no">Plate II.</p>
+          <h2 id="h-splashery">Splashery</h2>
+          <p class="dates"><i>2026 to present</i></p>
+        </header>
+
+        <div class="lede">
+          <p>
+            An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy (a real captured
+            object, or one generated from a seed), spin it, poke it, blow on it, splash paint on it, drop it, watch
+            it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.
+          </p>
+          <p class="links">
+            <a href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+            <a href="https://github.com/ryanjosephkamp/splashery">Code</a>
+            <a href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer's Manual</a>
+          </p>
+        </div>
+
+        <div class="figs">
+          <article class="fig">
+            <div class="fig-art">
+              <canvas id="sky" class="sky" role="img" aria-label="The stars, planets and Moon over Cincinnati at the chosen time."></canvas>
+            </div>
+            <div class="fig-text">
+              <p class="fig-no">Fig. 1</p>
+              <h3>The night sky, for any date, time and place</h3>
+              <p>
+                Splashery puts you under the stars: every star to magnitude 6 from the HYG database, the
+                constellation lines, the Sun, the Moon and the planets, turned to the date, the hour and the place
+                you choose.
+              </p>
+              <p>
+                This chart is the sky over Cincinnati, drawn from the same catalog with the same formulas. The
+                zenith is at the center and the horizon is the rim. Drag the chart sideways, or slide the hours.
+              </p>
+              <div class="control">
+                <label for="hours"><i>Hours from now</i></label>
+                <input id="hours" type="range" min="-720" max="720" step="10" value="0" />
+                <button type="button" id="now">Now</button>
+              </div>
+              <p class="fig-read" id="sky-read" aria-live="polite">Cincinnati, Ohio: 39.10° N, 84.51° W.</p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/splashery/site/toys/night-sky/?labs=1">The Night sky toy</a>
+              </p>
+            </div>
+          </article>
+
+          <article class="fig flip">
+            <div class="fig-art">
+              <canvas id="helens" class="helens" role="img" aria-label="Contour lines of Mount St. Helens, before the eruption of May 18, 1980, or today."></canvas>
+            </div>
+            <div class="fig-text">
+              <p class="fig-no">Fig. 2</p>
+              <h3>Real landscapes from public data</h3>
+              <p>
+                The Grand Canyon that floods from the river up, the Mariana Trench under an ocean that drains away,
+                and Mount St. Helens before and after May 18, 1980, each built from public elevation data.
+              </p>
+              <p>
+                This map is Mount St. Helens from the same two grids, 11 km on a side, with a contour every 100 m.
+                Change the date and the summit goes: the highest point in the grid falls from 2,945 m to 2,533 m, and
+                the crater opens to the north.
+              </p>
+              <div class="control seg" role="group" aria-label="Which survey to draw">
+                <button type="button" id="before" aria-pressed="true">Before May 18, 1980</button>
+                <button type="button" id="after" aria-pressed="false">Today</button>
+              </div>
+              <p class="fig-read" id="helens-read" aria-live="polite">Highest point in the grid: 2,945 m.</p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/splashery/site/toys/st-helens/?labs=1">Mount St. Helens</a>
+                <a href="https://ryanjosephkamp.github.io/splashery/site/toys/grand-canyon/?labs=1">The Grand Canyon</a>
+                <a href="https://ryanjosephkamp.github.io/splashery/site/toys/sea-floor/?labs=1">The Mariana Trench</a>
+              </p>
+            </div>
+          </article>
+
+          <article class="fig text-only">
+            <div class="fig-text">
+              <p class="fig-no">Fig. 3</p>
+              <h3>Powers of ten</h3>
+              <p>
+                One continuous zoom from a galaxy down to a single molecular machine, through real pictures and data
+                at every scale: about 98,000 stars where they really are, the planets on their orbits, aerial
+                pictures of Washington at every half power of ten, a maple leaf, the cells of a leaf under the
+                microscope, and a ribosome from its cryo-EM map. <a href="#name">Plate I</a> follows its stops.
+              </p>
+              <div class="real">
+                <button type="button" id="load-real">Load the real toy here</button>
+                <p class="fine">
+                  It is Splashery itself, running in a frame: about 5 MB to begin with, and more pictures as you
+                  zoom. Or open
+                  <a href="https://ryanjosephkamp.github.io/splashery/site/toys/powers-of-ten/?labs=1">the Powers of ten toy</a>
+                  on its own page.
+                </p>
+              </div>
+            </div>
+            <div class="fig-text">
+              <p class="fig-no">Also on the shelves</p>
+              <h3>From atoms to weather</h3>
+              <p>
+                Climate records drawn from data: Mauna Loa CO2 as a spiral and GISTEMP temperature anomalies. A
+                ripple tank and a light bench. A molecule viewer that fetches entries from the Protein Data Bank. A
+                volume viewer for CT and MRI scans. Captured toys that are real scans of up to 450,000 splats, and
+                effects that run on the GPU for every splat, every frame.
+              </p>
+              <p>
+                It is static files and ES modules only: no build step, no framework, no server. Ryan defined the
+                project's vision and its toy categories, refined the interaction design through hands-on testing,
+                and contributed mathematical recipes.
+              </p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/splashery/?labs=1">Open Splashery with its labs shelves</a>
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Plates III to VI -->
+      <section class="sheet" id="plates" aria-labelledby="h-plates">
+        <header class="sheet-head">
+          <p class="plate-no">Plates III to VI.</p>
+          <h2 id="h-plates">Charted in detail</h2>
+        </header>
+
+        <div class="charts">
+          <article class="chart wide">
+            <svg class="art" viewBox="0 0 320 200" role="img" aria-label="A loop graph drawn as a constellation: build, check, a person decides, and a named stop.">
+              <g class="con-lines">
+                <path d="M60 140 L150 60 L250 90 L190 160 Z" />
+                <path d="M250 90 L292 40" class="gold-line" />
+              </g>
+              <path id="loop-path" d="M60 140 L150 60 L250 90 L190 160 Z" fill="none" stroke="none" />
+              <g class="con-stars">
+                <circle cx="60" cy="140" r="4" />
+                <circle cx="150" cy="60" r="5" />
+                <circle cx="250" cy="90" r="4.5" />
+                <circle cx="190" cy="160" r="3.5" />
+                <circle cx="292" cy="40" r="5" class="gold-star" />
+              </g>
+              <g class="con-names">
+                <text x="34" y="160">builds</text>
+                <text x="128" y="46">checks</text>
+                <text x="258" y="108">a person decides</text>
+                <text x="170" y="182">revises</text>
+                <text x="262" y="26" class="gold-text">stop</text>
+              </g>
+              <circle class="runner" r="3.2" />
+            </svg>
+            <div class="chart-text">
+              <p class="plate-no">Plate III.</p>
+              <h3>grooph</h3>
+              <p class="dates"><i>2026 to present</i></p>
+              <p>
+                Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person
+                decides and when the work stops. grooph checks that every loop names a stop, then compiles the graph
+                into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and
+                graphs stay on your device.
+              </p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/grooph/">Open</a>
+                <a href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+                <a href="https://github.com/ryanjosephkamp/grooph">Code</a>
+              </p>
+            </div>
+          </article>
+
+          <article class="chart">
+            <svg class="art" viewBox="0 0 320 170" role="img" aria-label="Meteors streaking from one radiant point, each ending in two fields: anchor text and URL.">
+              <g class="meteors">
+                <path d="M70 34 L150 76" />
+                <path d="M70 34 L196 52" />
+                <path d="M70 34 L120 120" />
+                <path d="M70 34 L236 104" />
+                <path d="M70 34 L176 136" />
+              </g>
+              <circle cx="70" cy="34" r="2.6" class="gold-star" />
+              <g class="fields">
+                <rect x="150" y="142" width="64" height="16" />
+                <rect x="218" y="142" width="88" height="16" />
+                <text x="156" y="154">anchor text</text>
+                <text x="224" y="154">URL</text>
+              </g>
+              <text x="52" y="22" class="tiny">radiant</text>
+            </svg>
+            <div class="chart-text">
+              <p class="plate-no">Plate IV.</p>
+              <h3>Link Meteor</h3>
+              <p>
+                A Chrome extension that collects links with their anchor text and URL in separate fields, for
+                reviewing sources and exporting a research collection. No account, ads, telemetry or backend.
+              </p>
+              <p class="links">
+                <a href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+                <a href="https://github.com/ryanjosephkamp/link-meteor">Code</a>
+              </p>
+            </div>
+          </article>
+
+          <article class="chart">
+            <svg class="art" viewBox="0 0 320 170" role="img" aria-label="A logarithmic rule from one to a million, with a gold index at about 345,000.">
+              <g class="logrule">
+                <line x1="20" y1="96" x2="300" y2="96" />
+                <g id="log-ticks"></g>
+                <g class="log-names">
+                  <text x="20" y="128">1</text>
+                  <text x="66.7" y="128">10</text>
+                  <text x="113.3" y="128">100</text>
+                  <text x="160" y="128">1,000</text>
+                  <text x="206.7" y="128">10<tspan dy="-5" font-size="8">4</tspan></text>
+                  <text x="253.3" y="128">10<tspan dy="-5" font-size="8">5</tspan></text>
+                  <text x="300" y="128">10<tspan dy="-5" font-size="8">6</tspan></text>
+                </g>
+              </g>
+              <g class="log-index">
+                <line x1="278.5" y1="52" x2="278.5" y2="104" />
+                <text x="278.5" y="42">about 345,000 words</text>
+              </g>
+            </svg>
+            <div class="chart-text">
+              <p class="plate-no">Plate V.</p>
+              <h3>English OpenList</h3>
+              <p class="dates"><i>December 2025 to present</i></p>
+              <p>
+                A free, open, continuously maintained list of valid English words, about 345,000 of them, with the
+                provenance of every word (which sources attested it, and when), auditable correction records, and a
+                browser explorer.
+              </p>
+              <p class="links">
+                <a href="https://english-openlist.pages.dev/">Explore</a>
+                <a href="https://github.com/ryanjosephkamp/english-openlist">Code</a>
+                <a href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+              </p>
+            </div>
+          </article>
+
+          <article class="chart wide">
+            <svg class="art" viewBox="0 0 320 150" role="img" aria-label="A survey line sweeping a field of points; repeats are struck out and the rest are kept.">
+              <g class="survey-stars">
+                <circle cx="38" cy="40" r="2" /><circle cx="74" cy="92" r="1.6" /><circle cx="104" cy="52" r="2.4" />
+                <circle cx="132" cy="110" r="1.6" /><circle cx="160" cy="34" r="2" /><circle cx="186" cy="84" r="2.6" />
+                <circle cx="214" cy="56" r="1.6" /><circle cx="242" cy="112" r="2" /><circle cx="270" cy="44" r="2.2" />
+                <circle cx="292" cy="90" r="1.6" />
+              </g>
+              <g class="survey-dupes">
+                <path d="M99 47 L109 57 M109 47 L99 57" />
+                <path d="M237 107 L247 117 M247 107 L237 117" />
+              </g>
+              <line class="sweep" x1="0" y1="14" x2="0" y2="136" />
+              <text x="20" y="144" class="tiny">sources swept on a schedule; repeats struck out</text>
+            </svg>
+            <div class="chart-text">
+              <p class="plate-no">Plate VI.</p>
+              <h3>resmon</h3>
+              <p class="dates"><i>April 2026 to present</i></p>
+              <p>
+                A local-first literature-monitoring desktop application. It runs scheduled searches across
+                open-access scholarly sources, removes duplicates, and compiles reading reports, with optional
+                summaries.
+              </p>
+              <p class="links"><a href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+            </div>
+          </article>
+        </div>
+
+        <h2 class="minor index-head">Index of further plates</h2>
+        <ol class="index">
+          <li>
+            <h3>reword_nerd</h3>
+            <p>
+              A local-first browser workbench that turns a reviewed document, or a set of images, into a portable
+              workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate,
+              explicit step, and the application contacts no model provider itself.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+              <a href="https://github.com/ryanjosephkamp/reword-nerd">Code</a>
+            </p>
+          </li>
+          <li>
+            <h3>Ars Magna</h3>
+            <p>
+              An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned
+              into real English words, by a deterministic search.
+            </p>
+            <p class="links">
+              <a href="https://ars-magna.pages.dev/">Try</a>
+              <a href="https://github.com/ryanjosephkamp/ars-magna">Code</a>
+            </p>
+          </li>
+          <li>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+              <a href="https://github.com/ryanjosephkamp/aqrobat">Code</a>
+            </p>
+          </li>
+          <li>
+            <h3>Amordle</h3>
+            <p>
+              A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked
+              multiplayer with an Elo rating.
+            </p>
+            <p class="links">
+              <a href="https://amordle.vercel.app">Play</a>
+              <a href="https://github.com/ryanjosephkamp/amordle">Code</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a>
+            </p>
+          </li>
+          <li class="last">
+            <h3>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</h3>
+            <p>
+              Ryan's undergraduate research capstone, April 2025: evidence accumulation modeled as a diffusion
+              process, with dynamic programming and value iteration, in a simulated obstacle-avoidance scenario.
+            </p>
+            <p class="links">
+              <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a>
+              <a href="https://youtu.be/LRAP1YHy3g0">Video</a>
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <!-- Interests and links -->
+      <section class="sheet two" id="interests" aria-labelledby="h-interests">
+        <div>
+          <header class="sheet-head left">
+            <p class="plate-no">Legend.</p>
+            <h2 id="h-interests">Research interests</h2>
+          </header>
+          <ul class="legend">
+            <li class="first"><span class="mag m1"></span>Scientific visualization</li>
+            <li><span class="mag m2"></span>Computer graphics</li>
+            <li><span class="mag m3"></span>Digital media</li>
+            <li><span class="mag m4"></span>Software engineering</li>
+            <li><span class="mag m5"></span>Information retrieval</li>
+          </ul>
+          <p>
+            MS in Computer Science, concentration in Artificial Intelligence, University of Cincinnati, August 2025
+            to expected May 2027. Thesis advisor:
+            <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.
+          </p>
+          <p>
+            BA in Mathematics and BS in Neuroscience, University of Cincinnati, January 2020 to May 2025. Capstone
+            advisor: <a href="https://sites.google.com/view/hkimmathbio/home">Dr. Hyunjoong Kim</a>.
+          </p>
+        </div>
+        <div id="links">
+          <header class="sheet-head left">
+            <p class="plate-no">Bearings.</p>
+            <h2>Where to find him</h2>
+          </header>
+          <ul class="bearings">
+            <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Curriculum vitae</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/repositories/">Repositories</a></li>
+            <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+            <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+            <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+            <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+            <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="colophon">
+      <p class="sc">Colophon</p>
+      <p>
+        Stars: the HYG database v4.1 by David Nash, CC BY-SA 4.0. Constellation lines: the Stellarium team's Western
+        sky culture, CC BY-SA. Planets: E. M. Standish's Keplerian elements for approximate positions (JPL). The
+        Moon: the low-precision series of the Astronomical Almanac. Mount St. Helens: the USGS pre-1980 DEM and
+        USGS 3DEP, public domain. Coastlines: Natural Earth, public domain. Washington, from the
+        city to the garden: ©
+        <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Open Database License.
+        The garden bed: <a href="https://superspl.at/scene/f233b115">Golden Fullmoon Maple</a>, a 3D capture by
+        Joshua Trapani, CC BY 4.0. The leaf:
+        <a href="https://www.flickr.com/photos/28012136@N08/2649442904">Golden Full Moon Maple</a> by susteph,
+        CC BY 2.0. The cells:
+        <a href="https://wellcomecollection.org/works/gwmfux6b">Arabidopsis thaliana plant cells containing chloroplasts</a>
+        by Fernán Federici, CC BY 4.0. The chloroplast:
+        <a href="https://wellcomecollection.org/works/bx3dctp2">Chloroplast in a bean leaf, TEM</a> by Kevin
+        Mackenzie, University of Aberdeen, CC BY 4.0. The ribosome: cryo-EM map
+        <a href="https://www.ebi.ac.uk/emdb/EMD-48329">EMD-48329</a> and its model, PDB 9MKK (Majumdar and others,
+        2025). Each of these is traced here as line work, at its true size. The data files and the astronomy module are Splashery's own. Set in IM Fell
+        English, Igino Marini's revival of the Fell types, under the SIL Open Font License.
+      </p>
+      <p><a href="../../">The other concepts</a></p>
+    </footer>
+
+    <script type="module" src="atlas.js"></script>
+  </body>
+</html>

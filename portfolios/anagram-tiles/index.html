@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — splats, words, and tools</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati, interested in scientific visualization and computer graphics. His projects include Splashery, a playground of Gaussian splats, and tools for words.">
+  <meta name="theme-color" content="#2b45d4">
+  <meta property="og:title" content="Ryan Kamp">
+  <meta property="og:description" content="Eight letters, 20,160 orderings, a handful of them English. Graduate student in computer science: Gaussian splats, and tools for words.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ryanjosephkamp.github.io/portfolios/anagram-tiles/">
+  <meta property="og:image" content="https://ryanjosephkamp.github.io/portfolios/anagram-tiles/assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232b45d4'/%3E%3Crect x='11' y='9' width='42' height='42' rx='7' fill='%23c9d0ee'/%3E%3Crect x='11' y='6' width='42' height='42' rx='7' fill='%23fff'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-family='ui-monospace,Menlo,monospace' font-weight='900' font-size='28' fill='%23141a33'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/recursive-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#work">Skip to work</a>
+
+  <header class="hero" id="top">
+    <nav class="nav wrap" aria-label="Primary">
+      <a class="nav__mark" href="#top" aria-label="Ryan Kamp, top of page">RK</a>
+      <ul>
+        <li><a href="#work">Work</a></li>
+        <li><a href="#research">Research</a></li>
+        <li><a href="#writing">Writing</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="hero__stage wrap">
+      <h1 class="sr-only">Ryan Kamp</h1>
+      <p class="hero__lede">Eight letters, currently spelling</p>
+      <div class="tiles" id="name-tiles" aria-hidden="true">RYAN KAMP</div>
+      <p class="gloss" aria-live="polite">
+        <b class="gloss__word" id="gloss-word">RYAN KAMP</b><i class="gloss__pos" id="gloss-pos">proper noun</i><span class="gloss__def" id="gloss-def">Graduate student in computer science at the University of Cincinnati.</span>
+      </p>
+      <div class="hero__controls">
+        <button class="btn" id="rearrange" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+          Rearrange
+        </button>
+        <span class="found">
+          <span class="pips" id="pips" aria-hidden="true"><i class="is-on"></i><i></i><i></i><i></i><i></i></span>
+          <span id="found-count">1 of 5 found</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="shelf" id="shelf" aria-hidden="true"></div>
+
+    <div class="hero__foot wrap">
+      <p class="hero__intro">I&rsquo;m a master&rsquo;s student in computer science at the <a href="https://www.uc.edu/">University of Cincinnati</a>. My research interests are scientific visualization and computer graphics. I also make tools for words, which is why my name comes apart.</p>
+      <p class="hero__inventory"><b>A A K M N P R Y</b><br>Ordering <b class="rank" id="rank">17,359</b> of 20,160, shown above between its alphabetical neighbors. A handful are English. Drag the tiles<span class="type-hint">, or just type</span>.</p>
+    </div>
+  </header>
+
+  <nav class="dock" id="dock" aria-label="Sections" inert>
+    <a class="dock__mark" href="#top" aria-label="Back to the top">RK</a>
+    <a href="#work">Work</a>
+    <a href="#research">Research</a>
+    <a href="#writing">Writing</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <main>
+    <section class="section" id="work">
+      <div class="wrap">
+        <header class="head">
+          <h2>work<i>noun</i></h2>
+          <p>Things built on purpose: Gaussian splats you can play with, tools for words, and tools for the people and agents who work with them.</p>
+        </header>
+
+        <article class="plate">
+          <div class="plate__text">
+            <h3>Splashery</h3>
+            <p class="plate__tag">Splats you can play with.</p>
+            <p class="plate__desc">A toy box of 3D Gaussian splats that runs entirely in the browser. Pick a toy, spin it, poke it, splash paint on it, drop it, watch it fall apart and come back, then share it as a link, a GIF or a video.</p>
+            <p class="plate__meta">WebGPU, with WebGL2 fallback · no build step, no framework, no server</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/splashery">Source</a>
+            </p>
+          </div>
+          <div class="plate__art art--splash" role="img" aria-label="A slowly turning blob made of soft, glowing splats. It scatters when the pointer touches it.">
+            <canvas id="splat"></canvas>
+            <p class="art__caption" aria-hidden="true">Touch it. The splats scatter, then spring home.</p>
+          </div>
+        </article>
+
+        <article class="plate">
+          <div class="plate__text">
+            <h3>grooph</h3>
+            <p class="plate__tag">Loop graphs for coding agents.</p>
+            <p class="plate__desc">Draw who builds, who checks, where a person decides and when the work stops. grooph checks that every loop names a stop, then compiles the graph into a prompt package for Claude Code. It never runs an agent and never calls a model.</p>
+            <p class="plate__meta">TypeScript · built for a phone · works offline</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open the app</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/grooph">Source</a>
+            </p>
+          </div>
+          <div class="plate__art art--grooph">
+            <svg viewBox="0 0 600 250" role="img" aria-label="A loop graph: the builder hands work to the critic. If the bar is not met, the work loops back to the builder. When the bar passes, the run stops for a person to decide.">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="oklch(0.2 0.045 264)"/></marker>
+              </defs>
+              <path class="g-edge g-edge--loop" d="M280 108 C 280 22, 75 22, 75 104" marker-end="url(#arrow)"/>
+              <path class="g-edge" d="M140 140 H209" marker-end="url(#arrow)"/>
+              <path class="g-edge" d="M345 140 H434" marker-end="url(#arrow)"/>
+              <text class="g-label" x="178" y="34" text-anchor="middle">bar not met: go again</text>
+              <text class="g-label" x="390" y="128" text-anchor="middle">bar passed</text>
+              <g class="g-node"><rect x="10" y="110" width="130" height="60" rx="14"/><text x="75" y="140">Builder</text></g>
+              <g class="g-node g-node--stop"><rect x="215" y="110" width="130" height="60" rx="14"/><text x="280" y="140">Critic</text></g>
+              <g class="g-node g-node--you"><rect x="440" y="110" width="150" height="60" rx="14"/><text x="515" y="140">You decide</text></g>
+              <text class="g-label" x="75" y="196" text-anchor="middle">builds</text>
+              <text class="g-label" x="280" y="196" text-anchor="middle">inspects the bar</text>
+              <text class="g-label" x="515" y="196" text-anchor="middle">the loop stops here</text>
+              <circle class="g-token" r="7">
+                <animateMotion dur="5.2s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0.16;0.16;0.62;0.62;0.78;0.78;1" keyTimes="0;0.12;0.2;0.52;0.6;0.72;0.8;1" path="M140 140 H212 M280 108 C 280 22, 75 22, 75 108 M140 140 H212 M345 140 H437"/>
+              </circle>
+            </svg>
+          </div>
+        </article>
+
+        <article class="plate">
+          <div class="plate__text">
+            <h3>Ars Magna</h3>
+            <p class="plate__tag">An anagram of &ldquo;Anagrams.&rdquo; Also Latin for <i>the great art</i>.</p>
+            <p class="plate__desc">Give it any text. It returns every way those exact letters can be re-partitioned into real English words: spaces move freely, every letter is used exactly once, nothing is added and nothing is dropped.</p>
+            <p class="plate__meta">TypeScript · deterministic search · no AI</p>
+            <p class="links">
+              <a class="link" href="https://ars-magna.pages.dev/">Try it</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Source</a>
+            </p>
+          </div>
+          <div class="plate__art art--ars">
+            <div class="tiles" id="ars-tiles" aria-hidden="true">ARS MAGNA</div>
+            <p class="art__caption"><b id="ars-label">ARS MAGNA</b> &middot; same eight letters either way. Click, or drag one.</p>
+          </div>
+        </article>
+
+        <article class="plate">
+          <div class="plate__text">
+            <h3>Amordle</h3>
+            <p class="plate__tag">Wordle + Hurdle + Lichess &minus; ads.</p>
+            <p class="plate__desc">A free word game with any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer against other people with a real Elo rating attached. No ads, no paywalls.</p>
+            <p class="plate__meta">Solo · daily · ranked combat · forty rating pools</p>
+            <p class="links">
+              <a class="link" href="https://amordle.vercel.app">Play</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Why I built it</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/amordle">Source</a>
+            </p>
+          </div>
+          <div class="plate__art art--amordle" role="img" aria-label="A staircase of word tiles, from the two-letter GO up to the seven-letter AMORDLE.">
+            <ul class="stairs" aria-hidden="true">
+              <li style="--r:0"><b class="g" style="--i:0">G</b><b class="y" style="--i:1">O</b></li>
+              <li style="--r:1"><b class="g" style="--i:0">E</b><b style="--i:1">L</b><b class="y" style="--i:2">O</b></li>
+              <li style="--r:2"><b class="g" style="--i:0">W</b><b style="--i:1">O</b><b style="--i:2">R</b><b class="y" style="--i:3">D</b></li>
+              <li style="--r:3"><b class="g" style="--i:0">G</b><b style="--i:1">U</b><b style="--i:2">E</b><b style="--i:3">S</b><b class="y" style="--i:4">S</b></li>
+              <li style="--r:4"><b class="g" style="--i:0">H</b><b style="--i:1">U</b><b style="--i:2">R</b><b style="--i:3">D</b><b style="--i:4">L</b><b class="y" style="--i:5">E</b></li>
+              <li style="--r:5"><b class="g" style="--i:0">A</b><b class="g" style="--i:1">M</b><b class="g" style="--i:2">O</b><b class="g" style="--i:3">R</b><b class="g" style="--i:4">D</b><b class="g" style="--i:5">L</b><b class="g" style="--i:6">E</b></li>
+            </ul>
+          </div>
+        </article>
+
+        <div class="index">
+          <h3 class="index__title">Also on the shelf</h3>
+          <ul>
+            <li>
+              <h4>English OpenList</h4>
+              <p>A free, open, continuously maintained list of valid English words, about 345,000 so far, with the provenance of every one: which sources attested it, and when.</p>
+              <p class="links">
+                <a class="link" href="https://english-openlist.pages.dev/">Explore</a>
+                <a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+                <a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Source</a>
+              </p>
+            </li>
+            <li>
+              <h4>resmon</h4>
+              <p>Research Monitor: an automated literature surveillance desktop app. It watches open-access scholarly repositories, gathers new papers against your criteria, and compiles reading reports, with optional LLM summaries.</p>
+              <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Source</a></p>
+            </li>
+            <li>
+              <h4>Link Meteor</h4>
+              <p>A free Chrome extension for collecting links with their actual anchor text and URL in separate fields. No account, ads, telemetry or backend.</p>
+              <p class="links">
+                <a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+                <a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Source</a>
+              </p>
+            </li>
+            <li>
+              <h4>aqrobat</h4>
+              <p>A lightweight, local text and emoji QR lab: build QR artwork from letters, symbols or emoji, right in the browser.</p>
+              <p class="links">
+                <a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+                <a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Source</a>
+              </p>
+            </li>
+            <li>
+              <h4>reword_nerd</h4>
+              <p>A local-first browser workbench that turns documents and image sets into portable, reviewable prompt packages for rewriting. It never contacts a model provider itself.</p>
+              <p class="links">
+                <a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+                <a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+                <a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Source</a>
+              </p>
+            </li>
+            <li>
+              <h4>Capstone</h4>
+              <p>The speed-accuracy trade-off in perceptual decision-making, my undergraduate research capstone. It models evidence accumulation as a diffusion process and uses dynamic programming and value iteration to study decision boundaries in a simulated obstacle-avoidance scenario.</p>
+              <p class="links">
+                <a class="link" href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Source</a>
+                <a class="link" href="https://youtu.be/LRAP1YHy3g0">Video</a>
+              </p>
+            </li>
+          </ul>
+          <p class="more"><a class="link" href="https://github.com/ryanjosephkamp?tab=repositories">Everything else on GitHub</a></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--wash" id="research">
+      <div class="wrap">
+        <header class="head">
+          <h2>research<i>noun</i></h2>
+          <p>What I&rsquo;m trying to find out, roughly in the order I&rsquo;d bring it up at dinner.</p>
+        </header>
+
+        <div class="study">
+          <div class="study__prose">
+            <p>I started the MS program in computer science at the University of Cincinnati in the fall of 2025. My thesis advisor is <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.</p>
+            <p>My research interests are scientific visualization, computer graphics, digital media, software engineering and information retrieval. Splashery, my Gaussian splat playground, is where I explore the first three.</p>
+            <p class="links"><a class="link" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Read the CV</a></p>
+          </div>
+          <ul class="interests">
+            <li><small>vis.</small><span>Scientific visualization</span></li>
+            <li><small>gfx.</small><span>Computer graphics</span></li>
+            <li><small>media</small><span>Digital media</span></li>
+            <li><small>SE</small><span>Software engineering</span></li>
+            <li><small>IR</small><span><em>&hellip;and</em> information retrieval</span></li>
+          </ul>
+        </div>
+
+        <dl class="also">
+          <div>
+            <dt>professionally</dt>
+            <dd><span class="swap-line"><span data-swap="software|prompt|context|loop|graph">software / prompt / context / loop / graph</span> engineering</span></dd>
+            <dd>research tooling</dd>
+            <dd><span class="dim">occasional</span> game development</dd>
+          </div>
+          <div>
+            <dt>personally</dt>
+            <dd class="crescendo"><span>words,</span><span>more words,</span><span>and even more words</span></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section" id="writing">
+      <div class="wrap">
+        <header class="head">
+          <h2>writing<i>noun</i></h2>
+          <p>Longer explanations of why the things above exist.</p>
+        </header>
+        <ul class="posts">
+          <li><a href="https://ryanjosephkamp.github.io/blog/articles/amordle/">
+            <h3>Amordle: the Lichess of Wordle</h3>
+            <p>A free Wordle&ndash;Hurdle hybrid with ranked multiplayer, any word length from 2 to 35, and no ads.</p>
+            <span aria-hidden="true">&#8599;</span>
+          </a></li>
+          <li><a href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">
+            <h3>reword_nerd: local prompt packages for text and images</h3>
+            <p>A local-first browser workbench for text rewording and image regeneration prompt packages.</p>
+            <span aria-hidden="true">&#8599;</span>
+          </a></li>
+        </ul>
+        <p class="more"><a class="link" href="https://ryanjosephkamp.github.io/blog/">All posts</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="contact" id="contact">
+    <div class="wrap">
+      <header class="head">
+        <h2>contact<i>verb</i></h2>
+        <p>To reach; to get in touch with. The usual places, any of which will do.</p>
+      </header>
+      <ul class="elsewhere">
+        <li><a href="https://github.com/ryanjosephkamp">GitHub <small>ryanjosephkamp</small></a></li>
+        <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn <small>ryanjosephkamp</small></a></li>
+        <li><a href="https://x.com/ryanjosephkamp">X <small>@ryanjosephkamp</small></a></li>
+        <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face <small>datasets</small></a></li>
+        <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube <small>@RyanJosephKamp</small></a></li>
+        <li><a href="https://ryanjosephkamp.github.io/blog/">Blog <small>posts</small></a></li>
+        <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV <small>PDF</small></a></li>
+      </ul>
+      <div class="colophon">
+        <p>&copy; 2026 Ryan Kamp &middot; Earth (for now)</p>
+        <p>Set in Recursive. No frameworks, no trackers. <i>ad astra</i></p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

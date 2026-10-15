@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ryan Kamp · Slice</title>
+    <meta
+      name="description"
+      content="Ryan Kamp builds ways to see inside things. Two real CT scans on a light box, a walnut and a young gar's head: cut them on three planes, set the window, turn the cutaway."
+    />
+    <meta property="og:title" content="Ryan Kamp · Slice" />
+    <meta property="og:description" content="Two real CT scans on a light box: a walnut and a young gar's head. Cut them, window them, turn them." />
+    <meta property="og:image" content="https://ryanjosephkamp.github.io/portfolios/slice/assets/og.jpg" />
+    <meta name="theme-color" content="#eef4f6" />
+    <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#findings">Skip to the projects</a>
+
+    <header class="rail">
+      <p class="rail-name"><span class="lamp" aria-hidden="true"></span><span class="rail-text">Light box 1</span></p>
+      <nav aria-label="Sections">
+        <a href="#splashery">Splashery</a>
+        <a href="#findings">Findings</a>
+        <a href="#impression">Impression</a>
+        <a href="#follow-up">Follow-up</a>
+      </nav>
+    </header>
+
+    <main>
+      <!-- ================= The exam ================= -->
+      <section class="exam" aria-labelledby="name">
+        <div class="exam-words">
+          <div class="who">
+            <p class="tag">Exam: one walnut, one gar, X-ray CT</p>
+            <h1 id="name">Ryan Kamp</h1>
+            <p class="lede">builds ways to <mark>see inside things</mark>.</p>
+          </div>
+          <div class="what">
+            <p>
+              A graduate student in computer science at the University of Cincinnati, with a degree in
+              neuroscience and another in mathematics. Clipped to the box are two real CT scans, the
+              samples that ship in the volume viewer of <a href="#splashery">Splashery</a>, his
+              Gaussian splat playground: a walnut, and the head of a young gar.
+            </p>
+            <p class="how">
+              <strong><span class="for-mouse">Move across</span><span class="for-touch">Tap, or drag sideways on,</span>
+              any picture to cut the scan there.</strong> The last picture is the scan with that corner
+              carved away; drag it to turn it. The strip underneath sets the window, and the two
+              labels on the film change the scan.
+            </p>
+          </div>
+        </div>
+
+        <figure class="film film-exam" id="viewer" aria-labelledby="viewer-cap">
+          <div class="clip" aria-hidden="true"></div>
+          <div class="clip clip-2" aria-hidden="true"></div>
+          <div class="burn burn-head">
+            <span class="scans" role="group" aria-label="Scan on the box">
+              <button type="button" data-scan="walnut" aria-pressed="true">Walnut</button>
+              <button type="button" data-scan="gar" aria-pressed="false">Gar's head</button>
+            </span>
+            <span id="burn-title">WALNUT 1 · X-RAY CT</span>
+            <span id="burn-pos">113 × 115 × 142 voxels · 0.3 mm</span>
+          </div>
+
+          <img
+            class="film-fallback"
+            id="sheet-data"
+            src="assets/walnut-sheet.png"
+            width="1356"
+            height="1380"
+            alt="A contact sheet of all 142 slices of a CT scan of a walnut, top to bottom: the shell as a bright ring, the kernel folded inside it."
+          />
+
+          <div class="panes">
+            <div class="row">
+              <div class="pane" data-cut="top" style="--a: 0.983">
+                <div class="view" tabindex="0" role="group" aria-label="Top down cut. Arrow keys move the cut lines; Page Up and Page Down step this slice.">
+                  <canvas width="113" height="115"></canvas>
+                  <i class="hair hair-v"></i><i class="hair hair-h"></i>
+                </div>
+                <p class="burn"><b>Top down</b> <span data-readout></span></p>
+              </div>
+              <div class="pane" data-cut="view" style="--a: 0.729">
+                <div class="view" tabindex="0" role="group" aria-label="The scan as a solid, with the corner at the cut lines carved away. Left and right arrow keys turn it.">
+                  <canvas width="132" height="181"></canvas>
+                </div>
+                <p class="burn">
+                  <span class="modes" role="group" aria-label="The fourth picture">
+                    <button type="button" data-mode="cutaway" aria-pressed="true">Cutaway</button>
+                    <button type="button" data-mode="mip" aria-pressed="false">Maximum intensity</button>
+                  </span>
+                  <span data-readout></span>
+                </p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="pane" data-cut="front" style="--a: 0.796">
+                <div class="view" tabindex="0" role="group" aria-label="Front to back cut. Arrow keys move the cut lines; Page Up and Page Down step this slice.">
+                  <canvas width="113" height="142"></canvas>
+                  <i class="hair hair-v"></i><i class="hair hair-h"></i>
+                  <span class="scale" aria-hidden="true"><i></i>10 mm</span>
+                </div>
+                <p class="burn"><b>Front to back</b> <span data-readout></span></p>
+              </div>
+              <div class="pane" data-cut="side" style="--a: 0.81">
+                <div class="view" tabindex="0" role="group" aria-label="Side to side cut. Arrow keys move the cut lines; Page Up and Page Down step this slice.">
+                  <canvas width="115" height="142"></canvas>
+                  <i class="hair hair-v"></i><i class="hair hair-h"></i>
+                </div>
+                <p class="burn"><b>Side to side</b> <span data-readout></span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="window">
+            <div class="wedge" aria-hidden="true">
+              <canvas id="hist" width="512" height="56"></canvas>
+              <div class="band" id="band"><i class="grip grip-lo"></i><i class="grip grip-hi"></i></div>
+            </div>
+            <div class="sliders">
+              <label>Level <input type="range" id="level" min="1" max="254" value="166" /><output id="level-out">166</output></label>
+              <label>Width <input type="range" id="width" min="2" max="254" value="178" /><output id="width-out">178</output></label>
+            </div>
+            <div class="presets" role="group" aria-label="Window presets">
+              <button type="button" data-preset="full" aria-pressed="true">Full range</button>
+              <button type="button" data-preset="soft" aria-pressed="false">Soft tissue</button>
+              <button type="button" data-preset="bone" aria-pressed="false">Bone</button>
+              <button type="button" id="colors" aria-pressed="false">Bone and tissue colors</button>
+            </div>
+            <p class="burn count" id="count" aria-live="polite"></p>
+          </div>
+
+          <figcaption id="viewer-cap">
+            <span data-credit="walnut">
+              Walnut 1 from the CWI cone-beam CT collection, averaged to 0.3 mm voxels. Every picture
+              is read live from the scan's 1,845,290 voxels.
+            </span>
+            <span data-credit="gar" hidden>
+              A 12.8 mm gar larva, micro-CT by Brian Metscher, averaged to 17.7 µm voxels and cropped
+              to the fish. Every picture is read live from the scan's 2,854,656 voxels.
+            </span>
+            Credits are at the foot of the page.
+          </figcaption>
+        </figure>
+      </section>
+
+      <!-- ================= Splashery ================= -->
+      <section class="series" id="splashery" aria-labelledby="splashery-h">
+        <header class="series-head">
+          <p class="tag">Series 1 · 2026 to present</p>
+          <h2 id="splashery-h">Splashery</h2>
+          <p class="big">
+            An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy (a
+            real captured object, or one generated from a seed), spin it, poke it, blow on it, splash
+            paint on it, drop it, watch it fall apart and come back, make your own, and share it as a
+            link, an embed, a GIF or a video.
+          </p>
+          <p class="links">
+            <a href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+            <a href="https://github.com/ryanjosephkamp/splashery">Code</a>
+            <a href="https://ryanjosephkamp.github.io/splashery/manual/">Tinkerer's Manual</a>
+          </p>
+          <p class="part">
+            Ryan defined the project's vision and its toy categories, refined the interaction design
+            through hands-on testing, and contributed mathematical recipes.
+          </p>
+        </header>
+
+        <div class="wall">
+          <article class="film film-text">
+            <p class="burn">A · THE VOLUME VIEWER</p>
+            <h3>Open a scan of your own</h3>
+            <p>
+              The volume viewer opens a CT, MRI or microscope scan (DICOM, NIfTI, a TIFF stack or a raw
+              volume) on your device, so nothing is uploaded, and draws it as splats. It has window and
+              level with presets for bone, soft tissue and the full range, a transfer function for
+              colors and opacity, a cut plane on each axis that a drag moves, a thin-slice view, and a
+              maximum-intensity picture.
+            </p>
+            <p>
+              Its samples are real scans of things that aren't people: the walnut and the young gar's
+              head on the box above. The viewer sits behind Splashery's
+              <a href="https://ryanjosephkamp.github.io/splashery/?labs=1">labs switch</a>.
+            </p>
+          </article>
+
+          <figure class="film film-sheet" id="sheet">
+            <div class="sheet-frame">
+              <img src="assets/walnut-sheet.png" width="1356" height="1380" loading="lazy" alt="All 142 slices of the walnut on one sheet, twelve to a row." />
+              <i class="ring" id="ring" aria-hidden="true"></i>
+            </div>
+            <figcaption>
+              <span class="burn" id="sheet-count">THE WHOLE EXAM · 142 SLICES · 12 TO A ROW</span>
+              The ring marks the slice in the top-down picture. Choose any slice to hang it there.
+            </figcaption>
+          </figure>
+
+          <article class="film film-text film-ct">
+            <div class="ct-words">
+            <p class="burn">B · HOW A CT SEES</p>
+            <h3>Toys that show how the machines see</h3>
+            <p>
+              A CT ring sweeps along a nautilus shell and builds its volume slice by slice, then a drag
+              cuts into it. A kiwi's or an orange's MRI slices scroll under a drag. Bags ride a belt
+              through an airport scanner. Pollen, diatoms and a snowflake appear as a scanning electron
+              microscope sees them, and a mug of tea cools in a thermal camera's false colors.
+            </p>
+            <p class="small">
+              On this page: the slice you chose, rebuilt from nothing but its own X-ray shadows by
+              filtered back projection. One view is a smear. Slide toward 180.
+            </p>
+            </div>
+            <div class="ct" id="ct">
+              <figure>
+                <canvas id="ct-shadows" width="165" height="120" aria-label="The X-ray shadows of the slice, one row per view."></canvas>
+                <figcaption class="burn">SHADOWS</figcaption>
+              </figure>
+              <figure>
+                <canvas id="ct-picture" width="113" height="115" aria-label="The slice rebuilt from its shadows."></canvas>
+                <figcaption class="burn">REBUILT</figcaption>
+              </figure>
+              <label class="ct-views">
+                <span>Views: <output id="views-out">1</output></span>
+                <input type="range" id="views" min="1" max="180" value="1" />
+              </label>
+            </div>
+          </article>
+
+          <article class="film film-text film-atlas">
+            <p class="burn">C · THE ANATOMY ATLAS</p>
+            <h3>A body, peeled layer by layer</h3>
+            <p>
+              A standing figure about 1.8 m tall, peeled like a clinical atlas. A tap opens the outer
+              layer along its seams and lifts it away; after the organs, a tap brings every layer back
+              in order. A labels switch lists the parts and highlights the one you tapped.
+            </p>
+            <ol class="layers" id="layers">
+              <li><button type="button"><b>Skin</b> a smooth shell that opens along seams</button></li>
+              <li><button type="button"><b>Muscles</b> the superficial muscles, in textbook reds</button></li>
+              <li><button type="button"><b>Skeleton</b> the bones, in ivory</button></li>
+              <li><button type="button"><b>Organs</b> brain, lungs, heart, liver, stomach, intestines, kidneys</button></li>
+            </ol>
+            <p class="small">Four films stacked on the box. Click the top one to peel it.</p>
+          </article>
+        </div>
+      
+        <article class="film film-wide film-real">
+          <div>
+            <p class="burn">D · THE REAL THING</p>
+            <h3 id="real-h">The same walnut, in Splashery</h3>
+            <p id="real-text">
+              Everything above is this page's own drawing of the scan. This one is Splashery's: its
+              walnut toy in the embed player, the same CT scan drawn as volume splats. It turns when
+              idle and you can orbit it. In the playground you can cut it, or show only its dense
+              shell.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/splashery/?labs=1">Open Splashery with labs on</a>
+            </p>
+          </div>
+          <div class="real-frame" id="real">
+            <button type="button" id="real-load">Load the toy here</button>
+            <p class="small">It comes from Splashery's own site, and only when you ask.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- ================= Findings ================= -->
+      <section class="series" id="findings" aria-labelledby="findings-h">
+        <header class="series-head">
+          <p class="tag">Series 2 · the other nine</p>
+          <h2 id="findings-h">Findings</h2>
+        </header>
+
+        <article class="film film-wide film-grooph">
+          <div>
+            <p class="burn">2 · 2026 TO PRESENT</p>
+            <h3>grooph</h3>
+            <p>
+              Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a
+              person decides and when the work stops. grooph checks that every loop names a stop, then
+              compiles the graph into a prompt package for a separate coding-agent harness. It runs no
+              agent and calls no model, and graphs stay on your device.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/grooph/">Open</a>
+              <a href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+              <a href="https://github.com/ryanjosephkamp/grooph">Code</a>
+            </p>
+          </div>
+          <svg class="loop" viewBox="16 30 456 142" role="img" aria-label="A loop graph on film: build, check, a person decides, and a stop circled in wax pencil.">
+            <path class="wire" d="M70 70 H310 V150 H70 Z" />
+            <path class="wire" d="M382 106 H404" />
+            <g class="node"><rect x="34" y="50" width="72" height="40" rx="6" /><text x="70" y="75">build</text></g>
+            <g class="node"><rect x="154" y="50" width="72" height="40" rx="6" /><text x="190" y="75">check</text></g>
+            <g class="node"><rect x="238" y="86" width="144" height="40" rx="20" /><text x="310" y="111">a person decides</text></g>
+            <g class="node node-stop"><rect x="404" y="89" width="46" height="34" rx="6" /><text x="427" y="111">stop</text></g>
+            <ellipse class="wax" cx="427" cy="106" rx="35" ry="28" pathLength="1" />
+            <circle class="pulse" r="5"><animateMotion dur="6s" repeatCount="indefinite" path="M70 70 H310 V150 H70 Z" /></circle>
+          </svg>
+        </article>
+
+        <div class="wall wall-small">
+          <article class="film film-text">
+            <p class="burn">3 · A LINK, SEEN THROUGH</p>
+            <h3>Link Meteor</h3>
+            <p>
+              A Chrome extension that collects links with their anchor text and URL in separate fields,
+              for reviewing sources and exporting a research collection. No account, ads, telemetry or
+              backend.
+            </p>
+            <dl class="fields" aria-label="One link in two fields">
+              <div><dt>Anchor text</dt><dd>a walnut, scanned</dd></div>
+              <div><dt>URL</dt><dd>doi.org/10.5281/zenodo.2686726</dd></div>
+            </dl>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/link-meteor/">Website</a>
+              <a href="https://github.com/ryanjosephkamp/link-meteor">Code</a>
+            </p>
+          </article>
+
+          <article class="film film-text">
+            <p class="burn">4 · EIGHT LETTERS, RECUT</p>
+            <h3>Ars Magna</h3>
+            <p>
+              An anagram finder. Give it any text and it returns every way those exact letters can be
+              re-partitioned into real English words, by a deterministic search.
+            </p>
+            <ul class="recut" aria-label="Ryan Kamp, cut four other ways">
+              <li><span>RYAN</span><span>KAMP</span></li>
+              <li><span>MAY</span><span>PRANK</span></li>
+              <li><span>PARK</span><span>MANY</span></li>
+              <li><span>RAMP</span><span>YANK</span></li>
+              <li><span>ARMY</span><span>KNAP</span></li>
+            </ul>
+            <p class="links">
+              <a href="https://ars-magna.pages.dev/">Try</a>
+              <a href="https://github.com/ryanjosephkamp/ars-magna">Code</a>
+            </p>
+          </article>
+
+          <article class="film film-text">
+            <p class="burn">5</p>
+            <h3>reword_nerd</h3>
+            <p>
+              A local-first browser workbench that turns a reviewed document, or a set of images, into
+              a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the
+              download is a separate, explicit step, and the application contacts no model provider
+              itself.
+            </p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a>
+              <a href="https://github.com/ryanjosephkamp/reword-nerd">Code</a>
+            </p>
+          </article>
+
+          <article class="film film-text">
+            <p class="burn">6 · APRIL 2026 TO PRESENT</p>
+            <h3>resmon</h3>
+            <p>
+              A local-first literature-monitoring desktop application. It runs scheduled searches
+              across open-access scholarly sources, removes duplicates, and compiles reading reports,
+              with optional summaries.
+            </p>
+            <p class="links"><a href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+          </article>
+
+          <article class="film film-text" id="openlist">
+            <p class="burn">7 · DECEMBER 2025 TO PRESENT</p>
+            <h3>English OpenList</h3>
+            <p>
+              A free, open, continuously maintained list of valid English words, about 345,000 of them,
+              with the provenance of every word (which sources attested it, and when), auditable
+              correction records, and a browser explorer.
+            </p>
+            <p class="links">
+              <a href="https://english-openlist.pages.dev/">Explore</a>
+              <a href="https://github.com/ryanjosephkamp/english-openlist">Code</a>
+              <a href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a>
+            </p>
+          </article>
+
+          <article class="film film-text">
+            <p class="burn">8</p>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+            <p class="links">
+              <a href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a>
+              <a href="https://github.com/ryanjosephkamp/aqrobat">Code</a>
+            </p>
+          </article>
+
+          <article class="film film-text">
+            <p class="burn">9</p>
+            <h3>Amordle</h3>
+            <p>
+              A free word game: any word length from 2 to 35 letters, three difficulties, a daily
+              puzzle, and ranked multiplayer with an Elo rating.
+            </p>
+            <p class="links">
+              <a href="https://amordle.vercel.app">Play</a>
+              <a href="https://github.com/ryanjosephkamp/amordle">Code</a>
+              <a href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a>
+            </p>
+          </article>
+
+          <article class="film film-text film-last">
+            <p class="burn">10 · APRIL 2025</p>
+            <h3>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</h3>
+            <p>
+              Ryan's undergraduate research capstone: evidence accumulation modeled as a diffusion
+              process, with dynamic programming and value iteration used to study decision boundaries
+              in a simulated obstacle-avoidance scenario for an autonomous vehicle.
+            </p>
+            <p class="links">
+              <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a>
+              <a href="https://youtu.be/LRAP1YHy3g0">Video</a>
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= Impression ================= -->
+      <section class="series report" id="impression" aria-labelledby="impression-h">
+        <header class="series-head">
+          <p class="tag">The report</p>
+          <h2 id="impression-h">Impression</h2>
+        </header>
+        <div class="report-grid">
+          <div>
+            <h3>Research interests</h3>
+            <ol class="interests">
+              <li><span><mark>Scientific visualization</mark>, and on this wall the part of it that looks inside: volumes and medical images.</span></li>
+              <li><span>Computer graphics.</span></li>
+              <li><span>Digital media.</span></li>
+              <li><span>Software engineering.</span></li>
+              <li><span>Information retrieval.</span></li>
+            </ol>
+          </div>
+          <div>
+            <h3>History</h3>
+            <dl class="history">
+              <div>
+                <dt>August 2025 to May 2027, expected</dt>
+                <dd>
+                  MS in Computer Science, concentration in Artificial Intelligence, University of
+                  Cincinnati. Thesis advisor:
+                  <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.
+                </dd>
+              </div>
+              <div>
+                <dt>January 2020 to May 2025</dt>
+                <dd>
+                  BS in Neuroscience and BA in Mathematics, University of Cincinnati. Capstone advisor:
+                  <a href="https://sites.google.com/view/hkimmathbio/home">Dr. Hyunjoong Kim</a>.
+                </dd>
+              </div>
+            </dl>
+            <p class="small aside">A walnut is the nearest thing to a brain that needs no consent form.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Follow-up ================= -->
+      <section class="series" id="follow-up" aria-labelledby="follow-h">
+        <header class="series-head">
+          <p class="tag">Recommended</p>
+          <h2 id="follow-h">Follow-up</h2>
+        </header>
+        <ul class="stickers">
+          <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+          <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+          <li><a href="https://ryanjosephkamp.github.io/repositories/">Repositories</a></li>
+          <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+          <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+          <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+          <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+          <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        The walnut: Walnut 1 from
+        <a href="https://doi.org/10.5281/zenodo.2686726"><cite>Cone-Beam X-Ray CT Data Collection Designed for Machine Learning</cite></a>
+        by Henri Der Sarkissian, Felix Lucka, Maureen van Eijnatten, Giulia Colacicco, Sophia Bethany
+        Coban and K. Joost Batenburg (CWI), used under
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Changed: averaged to 0.3 mm
+        voxels and stored as 8-bit densities, as Splashery ships it.
+      </p>
+      <p>
+        The gar: the 12.8 mm larva from
+        <a href="https://doi.org/10.5281/zenodo.19021581"><cite>MicroCT images of 3 early gar (Lepisosteus osseus) stages between 12.7mm and 21.7mm</cite></a>
+        by Brian Metscher (University of Vienna), used under
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Changed: averaged to
+        17.7 µm voxels, cropped to the fish with a margin, and the faint noise of the empty background
+        set to 0, as Splashery ships it.
+      </p>
+      <p>Ryan Kamp · Cincinnati, Ohio · Switch the box off when you leave.</p>
+    </footer>
+  </body>
+</html>

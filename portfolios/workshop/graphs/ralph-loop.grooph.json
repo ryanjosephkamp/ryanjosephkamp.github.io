@@ -1,0 +1,143 @@
+{
+  "grooph": 0,
+  "id": "workshop-ralph-loop",
+  "name": "Workshop: Ralph loop",
+  "version": 1,
+  "goal": "Draw every part on the parts list for the toy on sheet 1, in concepts/workshop/kit.js, one part at a time: 640 Gaussian splats in all, shared between the parts by surface area and spread evenly over each. Done when every item in concepts/workshop/graphs/PLAN.md is marked done and `node concepts/workshop/tools/measure.mjs` passes.",
+  "target": {
+    "harness": "claude-code"
+  },
+  "lineage": {
+    "pattern": "ralph-loop",
+    "from": "ralph-loop@1"
+  },
+  "description": "The plan file is the unit of work. Each round a fresh builder takes the top unchecked item, makes it true, runs the tests, and on green marks it done, commits and appends what it learned to the agent file. A test check catches an item that broke something; a plan check sends the builder back for the next item while any remains. The loop stops when the plan is empty, when the same failure repeats, at its round cap or at its dispatch budget: the stops the original loop leaves to the human.",
+  "nodes": [
+    {
+      "id": "builder",
+      "kind": "agent",
+      "name": "Builder",
+      "role": "builder",
+      "model": {
+        "tier": "fast"
+      },
+      "effort": "medium",
+      "brief": "Read concepts/workshop/README.md first, then take only the top unchecked item of concepts/workshop/graphs/PLAN.md: make it true in the code with tests, run `node concepts/workshop/tools/measure.mjs`, and on green mark the item done, append what you learned to concepts/workshop/README.md and commit. Never start a second item, and never skip, weaken or delete a test to get a pass. On a later round, start from the failing output you are handed, which may come from the item you just marked done. Report the item you took, what changed and whether the tests passed.",
+      "inputs": [
+        "concepts/workshop/graphs/PLAN.md",
+        "concepts/workshop/README.md",
+        "the project",
+        "failing test output (from round 1 on)"
+      ],
+      "outputs": [
+        "the change for the item, with tests",
+        "concepts/workshop/graphs/PLAN.md with the item marked done",
+        "concepts/workshop/README.md with what was learned appended",
+        "a commit on green"
+      ],
+      "allow": [
+        "read-files",
+        "edit-files",
+        "run-tests",
+        "run-commands"
+      ]
+    },
+    {
+      "id": "tests",
+      "kind": "check",
+      "name": "Tests",
+      "check": {
+        "kind": "tests",
+        "run": "node concepts/workshop/tools/measure.mjs",
+        "pass": "exit code 0 and no test skipped"
+      }
+    },
+    {
+      "id": "plan-check",
+      "kind": "check",
+      "name": "Plan empty?",
+      "description": "Counts the unchecked items left in the plan. grep prints the count and exits 1 when it is zero, so the printed count is the result, not the exit code.",
+      "check": {
+        "kind": "command",
+        "run": "grep -c '^- \\[ \\]' concepts/workshop/graphs/PLAN.md",
+        "pass": "the printed count is 0: no unchecked item remains in concepts/workshop/graphs/PLAN.md"
+      }
+    },
+    {
+      "id": "done",
+      "kind": "stop",
+      "name": "Done",
+      "outcome": "success"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-builder-tests",
+      "from": "builder",
+      "to": "tests"
+    },
+    {
+      "id": "e-tests-fail",
+      "from": "tests",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "test output"
+      ]
+    },
+    {
+      "id": "e-tests-plan-check",
+      "from": "tests",
+      "to": "plan-check",
+      "when": "pass"
+    },
+    {
+      "id": "e-plan-check-fail",
+      "from": "plan-check",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "concepts/workshop/graphs/PLAN.md"
+      ],
+      "label": "next item"
+    },
+    {
+      "id": "e-plan-check-pass",
+      "from": "plan-check",
+      "to": "done",
+      "when": "pass"
+    }
+  ],
+  "loops": [
+    {
+      "id": "ralph",
+      "name": "Ralph",
+      "members": [
+        "builder",
+        "tests",
+        "plan-check"
+      ],
+      "back": [
+        "e-tests-fail",
+        "e-plan-check-fail"
+      ],
+      "mode": "grind",
+      "stops": [
+        {
+          "kind": "diminishing-returns",
+          "rounds": 2,
+          "metric": "the same test failure"
+        },
+        {
+          "kind": "max-iterations",
+          "n": 5
+        },
+        {
+          "kind": "budget",
+          "measure": "dispatches",
+          "limit": 17
+        }
+      ]
+    }
+  ]
+}

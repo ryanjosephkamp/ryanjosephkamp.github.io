@@ -1,0 +1,183 @@
+{
+  "grooph": 0,
+  "id": "workshop-metric-sandwich",
+  "name": "Workshop: metric sandwich",
+  "version": 1,
+  "goal": "Draw the next part on the parts list for the toy on sheet 1, in concepts/workshop/kit.js: 640 Gaussian splats in all, shared between the parts by surface area and spread evenly over each. Done when `node concepts/workshop/tools/measure.mjs` passes and a critic finds nothing unmet in concepts/workshop/graphs/CHECKLIST.md.",
+  "target": {
+    "harness": "claude-code"
+  },
+  "lineage": {
+    "pattern": "metric-sandwich",
+    "from": "metric-sandwich@1"
+  },
+  "description": "A builder works; a check runs the cheap deterministic suite. Only a passing change reaches the frontier critic, which judges what the suite cannot see against a checklist. Either failing returns to the builder, so one loop has two back edges. It stops when the critic passes, at its round cap, or at its dispatch budget.",
+  "nodes": [
+    {
+      "id": "builder",
+      "kind": "agent",
+      "name": "Builder",
+      "role": "builder",
+      "model": {
+        "tier": "strong"
+      },
+      "effort": "high",
+      "brief": "Do the task in the code, with tests. On a later round you get either the failing check output or REVIEW.md; address what it names. Run `node concepts/workshop/tools/measure.mjs` before you report.",
+      "inputs": [
+        "the task",
+        "concepts/workshop/graphs/CHECKLIST.md",
+        "check output or REVIEW.md (from round 1 on)"
+      ],
+      "outputs": [
+        "the change, with tests",
+        "CHANGES.md: what changed this round"
+      ],
+      "allow": [
+        "read-files",
+        "edit-files",
+        "run-tests"
+      ]
+    },
+    {
+      "id": "checks",
+      "kind": "check",
+      "name": "Cheap checks",
+      "check": {
+        "kind": "command",
+        "run": "node concepts/workshop/tools/measure.mjs",
+        "pass": "exit code 0"
+      }
+    },
+    {
+      "id": "critic",
+      "kind": "agent",
+      "name": "Critic",
+      "role": "critic",
+      "model": {
+        "tier": "frontier"
+      },
+      "effort": "high",
+      "brief": "Judge only what `node concepts/workshop/tools/measure.mjs` cannot see, the items in the checklist, for a change that already passes it; use the repository only to understand what the change touches. Do not rerun or restate the checks. Cite the file and line for each finding; you judge, you do not fix. Verdict pass when no checklist item is unmet.",
+      "inputs": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "concepts/workshop/graphs/CHECKLIST.md"
+      ],
+      "outputs": [
+        "REVIEW.md: findings by checklist item and a verdict line",
+        "verdict: pass | fail | invalid-evidence"
+      ],
+      "allow": [
+        "read-files",
+        "write-outputs"
+      ],
+      "deny": [
+        "edit-files"
+      ]
+    },
+    {
+      "id": "done",
+      "kind": "stop",
+      "name": "Done",
+      "outcome": "success"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-builder-checks",
+      "from": "builder",
+      "to": "checks"
+    },
+    {
+      "id": "e-checks-fail",
+      "from": "checks",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "check output"
+      ]
+    },
+    {
+      "id": "e-checks-critic",
+      "from": "checks",
+      "to": "critic",
+      "when": "pass",
+      "evidence": [
+        "diff of the change",
+        "the repository as the change leaves it, read-only",
+        "concepts/workshop/graphs/CHECKLIST.md"
+      ]
+    },
+    {
+      "id": "e-critic-fail",
+      "from": "critic",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "REVIEW.md"
+      ]
+    },
+    {
+      "id": "e-critic-pass",
+      "from": "critic",
+      "to": "done",
+      "when": "pass"
+    }
+  ],
+  "loops": [
+    {
+      "id": "sandwich",
+      "name": "Sandwich",
+      "members": [
+        "builder",
+        "checks",
+        "critic"
+      ],
+      "back": [
+        "e-checks-fail",
+        "e-critic-fail"
+      ],
+      "mode": "judgment",
+      "bar": {
+        "name": "Checks, then checklist",
+        "inspects": [
+          {
+            "kind": "artifact",
+            "ref": "output of node concepts/workshop/tools/measure.mjs"
+          },
+          {
+            "kind": "checklist",
+            "ref": "concepts/workshop/graphs/CHECKLIST.md"
+          }
+        ],
+        "acceptance": "`node concepts/workshop/tools/measure.mjs` exits 0 and the critic finds no unmet item in concepts/workshop/graphs/CHECKLIST.md."
+      },
+      "stops": [
+        {
+          "kind": "bar-passed"
+        },
+        {
+          "kind": "max-iterations",
+          "n": 5
+        },
+        {
+          "kind": "budget",
+          "measure": "dispatches",
+          "limit": 16
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "p-critic-isolation",
+      "kind": "critic-isolation",
+      "scope": "graph"
+    },
+    {
+      "id": "p-no-self-grading",
+      "kind": "no-self-grading",
+      "scope": "graph"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "grooph": 0,
+  "id": "workshop-grind-loop",
+  "name": "Workshop: grind loop",
+  "version": 1,
+  "goal": "Draw the next part on the parts list for the toy on sheet 1, in concepts/workshop/kit.js: 640 Gaussian splats in all, shared between the parts by surface area and spread evenly over each. Done when `node concepts/workshop/tools/measure.mjs` passes.",
+  "target": {
+    "harness": "claude-code"
+  },
+  "lineage": {
+    "pattern": "grind-loop",
+    "from": "grind-loop@1"
+  },
+  "description": "A builder changes the code and a check runs the tests. A failure goes back to the builder with the test output; a pass ends the run. The check is the bar, so there is no critic. The loop stops at its round cap or its time budget if the tests never pass.",
+  "nodes": [
+    {
+      "id": "builder",
+      "kind": "agent",
+      "name": "Builder",
+      "role": "builder",
+      "model": {
+        "tier": "fast"
+      },
+      "effort": "medium",
+      "brief": "Make the task true by changing the code, adding tests where they are missing. Do not skip, weaken or delete a test to get a pass. On a later round, start from the failing output you are handed. Report what you changed and which tests now pass.",
+      "inputs": [
+        "the task",
+        "failing test output (from round 1 on)"
+      ],
+      "outputs": [
+        "the change",
+        "CHANGES.md: what changed this round and why"
+      ],
+      "allow": [
+        "read-files",
+        "edit-files",
+        "run-tests"
+      ]
+    },
+    {
+      "id": "tests",
+      "kind": "check",
+      "name": "Tests",
+      "check": {
+        "kind": "tests",
+        "run": "node concepts/workshop/tools/measure.mjs",
+        "pass": "exit code 0 and no test skipped"
+      }
+    },
+    {
+      "id": "done",
+      "kind": "stop",
+      "name": "Done",
+      "outcome": "success"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-builder-tests",
+      "from": "builder",
+      "to": "tests"
+    },
+    {
+      "id": "e-tests-fail",
+      "from": "tests",
+      "to": "builder",
+      "when": "fail",
+      "evidence": [
+        "test output"
+      ]
+    },
+    {
+      "id": "e-tests-pass",
+      "from": "tests",
+      "to": "done",
+      "when": "pass"
+    }
+  ],
+  "loops": [
+    {
+      "id": "grind",
+      "name": "Grind",
+      "members": [
+        "builder",
+        "tests"
+      ],
+      "back": [
+        "e-tests-fail"
+      ],
+      "mode": "grind",
+      "stops": [
+        {
+          "kind": "max-iterations",
+          "n": 5
+        },
+        {
+          "kind": "budget",
+          "measure": "minutes",
+          "limit": 30
+        }
+      ]
+    }
+  ]
+}

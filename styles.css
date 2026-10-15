@@ -187,6 +187,34 @@ main,
   text-underline-offset: 0.22em;
 }
 
+/* The Portfolios link: the same link as the rest, its color drifting slowly around the hue wheel. */
+@property --portfolios-hue {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 255;
+}
+
+.nav-links a.nav-portfolios {
+  color: oklch(50% 0.15 var(--portfolios-hue));
+  animation: portfolios-hue 24s linear infinite;
+}
+
+:root[data-resolved-theme="dark"] .nav-links a.nav-portfolios {
+  color: oklch(82% 0.12 var(--portfolios-hue));
+}
+
+@keyframes portfolios-hue {
+  to {
+    --portfolios-hue: 615;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-links a.nav-portfolios {
+    animation: none;
+  }
+}
+
 .theme-switcher {
   display: flex;
   gap: 0.6rem;

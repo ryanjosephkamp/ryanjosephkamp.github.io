@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ryan Kamp — Specimen: splats that explain</title>
+  <meta name="description" content="Ryan Kamp is a graduate student in computer science at the University of Cincinnati, interested in scientific visualization. On this slide: a neuron made of 32,768 Gaussian splats that you can focus, label, stain and fire.">
+  <meta name="theme-color" content="#f3f5f1">
+  <meta property="og:title" content="Ryan Kamp — Specimen">
+  <meta property="og:description" content="A neuron made of 32,768 Gaussian splats. Turn the focus and they merge into one. Tap it and it fires.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='18' width='56' height='28' rx='4' fill='%23fff' stroke='%23382a55' stroke-width='3'/%3E%3Ccircle cx='40' cy='32' r='8' fill='%235a2f8f'/%3E%3Crect x='9' y='23' width='14' height='18' fill='%23e9e4f2'/%3E%3C/svg%3E">
+  <link rel="preload" href="assets/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/newsreader-italic-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+  <noscript><style>.slide__fallback { display: grid !important; }</style></noscript>
+</head>
+<body>
+  <a class="skip" href="#collection">Skip to the collection</a>
+
+  <nav class="nav wrap" aria-label="Primary">
+    <a class="nav__mark" href="#top" aria-label="Ryan Kamp, top of page">RK <span>Specimen</span></a>
+    <ul>
+      <li><a href="#collection">Collection</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#cabinet">Cabinet</a></li>
+      <li><a href="#provenance">Provenance</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero wrap" id="top">
+    <div class="slide" data-stain="nissl">
+      <div class="slide__label">
+        <p class="slide__no">Slide No. 001</p>
+        <h1>Ryan Kamp</h1>
+        <p class="slide__kind"><i>Homo sapiens</i>, graduate student</p>
+        <dl>
+          <div><dt>Loc.</dt><dd>University of Cincinnati, Ohio</dd></div>
+          <div><dt>Prep.</dt><dd>One neuron, grown from a seed in code: 32,768 Gaussian splats</dd></div>
+          <div><dt>Stain</dt><dd id="stain-name">After cresyl violet and Luxol fast blue</dd></div>
+        </dl>
+      </div>
+      <div class="slide__stage">
+        <canvas id="scope" role="img" aria-label="A neuron drawn from Gaussian splats: branching dendrites studded with spines, a cell body with its nucleus, and a long axon wrapped in five segments of myelin, ending in a spray of terminals. The focus control below merges the splats down to one; the Fire button sends a spike along the axon."></canvas>
+        <ol class="pins" id="pins" aria-label="Parts of the neuron. Choose one to light it up.">
+          <li class="pin pin--up" data-part="dendrites"><button type="button" aria-pressed="false"><b>Dendrites</b><span>gather the inputs</span></button></li>
+          <li class="pin pin--down" data-part="soma"><button type="button" aria-pressed="false"><b>Soma</b><span>adds them up</span></button></li>
+          <li class="pin pin--up" data-part="hillock"><button type="button" aria-pressed="false"><b>Axon hillock</b><span>where the spike starts</span></button></li>
+          <li class="pin pin--down" data-part="myelin"><button type="button" aria-pressed="false"><b>Myelin sheath</b><span>insulation the spike skips over</span></button></li>
+          <li class="pin pin--up" data-part="node"><button type="button" aria-pressed="false"><b>Node of Ranvier</b><span>where the spike is renewed</span></button></li>
+          <li class="pin pin--down" data-part="terminals"><button type="button" aria-pressed="false"><b>Axon terminals</b><span>pass the signal on</span></button></li>
+        </ol>
+        <p class="slide__fallback">The live specimen needs JavaScript and WebGL2. It is a neuron drawn from 32,768 Gaussian splats that merge, pair by pair, down to one.</p>
+        <p class="slide__hint" aria-hidden="true">Tap the cell to fire it. Drag to turn it.</p>
+      </div>
+    </div>
+
+    <div class="tray">
+      <fieldset class="tray__stain">
+        <legend>Stain</legend>
+        <label><input type="radio" name="stain" value="nissl" data-after="After cresyl violet and Luxol fast blue" checked><span><i class="dab dab--nissl"></i>Violet and blue</span></label>
+        <label><input type="radio" name="stain" value="golgi" data-after="After Golgi's silver method"><span><i class="dab dab--golgi"></i>Silver</span></label>
+        <label><input type="radio" name="stain" value="he" data-after="After hematoxylin and eosin"><span><i class="dab dab--he"></i>Pink and purple</span></label>
+      </fieldset>
+      <button class="toggle" id="labels" type="button" aria-pressed="false">Labels</button>
+    </div>
+
+    <div class="bench">
+      <div class="knob">
+        <label for="focus">Focus <output id="count" for="focus">32,768 splats</output></label>
+        <input id="focus" type="range" min="0" max="15" step="0.01" value="15" aria-describedby="keeps">
+        <ol class="knob__ticks" aria-hidden="true"><li>1</li><li>8</li><li>64</li><li>512</li><li>4,096</li><li>32,768</li></ol>
+      </div>
+      <button class="fire" id="fire" type="button">
+        <svg viewBox="0 0 28 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 11h7l2.5-9 3 13 2-5.5 1.5 1.5h10"/></svg>
+        Fire
+      </button>
+      <figure class="strip">
+        <svg viewBox="0 0 600 132" role="img" aria-label="Chart of the membrane potential at the cell body after Fire is pressed: a flat resting line, a sharp spike, an undershoot, and a slow return to rest.">
+          <g class="strip__grid"><path d="M44 10V118M179 10V118M314 10V118M449 10V118M584 10V118M44 118H584"/><path class="strip__rest" d="M44 100H584"/></g>
+          <text x="38" y="20" text-anchor="end" id="v-peak">+40 mV</text>
+          <text x="38" y="104" text-anchor="end" id="v-rest">−65 mV</text>
+          <path id="pen" d="M44 100H584"/>
+          <circle id="pen-dot" cx="44" cy="100" r="3.5"/>
+        </svg>
+        <figcaption>Membrane potential at the cell body, slowed about 140 times.</figcaption>
+      </figure>
+    </div>
+
+    <p class="keeps" id="keeps">At level <b id="lvl">15</b> of 15, as at every other: mass <b id="mass">1.000000000</b> · center <b id="center">(0.000000, 0.000000, 0.000000)</b> · spread σ <b id="spread">(0.508733, 0.181531, 0.100124)</b>. Turn the focus and watch these not move.</p>
+
+    <div class="hero__intro">
+      <p class="lede">I&rsquo;m a master&rsquo;s student in computer science at the <a href="https://www.uc.edu/">University of Cincinnati</a>, with degrees in mathematics and neuroscience from the same place. What I want to make is <em>splats that explain</em>: pictures of science you can take apart until the thing makes sense.</p>
+      <p>The cell on the slide is the smallest example I could build. Turn the focus down and its 32,768 Gaussians merge, pair by pair, until the whole neuron is one soft blob with the same mass, center and spread it started with. Turn it back up and tap: the spike you see is the Hodgkin&ndash;Huxley equations, solved while you watch. Point at a label and its part lights up. Change the stain and the same splats take up different dyes.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="collection">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__no">Case I <span>the collection</span></p>
+          <h2>Splashery</h2>
+          <p>An interactive Gaussian splat playground that runs entirely in the browser. Pick a toy, a real captured object or one generated from a seed, then spin it, poke it, blow on it, splash paint on it, drop it, watch it fall apart and come back, make your own, and share it as a link, an embed, a GIF or a video.</p>
+          <p>Among the donuts and rubber ducks it keeps science shelves, where the toys do what the real thing does. The drawers below hold some of them. Pull one onto the bench: it is the real toy, live.</p>
+        </header>
+
+        <div class="case">
+          <div class="vitrine">
+            <div class="vitrine__bench" id="bench">
+              <p class="vitrine__empty">Nothing on the bench yet.<br><span>Pull a specimen from a drawer. Each one loads the real Splashery player, which is a heavy download, so it waits until you ask.</span></p>
+            </div>
+            <fieldset class="vitrine__fx" id="bench-fx" hidden>
+              <legend>While it sits there</legend>
+              <label><input type="radio" name="fx" value="" checked><span>Still</span></label>
+              <label><input type="radio" name="fx" value="breeze"><span>Breeze</span></label>
+              <label><input type="radio" name="fx" value="pokes"><span>Pokes</span></label>
+              <label><input type="radio" name="fx" value="twist"><span>Twist</span></label>
+              <label><input type="radio" name="fx" value="dissolve"><span>Dissolve</span></label>
+            </fieldset>
+            <p class="vitrine__note" id="bench-note">Live embeds of the real thing, served from <a href="https://ryanjosephkamp.github.io/splashery/">ryanjosephkamp.github.io/splashery</a>. Drag one to turn it; each has a link that opens it in Splashery, where the rest of its controls are.</p>
+          </div>
+
+          <div class="drawers">
+            <section class="drawer">
+              <h3>Cells <small>the tiny world shelf</small></h3>
+              <ul>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=neuron" data-toy="neuron" data-note="In Splashery you can fire a signal down it."><b>Neuron</b><span>fires a signal</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=astrocyte" data-toy="astrocyte" data-note="One of the neuron's neighbors on the tiny world shelf."><b>Astrocyte</b><span>a neuron's neighbor</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=dna" data-toy="dna" data-note="In Splashery it unzips."><b>DNA</b><span>unzips</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=dna-to-protein" data-toy="dna-to-protein" data-note="Drawn like a textbook figure."><b>DNA to protein</b><span>drawn like a textbook</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=mitosis" data-toy="mitosis" data-note="From the life of a cell."><b>Cell division</b><span>the life of a cell</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=bacteriophage" data-toy="bacteriophage" data-note="In Splashery, tap it to inject its DNA."><b>Bacteriophage</b><span>injects its DNA</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=animal-cell" data-toy="animal-cell" data-note="In Splashery it has a cutaway."><b>Animal cell</b><span>with a cutaway</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=mitochondrion" data-toy="mitochondrion" data-note="In Splashery it has a cutaway."><b>Mitochondrion</b><span>with a cutaway</span></a></li>
+              </ul>
+            </section>
+            <section class="drawer">
+              <h3>Body</h3>
+              <ul>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=brain" data-toy="brain" data-note="In Splashery, the Slice effect sweeps a plane through it and shows the insides."><b>Brain</b><span>slices open</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=eye" data-toy="eye" data-note="In Splashery you can shine a light at it."><b>Eye</b><span>shine a light</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=heart" data-toy="heart" data-note="A stylized heart that beats."><b>Heart</b><span>beats</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=lungs" data-toy="lungs" data-note="Lungs that breathe."><b>Lungs</b><span>breathe</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=anatomy-atlas" data-toy="anatomy-atlas" data-note="A standing figure peeled layer by layer: skin, muscles, skeleton, organs."><b>Anatomy atlas</b><span>peeled layer by layer</span></a></li>
+              </ul>
+            </section>
+            <section class="drawer">
+              <h3>Instruments <small>how we see inside things</small></h3>
+              <ul>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=electron-microscope" data-toy="electron-microscope" data-note="Pollen, diatoms or a snowflake as a scanning electron microscope sees them."><b>Electron microscope</b><span>pollen, as it sees it</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=how-ct" data-toy="how-ct" data-note="A CT ring sweeps along a nautilus shell and builds its volume slice by slice."><b>How CT works</b><span>slice by slice</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=fruit-mri" data-toy="fruit-mri" data-note="A kiwi's or an orange's MRI slices."><b>MRI of a fruit</b><span>a kiwi, in slices</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=gaussian-splatting" data-toy="gaussian-splatting" data-note="A cloud of random splats is fitted to a picture by gradient descent, step by step."><b>Gaussian splatting</b><span>splats, explained in splats</span></a></li>
+              </ul>
+            </section>
+            <section class="drawer">
+              <h3>Atoms, space and math</h3>
+              <ul>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=orbital" data-toy="orbital" data-note="Splashery holds the orbitals from 1s to 4f."><b>Electron orbital</b><span>1s to 4f</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=molecule" data-toy="molecule" data-note="Splashery builds molecules from water to caffeine and C60, or your own from a name, a formula or a file."><b>Molecule</b><span>water to C60</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=protein" data-toy="protein" data-note="Splashery has ubiquitin, insulin, GFP and hemoglobin, or your own PDB or mmCIF file."><b>Protein</b><span>or your own PDB</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=saturn" data-toy="saturn" data-note="One of the eight planets on Splashery's space shelf."><b>Saturn</b><span>and its rings</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=black-hole" data-toy="black-hole" data-note="A black hole with its disc."><b>Black hole</b><span>with its disc</span></a></li>
+                <li><a href="https://ryanjosephkamp.github.io/splashery/embed/?toy=lorenz" data-toy="lorenz" data-note="From the math shelf, beside the Klein bottle and the gyroid."><b>Lorenz attractor</b><span>from the math shelf</span></a></li>
+              </ul>
+            </section>
+          </div>
+        </div>
+
+        <div class="catalog">
+          <h3>What the science shelves are computed from</h3>
+          <p class="catalog__lede">The drawers above are a sample. This is the longer catalog, by subject, with what each exhibit actually solves, samples or reads.</p>
+          <dl>
+            <div><dt>Waves and optics</dt><dd>A ripple tank that solves the 2D wave equation, with dippers, a plane wave, and one or two slits. A light bench that traces rays with Snell&rsquo;s law through lenses, mirrors, a prism, a glass block and a fiber.</dd></div>
+            <div><dt>Light</dt><dd>Line spectra of sixteen elements from NIST data. A prism, with the glass&rsquo;s index from its Sellmeier fit, and a grating, by <i>d</i> sin <i>θ</i> = <i>mλ</i>.</dd></div>
+            <div><dt>Sound</dt><dd>A Chladni plate whose sand moves live with the sound. A sound lab with a spectrogram, a spectrum and an oscilloscope. A song landscape drawn from measured features: bands, loudness, spectral centroid, pitch.</dd></div>
+            <div><dt>Molecules and crystals</dt><dd>A molecule viewer that opens PDB, mmCIF, SDF, MOL and XYZ files or fetches an entry from the Protein Data Bank, with distance and angle measurement. Crystal unit cells from published lattice constants. Hydrogen orbitals sampled from |<i>ψ</i>|&sup2;.</dd></div>
+            <div><dt>Volumes and imaging</dt><dd>A volume viewer that opens CT, MRI and microscope scans on the device, with window and level, a transfer function, cut planes and a maximum-intensity picture. Its samples are a walnut and a gar&rsquo;s head.</dd></div>
+            <div><dt>Scale and sky</dt><dd>Powers of ten: one continuous zoom from a galaxy down to a single molecular machine. The night sky for any date, time and place, with stars to magnitude 6 from the HYG database.</dd></div>
+            <div><dt>Earth and data</dt><dd>Real landscapes from public data: the Grand Canyon, Mount St. Helens before and after May 18, 1980, the Mariana Trench. A CSV becomes a scatter, bars or a surface. Mauna Loa CO<sub>2</sub> as a spiral.</dd></div>
+            <div><dt>How splats work</dt><dd>A toy that fits 2D Gaussians to a picture by gradient descent, step by step, and shows one splat, many splats and sorting. A splat equation toy. The Tinkerer&rsquo;s Manual: what one splat is, how a recipe is built, and the equation language.</dd></div>
+          </dl>
+        </div>
+
+        <div class="ledger">
+          <div class="ledger__role">
+            <h3>My part</h3>
+            <p>I defined the project&rsquo;s vision and its toy categories, refined the interaction design through hands-on testing, and contributed mathematical recipes.</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/">Play</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/splashery/manual/">The Tinkerer&rsquo;s Manual</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/splashery">Code</a>
+            </p>
+          </div>
+          <dl class="ledger__facts">
+            <div><dt>Toys</dt><dd>Captured ones are real scans of up to 450,000 splats. Generated ones are built from seeded recipes, so a saved scene rebuilds the same toy.</dd></div>
+            <div><dt>Effects</dt><dd>Poke, wind, dissolve, drop, magnet, twist, slice and paint, run on the GPU for every splat, every frame.</dd></div>
+            <div><dt>Sharing</dt><dd>A link, a JSON file, a PNG, a GIF, a WebM, or an embed. Bring your own splat file: PLY, SOG, SPLAT, SPZ.</dd></div>
+            <div><dt>Made of</dt><dd>Static files and ES modules only: no build step, no framework, no server. PlayCanvas engine, WebGPU with a WebGL2 fallback.</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--tint" id="method">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__no">Case II <span>the method</span></p>
+          <h2>How to read the slide</h2>
+          <p>Four things are going on in the specimen at the top of this page. Here is each one by itself, small enough to work with your hands.</p>
+        </header>
+        <div class="figs">
+          <figure class="fig" id="fig-splat">
+            <div class="fig__stage">
+              <canvas role="img" aria-label="One Gaussian splat, turning slowly. A dashed ellipse marks one standard deviation of its shadow on the screen."></canvas>
+              <svg aria-hidden="true"><ellipse class="fig__ring"/></svg>
+            </div>
+            <figcaption>
+              <p class="fig__no">Fig. 1</p>
+              <h3>One splat</h3>
+              <p>A Gaussian: a center, a spread in three directions (its covariance <i>Σ</i>), a weight and a stain. Turn it by a rotation <i>R</i> and its shadow on the screen is a Gaussian again, with spread <i>RΣR</i><sup>T</sup>. The dashed ellipse is that formula, worked out separately from the picture. Edge-on, the same stain falls in a smaller shadow, so it is darker.</p>
+              <div class="fig__knobs">
+                <label>Long <input type="range" min="0.15" max="0.9" step="0.01" value="0.8" aria-label="How long the splat is"></label>
+                <label>Wide <input type="range" min="0.15" max="0.9" step="0.01" value="0.4" aria-label="How wide the splat is"></label>
+                <label>Deep <input type="range" min="0.15" max="0.9" step="0.01" value="0.2" aria-label="How deep the splat is"></label>
+              </div>
+              <p class="fig__says">Shadow <i>RΣR</i><sup>T</sup> = <span class="matrix"><b data-cell>0.000</b><b data-cell>0.000</b><b data-cell>0.000</b><b data-cell>0.000</b></span></p>
+            </figcaption>
+          </figure>
+
+          <figure class="fig" id="fig-merge">
+            <div class="fig__stage">
+              <canvas role="img" aria-label="Two splats, one violet and long, one blue and round. A dashed ellipse marks the single splat that would replace them. Drag either splat to move it."></canvas>
+              <svg aria-hidden="true"><ellipse class="fig__a"/><ellipse class="fig__b"/><ellipse class="fig__ring"/><path class="fig__cross"/></svg>
+            </div>
+            <figcaption>
+              <p class="fig__no">Fig. 2</p>
+              <h3>Focus</h3>
+              <p>Lowering the focus pairs splats up. Each pair becomes the one Gaussian with the same mass, center and covariance: the dashed ellipse. Drag either splat and it follows. On the slide this happens 32,767 times, and <a href="verify.mjs">a script</a> checks every merge against the splats beneath it and all 16 levels against the finest. The largest disagreement is about 10<sup>&minus;13</sup>.</p>
+              <div class="fig__knobs">
+                <label>Focus <input type="range" name="level" min="0" max="1" step="0.01" value="1" aria-label="Focus: from one merged splat to the pair"></label>
+                <label>Weight <input type="range" name="share" min="0.1" max="0.9" step="0.01" value="0.5" aria-label="How much of the mass the violet splat holds"></label>
+              </div>
+              <p class="fig__says">Mass <b data-say>0.50 + 0.50 = 1.00</b> · center <b data-say>(0.00, 0.00)</b> · spread <b data-say>0.00 by 0.00</b></p>
+            </figcaption>
+          </figure>
+
+          <figure class="fig" id="fig-light">
+            <div class="fig__stage fig__stage--pair">
+              <canvas role="img" aria-label="Three overlapping dyes, cyan, magenta and yellow, absorbed like stain: where two overlap the color is blue, red or green, and where all three overlap it is nearly black."></canvas>
+              <canvas role="img" aria-label="The same three colors painted one over another: whichever is drawn last covers the others."></canvas>
+              <span class="fig__tag">absorbed</span><span class="fig__tag">painted over</span>
+            </div>
+            <figcaption>
+              <p class="fig__no">Fig. 3</p>
+              <h3>Light</h3>
+              <p>These splats don&rsquo;t glow. They absorb, the way a stained section does on a bright stage: each takes a little light out, the losses add, and what is left is <i>e</i> to the minus sum. Addition does not care about order. Painting one splat over another does, which is why a painter has to sort them first. Shuffle the order and only the right-hand picture changes.</p>
+              <div class="fig__knobs"><button class="toggle" type="button">Shuffle the order</button></div>
+              <p class="fig__says">Drawn <b data-say>cyan, then magenta, then yellow.</b></p>
+            </figcaption>
+          </figure>
+
+          <figure class="fig" id="fig-spike">
+            <div class="fig__stage fig__stage--chart">
+              <svg viewBox="0 0 480 170" role="img" aria-label="Membrane potential over sixteen milliseconds for twenty sizes of push. The weak ones barely rise; the rest all produce nearly the same tall spike.">
+                <path class="strip__grid" d="M40 12V150M145 12V150M250 12V150M355 12V150M460 12V150M40 150H460" fill="none"/>
+                <path class="fig__ghosts"/>
+                <path class="fig__pen"/>
+                <text x="34" y="26" text-anchor="end">+40</text><text x="34" y="131" text-anchor="end">−65</text>
+                <text x="40" y="165">0 ms</text><text x="460" y="165" text-anchor="end">16 ms</text>
+              </svg>
+            </div>
+            <figcaption>
+              <p class="fig__no">Fig. 4</p>
+              <h3>Spike</h3>
+              <p>Fire integrates the Hodgkin&ndash;Huxley equations, with the 1952 squid-axon constants, from rest after one millisecond of current. A spike is all or none. Push this membrane a little and it shrugs; push it past its threshold and you get the whole spike, nearly the same size however hard you push. The faint lines are twenty sizes of push.</p>
+              <div class="fig__knobs">
+                <label class="fig__push">Push <span class="fig__track"><input type="range" min="0" max="20" step="0.1" value="5" aria-label="Size of the one-millisecond current pulse"><i class="fig__least" aria-hidden="true"></i></span></label>
+              </div>
+              <p class="fig__says"><b data-say>5.0</b> µA/cm² for 1 ms gives a peak of <b data-say>−60 mV</b>. Threshold: about <b data-say>6.9</b>. The slide fires at 20.</p>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="cabinet">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__no">Case III <span>the cabinet</span></p>
+          <h2>The rest of the collection</h2>
+          <p>Each label here is drawn in splats, on the same stage as the slide. They come into focus as you reach them; hover or tap one to send a pulse through.</p>
+        </header>
+
+        <article class="feature">
+          <div class="feature__art">
+            <canvas id="grooph-run" role="img" aria-label="A loop graph drawn in splats: a Builder box, a Critic box and a You box in a row, with an arc looping back from the Critic to the Builder. A pulse runs builder to critic, around the loop, and then out to You."></canvas>
+            <p class="feature__says" id="grooph-says" aria-hidden="true">Builder, critic, around again, then out to a person.</p>
+          </div>
+          <div class="feature__text">
+            <p class="head__no">Drawer 1 <span>software engineering</span></p>
+            <h3>grooph</h3>
+            <p class="feature__lede">Visual loop graphs for coding-agent workflows. You draw who builds, who checks, where a person decides and when the work stops.</p>
+            <p>grooph checks that every loop names a stop, then compiles the graph into a prompt package for a separate coding-agent harness. It runs no agent and calls no model, and graphs stay on your device. The graph on this page is 8,192 splats running one such loop: around again while the bar is not met, then out to a person.</p>
+            <p class="links">
+              <a class="link" href="https://ryanjosephkamp.github.io/grooph/">Open</a>
+              <a class="link" href="https://ryanjosephkamp.github.io/grooph/docs/">Docs</a>
+              <a class="link" href="https://github.com/ryanjosephkamp/grooph">Code</a>
+            </p>
+          </div>
+        </article>
+
+        <ul class="cards">
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="reword" role="img" aria-label="A page of text, an arrow, and a second page in another ink, drawn in splats."></canvas></div>
+            <p class="card__no">Software engineering</p>
+            <h3>reword_nerd</h3>
+            <p>A local-first browser workbench that turns a reviewed document, or a set of images, into a portable workbook of rewriting prompts. Everything stays reviewable in the browser, the download is a separate, explicit step, and the application contacts no model provider itself.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/reword-nerd/">Open</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/reword-nerd/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/reword-nerd">Code</a></p>
+          </li>
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="resmon" role="img" aria-label="Concentric rings with a sweep line and four dots, like a radar screen, drawn in splats."></canvas></div>
+            <p class="card__no">Information retrieval</p>
+            <h3>resmon</h3>
+            <p>A local-first literature-monitoring desktop application. It runs scheduled searches across open-access scholarly sources, removes duplicates, and compiles reading reports, with optional summaries.</p>
+            <p class="links"><a class="link" href="https://github.com/ryanjosephkamp/resmon">Code</a></p>
+          </li>
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="meteor" role="img" aria-label="Two chain links with streaks trailing behind them, drawn in splats."></canvas></div>
+            <p class="card__no">Information retrieval</p>
+            <h3>Link Meteor</h3>
+            <p>A Chrome extension that collects links with their anchor text and URL in separate fields, for reviewing sources and exporting a research collection. No account, ads, telemetry or backend.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/link-meteor/">Website</a><a class="link" href="https://github.com/ryanjosephkamp/link-meteor">Code</a></p>
+          </li>
+          <li class="card" id="openlist">
+            <div class="card__slide"><canvas data-emblem="openlist" role="img" aria-label="The letters Aa beside a short column of lines, drawn in splats."></canvas></div>
+            <p class="card__no">Words</p>
+            <h3>English OpenList</h3>
+            <p>A free, open, continuously maintained list of valid English words, about 345,000 of them, with the provenance of every word (which sources attested it, and when), auditable correction records, and a browser explorer.</p>
+            <p class="links"><a class="link" href="https://english-openlist.pages.dev/">Explore</a><a class="link" href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist">Dataset</a><a class="link" href="https://github.com/ryanjosephkamp/english-openlist">Code</a></p>
+          </li>
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="ars" role="img" aria-label="The words ARS MAGNA above the word anagrams, drawn in splats."></canvas></div>
+            <p class="card__no">Words</p>
+            <h3>Ars Magna</h3>
+            <p>An anagram finder. Give it any text and it returns every way those exact letters can be re-partitioned into real English words, by a deterministic search.</p>
+            <p class="links"><a class="link" href="https://ars-magna.pages.dev/">Try</a><a class="link" href="https://github.com/ryanjosephkamp/ars-magna">Code</a></p>
+          </li>
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="aqrobat" role="img" aria-label="A square of dots with three large corner squares, in the manner of a QR code, drawn in splats. It is a drawing, not a code that scans."></canvas></div>
+            <p class="card__no">Words</p>
+            <h3>aqrobat</h3>
+            <p>A local text and emoji QR lab: QR artwork built from letters, symbols or emoji.</p>
+            <p class="links"><a class="link" href="https://ryanjosephkamp.github.io/aqrobat/">Make one</a><a class="link" href="https://github.com/ryanjosephkamp/aqrobat">Code</a></p>
+          </li>
+          <li class="card">
+            <div class="card__slide"><canvas data-emblem="amordle" role="img" aria-label="Seven letter tiles spelling AMORDLE, drawn in splats."></canvas></div>
+            <p class="card__no">Words</p>
+            <h3>Amordle</h3>
+            <p>A free word game: any word length from 2 to 35 letters, three difficulties, a daily puzzle, and ranked multiplayer with an Elo rating.</p>
+            <p class="links"><a class="link" href="https://amordle.vercel.app">Play</a><a class="link" href="https://ryanjosephkamp.github.io/blog/articles/amordle/">Write-up</a><a class="link" href="https://github.com/ryanjosephkamp/amordle">Code</a></p>
+          </li>
+        </ul>
+
+        <p class="also"><b>Also on file.</b> <i>The Speed-Accuracy Trade-Off in Perceptual Decision-Making</i> (April 2025), my undergraduate research capstone. It models evidence accumulation as a diffusion process and uses dynamic programming and value iteration to study decision boundaries in a simulated autonomous-vehicle obstacle-avoidance scenario. <a href="https://github.com/ryanjosephkamp/UC_Undergraduate_Research_Capstone">Code</a> · <a href="https://youtu.be/LRAP1YHy3g0">video</a></p>
+      </div>
+    </section>
+
+    <section class="section section--tint" id="provenance">
+      <div class="wrap">
+        <header class="head">
+          <p class="head__no">Case IV <span>provenance</span></p>
+          <h2>Where the specimen came from</h2>
+        </header>
+        <div class="sheet">
+          <dl class="sheet__data">
+            <div><dt>Now</dt><dd><b>MS, Computer Science</b>, concentration in Artificial Intelligence. University of Cincinnati, expected May 2027. Thesis advisor: <a href="https://researchdirectory.uc.edu/p/chengy">Dr. Yizong Cheng</a>.</dd></div>
+            <div><dt>Before</dt><dd><b>BA, Mathematics</b> and <b>BS, Neuroscience</b>. University of Cincinnati, 2025.</dd></div>
+            <div><dt>Interests</dt><dd><b>Scientific visualization</b>, computer graphics, digital media, software engineering, and information retrieval.</dd></div>
+          </dl>
+          <div class="sheet__aside">
+            <p>This page argues for the first interest on that list. A neuroscience degree taught me what the pictures are of; a mathematics degree taught me what a Gaussian is. I would like to spend the next few years putting the two together.</p>
+            <p class="links"><a class="link" href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">Read the CV</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot" id="contact">
+    <div class="wrap">
+      <h2>Filed under</h2>
+      <ul class="tags">
+        <li><a href="https://github.com/ryanjosephkamp">GitHub</a></li>
+        <li><a href="https://ryanjosephkamp.github.io/blog/">Blog</a></li>
+        <li><a href="https://ryanjosephkamp.github.io/">Homepage</a></li>
+        <li><a href="https://www.linkedin.com/in/ryanjosephkamp">LinkedIn</a></li>
+        <li><a href="https://x.com/ryanjosephkamp">X</a></li>
+        <li><a href="https://m.youtube.com/@RyanJosephKamp">YouTube</a></li>
+        <li><a href="https://huggingface.co/ryanjosephkamp">Hugging Face</a></li>
+        <li><a href="https://drive.google.com/file/d/1x3CYZOWMckdRBlrFfejLhzqY4ftGoO9h/view?usp=drive_link">CV</a></li>
+      </ul>
+      <div class="colophon">
+        <p>&copy; 2026 Ryan Kamp. The neuron is a recipe, not a recording: no tissue was involved.</p>
+        <p>Set in Newsreader, whose optical-size axis is wired to the focus control: watch the name on the slide. No frameworks, no trackers.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
