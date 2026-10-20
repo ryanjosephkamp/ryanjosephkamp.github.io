@@ -179,6 +179,19 @@ test.describe("canonical site QA", () => {
       await expect(splashery).toHaveAttribute("src", /\/splashery\/embed\/\?bg=transparent#s=/);
       await expect(splashery).toHaveAttribute("style", /aspect-ratio:\s*4\/3/);
       await expect(splashery).toHaveAttribute("style", /color-scheme:\s*light/);
+      // The toy's sound: off at first, on when the button is tapped, and off again.
+      const sound = page.locator("#splashery-sound");
+      await expect(sound).toHaveText("Sound: off");
+      await expect(sound).toHaveAttribute("aria-pressed", "false");
+      await sound.click();
+      await expect(sound).toHaveAttribute("aria-pressed", "true");
+      await expect(splashery).toHaveAttribute(
+        "src",
+        /\/splashery\/embed\/\?bg=transparent&sound=on#s=/,
+      );
+      await sound.click();
+      await expect(sound).toHaveText("Sound: off");
+      await expect(splashery).toHaveAttribute("src", /\/splashery\/embed\/\?bg=transparent#s=/);
       await expect(page.locator("#s26-note")).toHaveCount(0);
       await expectNoPageOverflow(page);
       await expectNoForbiddenVisibleCopy(page);
