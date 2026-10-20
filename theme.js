@@ -24,3 +24,21 @@ systemDark.addEventListener("change", () => {
 });
 
 setTheme(localStorage.getItem(THEME_KEY) || "system");
+
+// The Splashery toy's sound: off at first, on when tapped. The embed only sounds with ?sound=on,
+// so the button reloads the toy with or without it.
+const soundButton = document.querySelector("#splashery-sound");
+const toyFrame = document.querySelector("#splashery-slot iframe");
+if (soundButton && toyFrame) {
+  soundButton.hidden = false;
+  soundButton.setAttribute("aria-pressed", "false");
+  soundButton.addEventListener("click", () => {
+    const on = soundButton.getAttribute("aria-pressed") !== "true";
+    const url = new URL(toyFrame.src);
+    if (on) url.searchParams.set("sound", "on");
+    else url.searchParams.delete("sound");
+    toyFrame.src = url.href;
+    soundButton.setAttribute("aria-pressed", String(on));
+    soundButton.textContent = on ? "Sound: on (tap the toy)" : "Sound: off";
+  });
+}

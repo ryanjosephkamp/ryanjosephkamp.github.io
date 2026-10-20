@@ -331,6 +331,15 @@ main,
   margin-bottom: 0;
 }
 
+.embed-sound {
+  border: 0;
+  background: none;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .embed-slot-kicker {
   color: var(--faint);
   font-size: 0.8rem;
