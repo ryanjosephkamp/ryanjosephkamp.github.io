@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-20T08:33:54.397Z",
+  "generated_at": "2026-10-21T08:33:55.394Z",
   "owner": "ryanjosephkamp",
   "source": {
     "endpoint": "https://api.github.com/users/ryanjosephkamp/repos",
     "authentication": "none",
     "pages_fetched": 2,
-    "repo_count_raw": 113,
-    "repo_count_included": 113,
+    "repo_count_raw": 114,
+    "repo_count_included": 114,
     "repo_count_filtered_out": 0,
     "filtered_out": []
   },
@@ -45,7 +45,7 @@
       "id": "research-software",
       "label": "Research Software",
       "color": "#18c3d7",
-      "count": 4
+      "count": 5
     },
     {
       "id": "interactive",
@@ -61,6 +61,154 @@
     }
   ],
   "repos": [
+    {
+      "id": 1427692744,
+      "name": "splashery-experimental",
+      "full_name": "ryanjosephkamp/splashery-experimental",
+      "html_url": "https://github.com/ryanjosephkamp/splashery-experimental",
+      "description": "Experimental viewing tools and renderer work for Gaussian splat toys.",
+      "homepage": "",
+      "topics": [],
+      "language": "JavaScript",
+      "created_at": "2026-10-21T00:10:15Z",
+      "updated_at": "2026-10-21T08:05:04Z",
+      "pushed_at": "2026-10-21T08:05:00Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "watchers_count": 0,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 132700,
+      "cluster": "research-software",
+      "cluster_label": "Research Software",
+      "cluster_color": "#18c3d7",
+      "tags": [
+        "JavaScript"
+      ]
+    },
+    {
+      "id": 1424742607,
+      "name": "splashery-lite",
+      "full_name": "ryanjosephkamp/splashery-lite",
+      "html_url": "https://github.com/ryanjosephkamp/splashery-lite",
+      "description": "",
+      "homepage": "",
+      "topics": [],
+      "language": "HTML",
+      "created_at": "2026-10-18T19:34:41Z",
+      "updated_at": "2026-10-21T07:44:29Z",
+      "pushed_at": "2026-10-21T08:02:45Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "watchers_count": 0,
+      "open_issues_count": 4,
+      "default_branch": "main",
+      "size": 278992,
+      "cluster": "other",
+      "cluster_label": "Other / Review",
+      "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
+      "tags": [
+        "HTML"
+      ]
+    },
+    {
+      "id": 1330366955,
+      "name": "ars-magna",
+      "full_name": "ryanjosephkamp/ars-magna",
+      "html_url": "https://github.com/ryanjosephkamp/ars-magna",
+      "description": "Find every way any text can be rearranged into real English words. Ars Magna is an anagram of Anagrams.",
+      "homepage": "https://ars-magna.pages.dev/",
+      "topics": [],
+      "language": "TypeScript",
+      "created_at": "2026-08-11T00:55:34Z",
+      "updated_at": "2026-10-21T06:32:16Z",
+      "pushed_at": "2026-10-21T06:32:13Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 0,
+      "forks_count": 0,
+      "watchers_count": 0,
+      "open_issues_count": 25,
+      "default_branch": "main",
+      "size": 39236,
+      "cluster": "other",
+      "cluster_label": "Other / Review",
+      "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
+      "tags": [
+        "TypeScript"
+      ]
+    },
+    {
+      "id": 1220134913,
+      "name": "resmon",
+      "full_name": "ryanjosephkamp/resmon",
+      "html_url": "https://github.com/ryanjosephkamp/resmon",
+      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
+      "homepage": "",
+      "topics": [],
+      "language": "Python",
+      "created_at": "2026-04-24T15:25:34Z",
+      "updated_at": "2026-10-20T04:23:24Z",
+      "pushed_at": "2026-10-20T15:55:44Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 1,
+      "default_branch": "main",
+      "size": 41519,
+      "cluster": "ai-ml",
+      "cluster_label": "AI and ML",
+      "cluster_color": "#7c5cff",
+      "secondary_clusters": [
+        "interactive"
+      ],
+      "tags": [
+        "Python"
+      ]
+    },
+    {
+      "id": 1235002638,
+      "name": "ryanjosephkamp.github.io",
+      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
+      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
+      "description": "Personal website 🌐",
+      "homepage": "https://ryanjosephkamp.github.io/",
+      "topics": [],
+      "language": "HTML",
+      "created_at": "2026-05-10T23:04:14Z",
+      "updated_at": "2026-10-20T08:33:59Z",
+      "pushed_at": "2026-10-20T08:33:55Z",
+      "fork": false,
+      "archived": false,
+      "disabled": false,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "watchers_count": 1,
+      "open_issues_count": 0,
+      "default_branch": "main",
+      "size": 27096,
+      "cluster": "web-portfolio",
+      "cluster_label": "Web and Portfolio",
+      "cluster_color": "#ffd43b",
+      "secondary_clusters": [],
+      "tags": [
+        "CSS",
+        "JavaScript",
+        "HTML"
+      ]
+    },
     {
       "id": 1380788789,
       "name": "splashery",
@@ -93,125 +241,6 @@
       "tags": [
         "JavaScript",
         "HTML"
-      ]
-    },
-    {
-      "id": 1330366955,
-      "name": "ars-magna",
-      "full_name": "ryanjosephkamp/ars-magna",
-      "html_url": "https://github.com/ryanjosephkamp/ars-magna",
-      "description": "Find every way any text can be rearranged into real English words. Ars Magna is an anagram of Anagrams.",
-      "homepage": "https://ars-magna.pages.dev/",
-      "topics": [],
-      "language": "TypeScript",
-      "created_at": "2026-08-11T00:55:34Z",
-      "updated_at": "2026-10-20T06:41:09Z",
-      "pushed_at": "2026-10-20T06:41:06Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 0,
-      "forks_count": 0,
-      "watchers_count": 0,
-      "open_issues_count": 24,
-      "default_branch": "main",
-      "size": 36574,
-      "cluster": "other",
-      "cluster_label": "Other / Review",
-      "cluster_color": "#adb5bd",
-      "secondary_clusters": [],
-      "tags": [
-        "TypeScript"
-      ]
-    },
-    {
-      "id": 1235002638,
-      "name": "ryanjosephkamp.github.io",
-      "full_name": "ryanjosephkamp/ryanjosephkamp.github.io",
-      "html_url": "https://github.com/ryanjosephkamp/ryanjosephkamp.github.io",
-      "description": "Personal website 🌐",
-      "homepage": "https://ryanjosephkamp.github.io/",
-      "topics": [],
-      "language": "HTML",
-      "created_at": "2026-05-10T23:04:14Z",
-      "updated_at": "2026-10-20T04:39:59Z",
-      "pushed_at": "2026-10-20T04:39:54Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 27096,
-      "cluster": "web-portfolio",
-      "cluster_label": "Web and Portfolio",
-      "cluster_color": "#ffd43b",
-      "secondary_clusters": [],
-      "tags": [
-        "CSS",
-        "JavaScript",
-        "HTML"
-      ]
-    },
-    {
-      "id": 1424742607,
-      "name": "splashery-lite",
-      "full_name": "ryanjosephkamp/splashery-lite",
-      "html_url": "https://github.com/ryanjosephkamp/splashery-lite",
-      "description": "",
-      "homepage": "",
-      "topics": [],
-      "language": "HTML",
-      "created_at": "2026-10-18T19:34:41Z",
-      "updated_at": "2026-10-20T04:36:41Z",
-      "pushed_at": "2026-10-20T04:36:37Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 0,
-      "forks_count": 0,
-      "watchers_count": 0,
-      "open_issues_count": 0,
-      "default_branch": "main",
-      "size": 94857,
-      "cluster": "other",
-      "cluster_label": "Other / Review",
-      "cluster_color": "#adb5bd",
-      "tags": [
-        "HTML"
-      ]
-    },
-    {
-      "id": 1220134913,
-      "name": "resmon",
-      "full_name": "ryanjosephkamp/resmon",
-      "html_url": "https://github.com/ryanjosephkamp/resmon",
-      "description": "resmon is an automated, customizable literature surveillance desktop app. It unifies 16 open-access repositories (arXiv, CrossRef, OpenAlex, PubMed, IEEE Xplore, and more) into manual Deep Dives, Deep Sweeps, and scheduled routines with optional LLM summarization. ",
-      "homepage": "",
-      "topics": [],
-      "language": "Python",
-      "created_at": "2026-04-24T15:25:34Z",
-      "updated_at": "2026-10-20T04:23:24Z",
-      "pushed_at": "2026-10-20T04:23:20Z",
-      "fork": false,
-      "archived": false,
-      "disabled": false,
-      "stargazers_count": 1,
-      "forks_count": 0,
-      "watchers_count": 1,
-      "open_issues_count": 1,
-      "default_branch": "main",
-      "size": 41503,
-      "cluster": "ai-ml",
-      "cluster_label": "AI and ML",
-      "cluster_color": "#7c5cff",
-      "secondary_clusters": [
-        "interactive"
-      ],
-      "tags": [
-        "Python"
       ]
     },
     {
@@ -267,6 +296,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "JavaScript"
       ]
@@ -295,6 +325,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "Unspecified"
       ]
@@ -323,6 +354,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "Unspecified"
       ]
@@ -351,6 +383,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "JavaScript"
       ]
@@ -379,6 +412,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "Shell"
       ]
@@ -407,6 +441,7 @@
       "cluster": "other",
       "cluster_label": "Other / Review",
       "cluster_color": "#adb5bd",
+      "secondary_clusters": [],
       "tags": [
         "Unspecified"
       ]
